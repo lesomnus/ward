@@ -19,6 +19,7 @@ both.
 | `compose/providers/` | the sources and rules, mounted into Ward; edit them while it runs |
 | `../example/emitter/` | the service the emitters run, and its control endpoint |
 | `../Dockerfile` | Ward's image |
+| `compose/docker-compose.collector.yaml`, `compose/collector-ward.yaml` | the same environment with Ward inside a Collector |
 
 `compose/compose_test.go` checks the configuration the way Ward reads it:
 `ward.yaml` complete, every provider file parsed and merged, the nodes matching
@@ -170,3 +171,33 @@ None of this touches the services' own export: a Collector's queue answers
 them at once whatever Ward does. A Collector that also runs an exporter
 without a queue is the exception -- see the caveat in
 `collector/collector.yaml`.
+
+## The scenarios
+
+`compose/e2e_test.go` drives the running environment through the emitters and
+docker compose, and checks what Ward says over its API: silence, an explicit
+release and a string that is not one, levels with a latch and a reset, a
+discrete state, a process down and back, a crash loop, a node that cannot be
+observed, and the change feed. It leaves the environment running, and takes
+about four minutes.
+
+```sh
+go test -tags e2e -count=1 -v -run TestEndToEnd ./deploy/compose/
+go test -tags e2e -count=1 -v -run TestMeasure ./deploy/compose/   # signal to verdict, in the API
+```
+
+## Ward inside a Collector
+
+`../collector/` builds a Collector with Ward in it: `wardexporter` is Ward as an
+exporter, and `builder-config.yaml` the ocb manifest. Over the base file, it
+takes the place of `ward serve` -- the nodes' Collectors send to it, the API is
+on 14319, and the same scenarios run:
+
+```sh
+cd deploy/compose
+docker compose -f docker-compose.yaml -f docker-compose.collector.yaml up -d --build
+```
+
+`compose/collector-ward.yaml` is its configuration: the Collector's OTLP
+receiver, and the `ward` exporter whose `ward` block is `ward.yaml` without the
+receivers (a test holds the two together).

@@ -38,3 +38,9 @@ jobs:
 
       - name: Test
         run: go test ./...
+
+      - name: Collector exporter
+        working-directory: collector/wardexporter
+        run: |
+          go vet ./...
+          go test ./...

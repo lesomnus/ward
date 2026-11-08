@@ -740,3 +740,66 @@ func TestResetsCountRestartsOnly(t *testing.T) {
 	h.run(t0.Add(60 * s))
 	h.expect("open det.loop/n1/ active level=crash_loop opened=45s")
 }
+
+// Shelving marks a Condition's Issues and nothing else: timed until it runs
+// out, one_shot until the open Issue closes; out of service until put back.
+func TestShelveAndOutOfService(t *testing.T) {
+	h := newHarness(t, logRules)
+	ctx := context.Background()
+	h.live("n1", "det", t0.Add(-time.Hour), t0.Add(-10*s), t0.Add(120*s))
+	ref := ConditionRef{Rule: "det.keep", Node: "n1"}
+
+	if err := h.ev.Shelve(ctx, ref, "one_shot", 0, "", h.now); err == nil {
+		t.Error("one_shot with no open issue")
+	}
+	if err := h.ev.Shelve(ctx, ref, "timed", 9*time.Hour, "", h.now); err == nil {
+		t.Error("shelved past operator.max_shelve")
+	}
+	if err := h.ev.Shelve(ctx, ConditionRef{Rule: "nope"}, "timed", time.Minute, "", h.now); err == nil {
+		t.Error("shelved a rule that is not there")
+	}
+
+	h.run(t0)
+	if err := h.ev.Shelve(ctx, ref, "timed", 5*s, "noisy", h.now); err != nil {
+		t.Fatal(err)
+	}
+	h.signal("det.keep", "n1", "", t0.Add(s))
+	h.run(t0.Add(3 * s))
+	if !h.out[0].Issue.Shelved {
+		t.Errorf("opened unshelved during a timed shelve: %+v", h.out[0].Issue)
+	}
+	h.run(t0.Add(8 * s)) // the shelve runs out: an update marks it
+	last := h.out[len(h.out)-1]
+	if last.Event != EventUpdate || last.Issue.Shelved {
+		t.Errorf("after the shelve ran out: %s shelved=%v", last.Event, last.Issue.Shelved)
+	}
+
+	if err := h.ev.Shelve(ctx, ref, "one_shot", 0, "", h.now); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.ev.SetOutOfService(ctx, ref, true, "sensor broken"); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.ev.SetOutOfService(ctx, ref, true, ""); err == nil {
+		t.Error("out of service twice")
+	}
+	h.run(t0.Add(40 * s)) // closes by silence; the one_shot goes with it
+	if o := h.ev.overrides[condKey{"det.keep", "n1", ""}]; o == nil || o.shelve != "" || !o.oos {
+		t.Errorf("after the issue closed: %+v", o)
+	}
+	_, ovs := h.ev.Take()
+	_ = ovs
+	h.signal("det.keep", "n1", "", t0.Add(41*s))
+	h.run(t0.Add(45 * s))
+	opened := h.out[len(h.out)-1]
+	if opened.Event != EventOpen || opened.Issue.Shelved || !opened.Issue.OutOfService {
+		t.Errorf("the next issue: %s shelved=%v oos=%v", opened.Event, opened.Issue.Shelved, opened.Issue.OutOfService)
+	}
+	if err := h.ev.SetOutOfService(ctx, ref, false, "replaced"); err != nil {
+		t.Fatal(err)
+	}
+	ts, _ := h.ev.Take()
+	if len(ts) != 1 || ts[0].Issue.OutOfService {
+		t.Errorf("back in service: %+v", ts)
+	}
+}

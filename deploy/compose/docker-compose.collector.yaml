@@ -1,0 +1,15 @@
+# Ward inside a Collector (collector/), in place of `ward serve`. Over the base
+# file:
+#
+#   docker compose -f docker-compose.yaml -f docker-compose.collector.yaml up -d --build
+#
+# The same API on 14319 and OTLP on 14317/14318, so the same scenarios run.
+services:
+  ward:
+    build:
+      context: ../..
+      dockerfile: collector/Dockerfile
+    image: ward-collector:local
+    command: ["--config", "/etc/otelcol-ward/config.yaml"]
+    volumes:
+      - ./collector-ward.yaml:/etc/otelcol-ward/config.yaml:ro

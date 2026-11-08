@@ -22,6 +22,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	app "github.com/lesomnus/ward"
 )
@@ -232,6 +233,35 @@ func TestEndToEnd(t *testing.T) {
 		}
 	})
 
+	t.Run("an operator comments and shelves", func(t *testing.T) {
+		e.t = t
+		start := time.Now().Add(-time.Second)
+		e.ctl(2, "/condition/repeat?type=emitter.overheat&key=op&every=300ms")
+		e.waitFor(15*time.Second, "open", e.issueIs("emitter.overheat", "edge-2", "op", start, "active", ""))
+		i := e.latest("emitter.overheat", "edge-2", "op")
+		ev, err := e.issues.Comment(e.ctx, app.IssueCommentRequest_builder{Ref: app.IssueRef_builder{Id: i.GetId()}.Build(), Comment: "looking"}.Build())
+		if err != nil || ev.GetEvent() != "comment" || ev.GetComment() != "looking" || ev.GetCursor() == 0 {
+			t.Fatalf("comment: %v %v", ev, err)
+		}
+		ref := app.ConditionRef_builder{Rule: "emitter.overheat", Node: "edge-2", Key: "op"}.Build()
+		c, err := e.conds.Shelve(e.ctx, app.ConditionShelveRequest_builder{Ref: ref, Mode: "timed", Duration: durationpb.New(time.Minute), Comment: "known"}.Build())
+		if err != nil || !c.GetShelved() || c.GetDateUnshelve() == nil {
+			t.Fatalf("shelve: %v %v", c, err)
+		}
+		e.waitFor(5*time.Second, "the issue is marked", func() (bool, string) {
+			i := e.latest("emitter.overheat", "edge-2", "op")
+			return i.GetShelved(), show(i)
+		})
+		if _, err := e.conds.Unshelve(e.ctx, app.ConditionUnshelveRequest_builder{Ref: ref}.Build()); err != nil {
+			t.Fatalf("unshelve: %v", err)
+		}
+		e.ctl(2, "/condition/stop?type=emitter.overheat&key=op")
+		e.waitFor(30*time.Second, "resolved", e.issueIs("emitter.overheat", "edge-2", "op", start, "closed", "resolved.silence"))
+		if i := e.latest("emitter.overheat", "edge-2", "op"); i.GetShelved() {
+			t.Errorf("still shelved: %s", show(i))
+		}
+	})
+
 	t.Run("a gauge crosses levels", func(t *testing.T) {
 		e.t = t
 		start := time.Now().Add(-time.Second)
@@ -273,6 +303,18 @@ func TestEndToEnd(t *testing.T) {
 		start := time.Now().Add(-time.Second)
 		e.compose("stop", "emitter-2")
 		e.waitFor(40*time.Second, "down", e.issueIs("emitter.down", "edge-2", "", start, "active", ""))
+		comps := app.NewComponentServiceClient(e.conn)
+		e.waitFor(10*time.Second, "the component tree says so", func() (bool, string) {
+			var hs []string
+			for _, name := range []string{"emitters", "fleet"} {
+				c, err := comps.Get(e.ctx, app.ComponentGetRequest_builder{Ref: app.ComponentRef_builder{Name: name}.Build()}.Build())
+				if err != nil {
+					return false, err.Error()
+				}
+				hs = append(hs, name+"="+c.GetHealth())
+			}
+			return hs[0] == "emitters=unhealthy" && hs[1] == "fleet=unhealthy", strings.Join(hs, " ")
+		})
 		e.compose("start", "emitter-2")
 		e.waitFor(60*time.Second, "back", e.issueIs("emitter.down", "edge-2", "", start, "closed", "resolved.condition"))
 	})
@@ -347,5 +389,166 @@ func TestEndToEnd(t *testing.T) {
 				t.Errorf("no %s on the feed", ev)
 			}
 		}
+	})
+}
+
+// TestMeasure reports how long after the signal Ward's judgement is in the
+// API (design §3.4): an activation from the signal that met it, a resolution
+// from when the silence it needed was over.
+func TestMeasure(t *testing.T) {
+	e := setup(t)
+	e.waitFor(90*time.Second, "edge-1", e.observable("edge-1", true))
+	events := app.NewIssueEventServiceClient(e.conn)
+	var opens, closes []time.Duration
+	for i := range 5 {
+		key := fmt.Sprintf("m%d", i)
+		start := time.Now().Add(-time.Second)
+		e.ctl(1, "/condition/repeat?type=emitter.overheat&key="+key+"&every=200ms")
+		e.waitFor(20*time.Second, "open", e.issueIs("emitter.overheat", "edge-1", key, start, "active", ""))
+		time.Sleep(2 * time.Second)
+		e.ctl(1, "/condition/stop?type=emitter.overheat&key="+key)
+		e.waitFor(40*time.Second, "closed", e.issueIs("emitter.overheat", "edge-1", key, start, "closed", "resolved.silence"))
+
+		issue := e.latest("emitter.overheat", "edge-1", key)
+		id := issue.GetId()
+		res, err := events.List(e.ctx, app.IssueEventListRequest_builder{
+			Filters: []*app.IssueEventFilter{app.IssueEventFilter_builder{IssueId: id}.Build()},
+		}.Build())
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, v := range res.GetItems() {
+			switch v.GetEvent() {
+			case "open":
+				opens = append(opens, v.GetDateCreated().AsTime().Sub(v.GetDateOccurred().AsTime()))
+			case "close":
+				// resolve_after is 5s: silence was over 5s after the last signal.
+				due := v.GetDateSeen().AsTime().Add(5 * time.Second)
+				closes = append(closes, v.GetDateCreated().AsTime().Sub(due))
+			}
+		}
+	}
+	t.Logf("activation, signal to committed: %v", opens)
+	t.Logf("resolution, silence over to committed: %v", closes)
+}
+
+// TestFaults injects the faults of deploy/README.md into the running
+// environment and checks what Ward makes of them (design §12.3, §12.4).
+func TestFaults(t *testing.T) {
+	e := setup(t)
+	e.waitFor(90*time.Second, "edge-1", e.observable("edge-1", true))
+	e.waitFor(30*time.Second, "edge-2", e.observable("edge-2", true))
+
+	count := func(rule, node, key string, since time.Time) int {
+		res, err := e.issues.List(e.ctx, app.IssueListRequest_builder{
+			Filters: []*app.IssueFilter{app.IssueFilter_builder{Rule: &rule, Node: &node}.Build()}, Size: 500,
+		}.Build())
+		if err != nil {
+			e.t.Fatal(err)
+		}
+		n := 0
+		for _, i := range res.GetItems() {
+			if i.GetKey() == key && !i.GetDateOpened().AsTime().Before(since) {
+				n++
+			}
+		}
+		return n
+	}
+	up := func() (bool, string) {
+		_, err := e.status.Get(e.ctx, app.StatusGetRequest_builder{}.Build())
+		if err != nil {
+			return false, err.Error()
+		}
+		return true, "answering"
+	}
+
+	t.Run("Ward killed with an issue open carries on with it", func(t *testing.T) {
+		e.t = t
+		start := time.Now().Add(-time.Second)
+		e.ctl(1, "/condition/repeat?type=emitter.overheat&key=kill&every=300ms")
+		e.waitFor(15*time.Second, "open", e.issueIs("emitter.overheat", "edge-1", "kill", start, "active", ""))
+		before := e.latest("emitter.overheat", "edge-1", "kill")
+
+		e.compose("kill", "-s", "KILL", "ward")
+		e.compose("start", "ward")
+		e.waitFor(60*time.Second, "back", up)
+		e.waitFor(30*time.Second, "the same issue", func() (bool, string) {
+			i := e.latest("emitter.overheat", "edge-1", "kill")
+			return i != nil && string(i.GetId()) == string(before.GetId()) && i.GetState() == "active", show(i)
+		})
+		e.ctl(1, "/condition/stop?type=emitter.overheat&key=kill")
+		e.waitFor(90*time.Second, "resolved, once observable again", e.issueIs("emitter.overheat", "edge-1", "kill", start, "closed", "resolved.silence"))
+		if n := count("emitter.overheat", "edge-1", "kill", start); n != 1 {
+			t.Errorf("%d issues for one interval", n)
+		}
+	})
+
+	t.Run("Ward frozen for a while loses nothing", func(t *testing.T) {
+		e.t = t
+		start := time.Now()
+		e.compose("pause", "ward")
+		time.Sleep(20 * time.Second)
+		e.compose("unpause", "ward")
+		e.waitFor(90*time.Second, "edge-1", e.observable("edge-1", true))
+		e.waitFor(30*time.Second, "edge-2", e.observable("edge-2", true))
+
+		res, err := e.issues.Search(e.ctx, app.IssueSearchRequest_builder{Size: 500}.Build())
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, i := range res.GetItems() {
+			if i.GetCloseReason() == "interrupted.diag_gap" {
+				t.Errorf("20 s inside the recovery window closed %s", show(i))
+			}
+		}
+		// The services' own export was not touched: their Collector's queue
+		// answered them whatever Ward did.
+		out, err := exec.Command("docker", "compose", "logs", "--since", start.Format(time.RFC3339), "emitter-1", "emitter-2").CombinedOutput()
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, l := range strings.Split(string(out), "\n") {
+			if strings.Contains(l, "rpc error") || strings.Contains(strings.ToLower(l), "export") && strings.Contains(strings.ToLower(l), "fail") {
+				t.Errorf("a service's export failed while Ward was frozen: %s", l)
+			}
+		}
+	})
+
+	t.Run("a node cut off the network resolves nothing until it is back", func(t *testing.T) {
+		e.t = t
+		start := time.Now().Add(-time.Second)
+		e.ctl(1, "/condition/repeat?type=emitter.overheat&key=net&every=300ms")
+		e.waitFor(15*time.Second, "open", e.issueIs("emitter.overheat", "edge-1", "net", start, "active", ""))
+
+		if out, err := exec.Command("docker", "network", "disconnect", "ward-local_lan", "ward-local-edge-1-1").CombinedOutput(); err != nil {
+			t.Fatalf("disconnect: %v %s", err, out)
+		}
+		e.ctl(1, "/condition/stop?type=emitter.overheat&key=net")
+		e.waitFor(30*time.Second, "unobservable", e.observable("edge-1", false))
+		// Long past resolve_after (5 s): silence while unobservable is no evidence.
+		time.Sleep(20 * time.Second)
+		if i := e.latest("emitter.overheat", "edge-1", "net"); i.GetState() == "closed" {
+			t.Fatalf("resolved while the node could not be observed: %s", show(i))
+		}
+
+		if out, err := exec.Command("docker", "network", "connect", "--alias", "edge-1", "ward-local_lan", "ward-local-edge-1-1").CombinedOutput(); err != nil {
+			t.Fatalf("connect: %v %s", err, out)
+		}
+		e.waitFor(90*time.Second, "observable", e.observable("edge-1", true))
+		e.waitFor(60*time.Second, "resolved", e.issueIs("emitter.overheat", "edge-1", "net", start, "closed", "resolved.silence"))
+	})
+
+	t.Run("a node that rebooted interrupts what was open", func(t *testing.T) {
+		e.t = t
+		start := time.Now().Add(-time.Second)
+		e.ctl(2, "/condition/repeat?type=emitter.overheat&key=boot&every=300ms")
+		e.waitFor(15*time.Second, "open", e.issueIs("emitter.overheat", "edge-2", "boot", start, "active", ""))
+		e.ctl(2, "/condition/stop?type=emitter.overheat&key=boot")
+		time.Sleep(2 * time.Second)
+		// A reboot, as system.uptime tells it: up for a second.
+		e.ctl(2, "/gauge?name=system.uptime&value=1")
+		time.Sleep(1500 * time.Millisecond)
+		e.ctl(2, "/gauge/stop?name=system.uptime")
+		e.waitFor(30*time.Second, "interrupted", e.issueIs("emitter.overheat", "edge-2", "boot", start, "closed", "interrupted.reboot"))
 	})
 }

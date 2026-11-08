@@ -1,0 +1,27 @@
+# The OpenTelemetry Collector Builder (ocb) manifest of a Collector with Ward
+# in it (design §8.4): an OTLP receiver in, Ward out. Built from collector/:
+#
+#   go run go.opentelemetry.io/collector/cmd/builder@v0.165.0 --config builder-config.yaml
+#
+# collector/Dockerfile does that; deploy/compose/docker-compose.collector.yaml
+# runs it in place of `ward serve`.
+dist:
+  name: otelcol-ward
+  description: An OpenTelemetry Collector with Ward in it
+  output_path: ./build
+  version: 0.0.0
+
+receivers:
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.165.0
+
+processors:
+  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.165.0
+
+exporters:
+  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.165.0
+  - gomod: github.com/lesomnus/ward/collector/wardexporter v0.0.0
+
+# Paths are from output_path.
+replaces:
+  - github.com/lesomnus/ward => ../..
+  - github.com/lesomnus/ward/collector/wardexporter => ../wardexporter

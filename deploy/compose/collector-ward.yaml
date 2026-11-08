@@ -1,0 +1,75 @@
+# The compose environment with Ward inside a Collector (docker-compose.collector.yaml):
+# the same Ward configuration as ward.yaml but its receivers, which this
+# Collector's are. The nodes' Collectors send here as they would to ward serve.
+receivers:
+  otlp:
+    protocols:
+      grpc: {endpoint: "0.0.0.0:14317"}
+      http: {endpoint: "0.0.0.0:14318"}
+
+exporters:
+  ward:
+    queue_size: 4096
+    ward:
+      # Ward in the local environment (docker-compose.yaml). Every value is written
+      # out -- Ward refuses to start on a missing one -- and each is the design's
+      # recommended value unless its comment says why not.
+
+      # payday's blocks.
+      server:
+        # The gRPC API.
+        addr: ":14319"
+      db:
+        driver: sqlite3
+        # In the volume mounted at /var/lib/ward. WAL and synchronous(FULL): a
+        # committed Issue transition survives `docker kill`.
+        dsn: "file:/var/lib/ward/ward.db?_pragma=journal_mode(WAL)&_pragma=synchronous(FULL)&_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)"
+      watch:
+        # Ward publishes no Watch. Its change feed is IssueEventService/Follow.
+        broker: none
+      spin:
+        lease: local
+      audit:
+        # The trail of what callers did; the evaluation loop's writes are not on it.
+        retain: 8760h
+        discard: true
+
+      operator:
+        max_shelve: 8h
+
+      engine:
+        tick: 1s
+        eval_lag: {log: 2s, metric: 3s}
+        # The Collectors' max_elapsed_time (deploy/collector/collector.yaml).
+        recovery_window: 120s
+        checkpoint: 5s
+        gate:
+          hold: 15s
+          unobservable_to_stale: 60s
+          canary: {interval: 1s, timeout: 2s, max_rtt: 200ms, check_window: 30s, max_missing: 1}
+        limits: {keys_per_rule: 50, new_issues_per_rule_per_minute: 5}
+
+      # One per Collector. `match` is the host.name that Collector puts on everything
+      # it sends (NODE_HOST_NAME in docker-compose.yaml); `collector` is its OTLP gRPC
+      # receiver, where the canary goes, on the network Ward shares with it.
+      nodes:
+        edge-1: {match: {host.name: edge-1}, collector: "edge-1:4317"}
+        edge-2: {match: {host.name: edge-2}, collector: "edge-2:4317"}
+
+      # The directory ./providers, mounted read-only. Edit a file there and Ward
+      # picks it up without a restart.
+      providers:
+        - {name: base, type: file, path: /etc/ward/providers/base.yaml, poll_interval: 10s, debounce: 200ms}
+        - {name: emitter, type: file, path: /etc/ward/providers/emitter.yaml, poll_interval: 10s, debounce: 200ms}
+        - {name: reporter, type: file, path: /etc/ward/providers/reporter.yaml, poll_interval: 10s, debounce: 200ms}
+
+      store:
+        # 30 days.
+        retention: 720h
+
+      exporters: []
+
+service:
+  pipelines:
+    logs: {receivers: [otlp], exporters: [ward]}
+    metrics: {receivers: [otlp], exporters: [ward]}

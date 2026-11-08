@@ -3,6 +3,7 @@ package engine
 import (
 	"maps"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/lesomnus/ward/def"
@@ -72,7 +73,16 @@ func (e *Engine) publish(now time.Time) {
 
 	for _, n := range ev.cfg.Nodes {
 		v := NodeView{Name: n, Gate: e.Gate.Report(n)}
-		v.DateBooted = ev.boots[n].latest()
+		b := ev.boots[n]
+		v.DateBooted = b.latest()
+		// The canary fails, yet the node's own data still arrives: what is
+		// broken is the way to its Collector, not the node. It stays
+		// unobservable -- nothing says its pipeline delivers in full -- but
+		// the reason says which (ward#29).
+		if !v.Gate.Observable && b != nil && now.Sub(b.seen) < 2*e.cfg.Engine.Gate.Hold &&
+			strings.Contains(v.Gate.Reason, GateUnreachable) {
+			v.Gate.Reason = "canary path: " + v.Gate.Reason
+		}
 		s.Nodes = append(s.Nodes, v)
 	}
 
