@@ -147,3 +147,23 @@ rules:
     resolve: {for: 10s}
     startup_grace: 0s
     operator: {ack: none, latch: false}
+
+# The component tree ComponentService answers with (design §9). A Condition
+# belongs to a component by its rule, and by node and Key when a member names
+# them; a parent is as bad as the worst under it.
+components:
+  fleet:
+    parent: ""
+    members: []
+  emitters:
+    parent: fleet
+    members:
+      - {rule: emitter.down}
+      - {rule: emitter.crash_loop}
+      - {rule: emitter.stalled}
+      - {rule: emitter.overheat}
+      - {rule: emitter.disconnected}
+  power:
+    parent: fleet
+    members:
+      - {rule: emitter.battery.low}

@@ -1292,6 +1292,10 @@ func (e *Evaluator) nodeTick(c *cond) {
 	case okL && okM:
 	case whyL == GateStarting || whyM == GateStarting:
 		truth = triUnknown
+	case (okL || whyL == GateRecovering) && (okM || whyM == GateRecovering):
+		// Fine again, and waiting out gate.hold before silence counts. A node
+		// rule is about how long the node was failing, so a blip -- one slow
+		// canary -- does not become an outage as long as the hold.
 	case !okL:
 		truth, reason = triTrue, PathLog.String()+": "+whyL
 	default:

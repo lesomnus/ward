@@ -803,3 +803,51 @@ func TestShelveAndOutOfService(t *testing.T) {
 		t.Errorf("back in service: %+v", ts)
 	}
 }
+
+// A blip is not an outage: a node that is only waiting out the gate's hold
+// after one bad canary does not count as unobservable to a node rule.
+func TestNodeRuleIgnoresRecovery(t *testing.T) {
+	h := newHarness(t, nodeRules)
+	h.run(t0)
+	h.gate.down["n1"] = GateSlow
+	h.run(t0.Add(s))
+	h.gate.down["n1"] = GateRecovering
+	h.run(t0.Add(20 * s))
+	delete(h.gate.down, "n1")
+	h.run(t0.Add(30 * s))
+	h.expect()
+}
+
+// A batch arrives out of order: the activation is the one event time says.
+func TestOutOfOrderBatch(t *testing.T) {
+	h := newHarness(t, logRules)
+	h.live("n1", "det", t0.Add(-time.Hour), t0.Add(-10*s), t0.Add(40*s))
+	for _, d := range []time.Duration{4 * s, 3 * s, 0} {
+		h.arrive(t0.Add(5*s), logIn{rule: h.rule("det.fail"), node: "n1", key: "front", t: t0.Add(d)})
+	}
+	h.run(t0.Add(30 * s))
+	h.expect(
+		"open det.fail/n1/front active opened=3s",
+		"close det.fail/n1/front closed resolved.silence opened=3s closed=4s",
+	)
+}
+
+// A signal that comes after its time was judged does not undo the verdict:
+// it opens an Issue of its own, and is counted as late (design §7.5).
+func TestLateSignal(t *testing.T) {
+	h := newHarness(t, logRules)
+	h.live("n1", "det", t0.Add(-time.Hour), t0.Add(-10*s), t0.Add(60*s))
+	h.signal("det.keep", "n1", "", t0)
+	h.run(t0.Add(20 * s))
+	h.arrive(t0.Add(21*s), logIn{rule: h.rule("det.keep"), node: "n1", t: t0.Add(5 * s)})
+	h.run(t0.Add(40 * s))
+	h.expect(
+		"open det.keep/n1/ active opened=0s",
+		"close det.keep/n1/ closed resolved.silence opened=0s closed=0s",
+		"open det.keep/n1/ active opened=5s",
+		"close det.keep/n1/ closed resolved.silence opened=5s closed=5s",
+	)
+	if h.ev.Late() != 1 {
+		t.Errorf("late %d, want 1", h.ev.Late())
+	}
+}
