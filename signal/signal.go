@@ -24,6 +24,13 @@ const Canary = "ward-canary"
 
 // Attributes of a canary record.
 const (
-	CanaryRun = "diag.canary.run"
-	CanarySeq = "diag.canary.seq"
+	CanaryRun  = "diag.canary.run"
+	CanarySeq  = "diag.canary.seq"
+	CanaryNode = "diag.canary.node"
+)
+
+// Canary names of the log record and the metric a canary is made of.
+const (
+	CanaryEvent  = "diag.canary"
+	CanaryMetric = "diag.canary"
 )
