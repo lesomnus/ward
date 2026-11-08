@@ -27,9 +27,9 @@ tool (
 require (
 	ariga.io/atlas v1.3.0
 	github.com/lesomnus/otx v0.0.0-20261013182912-d2af55df512e
-	github.com/lesomnus/payday v0.1.0
+	github.com/lesomnus/payday v0.0.0-20261106035225-688547d9aad7
 	github.com/lesomnus/protobuf-patch v0.0.0-20260803175157-e1b7a0c2804f
-	github.com/lesomnus/xli v0.0.0-20261006051808-dadaa2417a76
+	github.com/lesomnus/xli v0.0.0-20261009121920-4ce270c7448c
 	github.com/lesomnus/xli/cfg v0.1.2
 	github.com/lesomnus/z v0.0.0-20260531102454-3f1853bb4278
 	github.com/protobuf-orm/ent v0.0.0-20261024205432-0dd7dadc81bc

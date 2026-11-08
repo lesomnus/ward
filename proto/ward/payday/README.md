@@ -11,9 +11,15 @@ until the next one -- the past's lock apart, below.
   -- `option (payday.app) = {past: {event: 17, fact: 16}};` -- numbered as it
   declares, and go when the declaration does.
 - `notification.proto` and `notification_receipt.proto` are here only
-  when the app declares `option (payday.app) = {notify: {notification: 40, receipt: 41}};`.
+  when the app declares `option (payday.app) = {notify: {notification: 40, receipt: 41, keep: {days: 90}}};`.
   Their domains come from that declaration; the public notification contract is
   copied beside the internal records and disappears with them on opt-out.
+  `notification_account.proto`, the service an account reads its own
+  notifications through, is here too when that declaration says `accounts: {}`.
+- `entitlement.proto` is here only when the app declares
+  `option (payday.app) = {entitlements: {domain: 43}};` -- a tenant's copy
+  of what it is entitled to, numbered as declared -- and goes when the
+  declaration does.
 - `archived.proto` and `access.proto` are at domains 5 and 6, or at the
   numbers the app gives them when its own entities hold those --
   `option (payday.app) = {domains: {archived: 240, access: 241}};`.

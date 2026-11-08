@@ -49,8 +49,10 @@ go tool pd upgrade --payday <commit> # go get, go mod tidy, then that payday's u
 go tool pd versions .                # the page packages payday holds to a floor, and what this has
 ```
 
-A commit, not `latest`: payday tags no versions, so `latest` is whatever its
-`main` is when `go get` asks.
+A commit, not `latest`: payday tags no versions. The module proxy still lists a
+`v0.1.0`, tagged on 2026-10-29 and deleted since, so `latest` resolves to it --
+far behind `main` -- and Go calls the move from it to a `main` pseudo-version a
+"downgrade". Name a commit of `main`.
 
 `pd upgrade` runs `go` and `npm` and **commits nothing**: read `git diff`. It
 moves only what is below payday's floors, to the floor in the major it is in
