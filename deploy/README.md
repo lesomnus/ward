@@ -183,8 +183,17 @@ about four minutes.
 
 ```sh
 go test -tags e2e -count=1 -v -run TestEndToEnd ./deploy/compose/
+go test -tags e2e -count=1 -v -run TestFaults ./deploy/compose/    # Ward killed and frozen, a node cut off, a reboot
 go test -tags e2e -count=1 -v -run TestMeasure ./deploy/compose/   # signal to verdict, in the API
 ```
+
+`TestFaults` kills Ward with an Issue open (it comes back with it, and resolves
+it once its nodes are observable again), freezes it inside the recovery window
+(nothing is lost, and the services' own exports never fail), cuts a node off
+the network (nothing on it resolves until it is back), and fakes a reboot with
+a `system.uptime` of one second (what was open there is `interrupted.reboot`).
+Run it after `TestEndToEnd`: the reboot it fakes stays in Ward's memory of the
+node.
 
 ## Ward inside a Collector
 
