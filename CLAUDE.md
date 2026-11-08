@@ -19,6 +19,13 @@ version of everything below.
   per tick, through `Server.Sink`. Its context carries `engine.Mark`, and
   `engine.UnlessMarked` keeps those writes off payday's trail. A write made for a
   caller uses the caller's context, so the trail shows the RPC that asked.
+- An operator's RPC does not write: `layer.Ops` and `api` hand it to the loop
+  (`engine.Engine.do`), which applies it in the next tick's transaction and
+  answers once that committed. Keep it that way; the loop is the only writer.
+- `engine.Evaluator` is pure -- no clock, no I/O -- and the scenario tests in
+  `engine/eval_test.go` drive it a tick at a time. A change of judgement starts
+  with a scenario there. `cli/serve_test.go` runs `serve` in one process;
+  `deploy/compose/e2e_test.go` (`-tags e2e`) drives the compose environment.
 - No authentication yet: `cmd.Everyone` makes every method public. payday's
   default answers only health and reflection.
 - A generated `Patch` needs the row's version (`date_updated`).
@@ -165,6 +172,10 @@ go run ./cmd/ward serve               # back up, migrate and check ward.db, then
 go run ./cmd/ward migrate plan NAME   # after a schema change
 go run ./cmd/ward config env          # every variable this can be told through
 ```
+
+`--config` belongs to the root command: `ward --config FILE serve`.
+
+The compose environment is the way to see it work: `deploy/README.md`.
 
 ## `auth.Plain` is not for production
 

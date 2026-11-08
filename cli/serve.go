@@ -18,6 +18,7 @@ import (
 	"github.com/lesomnus/ward/conf"
 	"github.com/lesomnus/ward/def"
 	"github.com/lesomnus/ward/engine"
+	"github.com/lesomnus/ward/exporter"
 	"github.com/lesomnus/ward/provider"
 	"github.com/lesomnus/ward/receiver/otlp"
 )
@@ -30,6 +31,7 @@ type Running struct {
 	Registry *provider.Registry
 	Receiver *otlp.Receiver
 	Canary   *engine.Canary
+	Exporter *exporter.Exporter
 }
 
 // Assemble builds what `ward serve` runs on s, and hands the API its services.
@@ -62,7 +64,10 @@ func Assemble(ctx context.Context, s *cmd.Server, w conf.Ward) (*Running, error)
 	svc := &api.Services{Engine: e, Providers: reg.Status, Receiver: rcv.Stats, Tick: w.Engine.Tick}
 	s.Register = append(s.Register, svc.Register)
 
-	return &Running{Engine: e, Registry: reg, Receiver: rcv, Canary: e.NewCanary()}, nil
+	return &Running{
+		Engine: e, Registry: reg, Receiver: rcv, Canary: e.NewCanary(),
+		Exporter: &exporter.Exporter{Engine: e, Receiver: rcv.Stats, Configs: w.Exporters, Log: log.From(ctx)},
+	}, nil
 }
 
 // Run runs each part in g until ctx is done.
@@ -71,6 +76,7 @@ func (r *Running) Run(ctx context.Context, g *errgroup.Group) {
 	g.Go(func() error { return r.Engine.Run(ctx) })
 	g.Go(func() error { return r.Receiver.Run(ctx) })
 	g.Go(func() error { return r.Canary.Run(ctx) })
+	g.Go(func() error { return r.Exporter.Run(ctx) })
 }
 
 // NewCmdServe is `ward serve`: bring the database up to date, then answer.

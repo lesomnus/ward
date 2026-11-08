@@ -9,24 +9,72 @@ plan is [#21](https://github.com/lesomnus/ward/issues/21).
 
 ## Status
 
-The skeleton ([#22](https://github.com/lesomnus/ward/issues/22)): the `Issue`
-entity on SQLite, versioned migrations, the payday stack Ward runs on, and the
-write path of the evaluation loop. No rule is evaluated yet.
+A first prototype: everything but the Collector exporter adapter
+([#41](https://github.com/lesomnus/ward/issues/41)) runs, and runs together in
+`deploy/compose`.
 
-Nothing is authenticated yet: every RPC is open to every caller.
+- **Signals in**: OTLP over gRPC and HTTP (gzip), with a bounded queue that
+  tells a Collector to retry when it is full.
+- **Definitions in**: sources, rules and components from provider files,
+  re-read when they change; a broken file keeps its last good revision.
+- **Judgement**: log, metric (`points`, `resets`, `rate`, `last`, `avg`,
+  `min`, `max`, `change`; levels, deadband, `relative_to`, discrete states),
+  node and composite rules, three-valued suppression, the silence decision table
+  with liveness evidence, restarts and reboots, the node gate from canaries,
+  latching, key limits, and the operators' acknowledge, comment, reset, shelve
+  and out-of-service.
+- **Out**: Issues and their transitions in SQLite, the gRPC API below, the
+  `Follow` change feed, and optionally Issue transitions and Ward's own metrics
+  over OTLP.
+
+Nothing is authenticated: every RPC is open to every caller.
+
+## Running it
+
+```sh
+cd deploy/compose && docker compose up -d --build   # two nodes' Collectors, emitters and Ward
+go test -tags e2e -count=1 -v ./deploy/compose/      # the scenarios, against it
+```
+
+`deploy/README.md` has the emitters' commands and how to inject faults.
+`go run ./cmd/ward serve` runs Ward alone on the repository's `ward.yaml`, which
+expects a Collector on this computer that names its node `local`.
+
+## API
+
+gRPC on `:14319`, every service in package `ward`:
+
+| Service | |
+| --- | --- |
+| `IssueService` | `Get`, `List` (by state, rule, node, attention), `Search` (by when it opened and closed); `Acknowledge`, `Comment`, `Reset` |
+| `IssueEventService` | `Get`, `List`; `Follow`, the change feed, from a cursor |
+| `ConditionService` | the current state of every (rule, node, key); `Shelve`, `Unshelve`, `RemoveFromService`, `PlaceInService` |
+| `SourceService`, `RuleService`, `ProviderService` | what is defined, by whom, and what each source is doing on each node |
+| `NodeService` | whether each node is observable, and why not |
+| `StatusService` | Ward itself: receiver queue, late signals, records no rule reads, attributes of the wrong type, unknown hosts, silent sources |
+| `ComponentService` | the component tree and its health |
 
 ## Layout
 
 | | |
 | --- | --- |
 | `proto/ward/` | the schema. `*_svc.g.proto` and `payday/` are generated |
+| `conf/` | Ward's blocks of the static configuration, and their validation |
+| `def/` | what a provider supplies: parsing, validation, merging providers |
+| `provider/` | the file provider and the registry that merges them |
+| `receiver/otlp/` | OTLP over gRPC and HTTP into a `signal.Sink` |
+| `engine/` | the normalizer, the evaluator, the node gate and canary, the Store, and the loop that ties them |
+| `api/` | the services that answer from the loop's state |
+| `exporter/` | Ward's own records over OTLP |
 | `layer/` | Ward's layers of the payday stack: `Seal` refuses callers the writes only Ward makes, `Ops` holds Ward's own RPCs |
-| `engine/` | the evaluation loop: the transaction a tick commits in, and the filter that keeps its writes off payday's trail |
 | `migrations/` | SQL planned from the schema, reviewed, and embedded in the binary |
 | `cli/`, `cmd/` | the `ward` binary and its wiring |
+| `example/` | the emitter that plays a service, and an example provider file |
+| `deploy/` | a node's Collector configuration, and the compose environment |
 
 The stack a call goes down: `Gate → Audit → Seal → Ops → Sink`. The
-evaluation loop writes through the sink, under Ward's layers.
+evaluation loop writes through the sink, under Ward's layers, one transaction a
+tick.
 
 ## Working on it
 
@@ -34,10 +82,11 @@ evaluation loop writes through the sink, under Ward's layers.
 go tool pd gen .                      # after editing proto/
 go run ./cmd/ward migrate plan NAME   # after a schema change: write the migration, then read it
 go test ./...
-go run ./cmd/ward serve               # back up, migrate and check ward.db, then serve on :14319
+go run ./cmd/ward serve               # back up, migrate and check ward.db, then serve
 ```
 
-`ward.yaml` is the configuration, every value written out.
+`ward.yaml` is the configuration, every value written out; Ward refuses to
+start on one left out.
 
 CI runs `pd gen --check`, `pd doctor`, a migration plan that has to come out
 empty, `go vet` and the tests.

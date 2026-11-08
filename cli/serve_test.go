@@ -2,9 +2,12 @@ package cli_test
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -60,6 +63,37 @@ func (x *collectorMetrics) Export(ctx context.Context, req pmetricotlp.ExportReq
 	return pmetricotlp.NewExportResponse(), err
 }
 
+// exported keeps what Ward exports of itself.
+type exported struct {
+	plogotlp.UnimplementedGRPCServer
+	mu     sync.Mutex
+	events []string
+}
+
+func (x *exported) Export(_ context.Context, req plogotlp.ExportRequest) (plogotlp.ExportResponse, error) {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	rls := req.Logs().ResourceLogs()
+	for i := range rls.Len() {
+		sls := rls.At(i).ScopeLogs()
+		for j := range sls.Len() {
+			lrs := sls.At(j).LogRecords()
+			for k := range lrs.Len() {
+				ev, _ := lrs.At(k).Attributes().Get("diag.issue.event")
+				reason, _ := lrs.At(k).Attributes().Get("diag.issue.reason")
+				x.events = append(x.events, ev.AsString()+" "+reason.AsString())
+			}
+		}
+	}
+	return plogotlp.NewExportResponse(), nil
+}
+
+func (x *exported) seen() []string {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	return slices.Clone(x.events)
+}
+
 const appRules = `
 version: 1
 sources:
@@ -99,6 +133,17 @@ func TestServe(t *testing.T) {
 	}
 	col := &collector{host: "n1"}
 
+	// Where Ward exports its own records.
+	xl, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ex := &exported{}
+	xg := grpc.NewServer()
+	plogotlp.RegisterGRPCServer(xg, ex)
+	go xg.Serve(xl)
+	defer xg.Stop()
+
 	var c cmd.Config
 	c.Db.Driver = "sqlite3"
 	c.Db.Dsn = "file:" + filepath.Join(dir, "ward.db") +
@@ -120,7 +165,7 @@ func TestServe(t *testing.T) {
 	c.Nodes = map[string]conf.Node{"n1": {Match: map[string]string{"host.name": "n1"}, Collector: cl.Addr().String()}}
 	c.Providers = []conf.Provider{{Name: "app", Type: "file", Path: rules, PollInterval: time.Second, Debounce: 50 * time.Millisecond}}
 	c.Store = conf.Store{Retention: time.Hour}
-	c.Exporters = []conf.Exporter{}
+	c.Exporters = []conf.Exporter{{Type: "otlp", Endpoint: xl.Addr().String(), Insecure: true}}
 	if err := c.Ward().Validate(); err != nil {
 		t.Fatalf("config: %v", err)
 	}
@@ -290,4 +335,9 @@ func TestServe(t *testing.T) {
 	if !i.GetAttention() || i.GetCount() != 2 {
 		t.Errorf("closed issue: attention %v count %d", i.GetAttention(), i.GetCount())
 	}
+
+	waitFor(5*time.Second, "exported", func() (bool, string) {
+		got := ex.seen()
+		return slices.Equal(got, []string{"open ", "close resolved.silence"}), fmt.Sprint(got)
+	})
 }

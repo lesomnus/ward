@@ -516,3 +516,15 @@ func parseAfter(a string) (time.Time, [16]byte, error) {
 	copy(id[:], b)
 	return time.Unix(0, ns), id, nil
 }
+
+// LastCursor is the newest transition the Store has; 0 if none.
+func (s *Store) LastCursor(ctx context.Context) (int64, error) {
+	v, err := s.Ent.IssueEvent.Query().Order(ent.Desc(issueevent.FieldCursor)).First(ctx)
+	if ent.IsNotFound(err) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	return v.Cursor, nil
+}

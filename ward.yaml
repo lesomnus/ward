@@ -25,3 +25,46 @@ audit:
   # than archived.
   retain: 8760h
   discard: true
+
+# -- Ward's own blocks (conf.Ward) --
+
+operator:
+  # The longest an operator may shelve a Condition for.
+  max_shelve: 8h
+
+receivers:
+  otlp:
+    grpc: {endpoint: "0.0.0.0:14317"}
+    http: {endpoint: "0.0.0.0:14318"}
+    max_request_bytes: 4194304
+    # Requests. When it is full, a Collector is told to try again.
+    queue_size: 4096
+
+engine:
+  tick: 1s
+  # Silence is judged up to now minus these: what was sent before has arrived.
+  eval_lag: {log: 2s, metric: 3s}
+  # As long as a Collector keeps retrying. Down longer, Ward closes its open
+  # Issues as interrupted.diag_gap when it comes back.
+  recovery_window: 120s
+  checkpoint: 5s
+  gate:
+    hold: 15s
+    unobservable_to_stale: 60s
+    canary: {interval: 1s, timeout: 2s, max_rtt: 200ms, check_window: 30s, max_missing: 1}
+  limits: {keys_per_rule: 50, new_issues_per_rule_per_minute: 5}
+
+nodes:
+  # A Collector on this computer that sets host.name=local on what it sends
+  # (deploy/collector/collector.yaml with NODE_HOST_NAME=local).
+  local: {match: {host.name: local}, collector: "127.0.0.1:4317"}
+
+providers:
+  - {name: local, type: file, path: example/providers/local.yaml, poll_interval: 10s, debounce: 200ms}
+
+store:
+  # Go durations: 720h is 30 days.
+  retention: 720h
+
+# OTLP exporters for Ward's own Issue transitions and metrics; none here.
+exporters: []

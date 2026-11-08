@@ -1,0 +1,41 @@
+# What `ward serve` with the repository's ward.yaml evaluates: the example
+# emitter (example/emitter) running on this computer, through a Collector
+# that names the node `local` (deploy/collector/collector.yaml with
+# NODE_HOST_NAME=local). deploy/compose has the fuller set.
+version: 1
+sources:
+  emitter:
+    liveness: {metric: emitter.frames, max_gap: 3s}
+rules:
+  - id: node.unobservable
+    kind: node
+    nodes: [local]
+    severity: error
+    activate: {unobservable_for: 10s}
+    resolve: {observable_for: 15s}
+    operator: {ack: none, latch: false}
+
+  # curl -X POST 'localhost:8080/condition/repeat?type=emitter.overheat&key=left&every=300ms'
+  - id: emitter.overheat
+    kind: log
+    source: emitter
+    severity: error
+    match: {attributes: {diag.condition.type: emitter.overheat}}
+    key: [{attribute: diag.condition.key}]
+    activate: {count: 3, within: 2s}
+    resolve_after: 5s
+    on_source_restart: close
+    operator: {ack: none, latch: false}
+
+  - id: emitter.down
+    kind: metric
+    source: emitter
+    severity: error
+    metric: {name: emitter.frames}
+    key: []
+    value: {of: points, window: 10s, across: sum}
+    limit: {levels: [{name: down, below: 1, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 10s}
+    startup_grace: 10s
+    operator: {ack: required, latch: false}
