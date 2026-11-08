@@ -1,0 +1,137 @@
+# The OpenTelemetry Collector of one node, sending to Ward.
+#
+# A node is a Collector and the host it runs on. Its services send their logs
+# and metrics to this Collector over OTLP, as they would anyway, and the diag
+# pipelines below pass all of it on to Ward -- everything but Ward's own
+# signals -- with the node's host.name on it and the host's own metrics beside
+# it. Ward decides what matters; this file does not.
+#
+# A Collector that already runs pipelines of its own (to a log store, a metrics
+# database) adds the pieces below beside them: the same `otlp` receiver feeds
+# both, and the diag pipelines are one more fan-out of it.
+#
+# Written for otel/opentelemetry-collector-contrib 0.163.2, which names its
+# components in snake_case: `otlp_http`, `host_metrics`, `resource_detection`.
+# The older names (`otlphttp`, `hostmetrics`, `resourcedetection`) still load,
+# as deprecated aliases.
+#
+# Environment:
+#
+#   WARD_OTLP_HTTP_ENDPOINT  Ward's OTLP/HTTP receiver, e.g. http://ward:14318
+#   NODE_HOST_NAME           this node's host.name: what Ward's
+#                            `nodes.<name>.match` names for it
+#
+# Check it with: otelcol-contrib validate --config=collector.yaml
+
+receivers:
+  # The services of this node, and Ward's canary: Ward sends one record and one
+  # data point through every node's receiver each second, as service
+  # `ward-canary`, and expects them back through the pipelines below. A
+  # receiver that refuses or stalls is how Ward learns the node's signals are
+  # not reaching it.
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # The host itself. The `system` scraper sends `system.uptime`, which is how
+  # Ward tells a reboot of the node from a restart of a service on it.
+  #
+  # In a container this reads the container's /proc, whose uptime is the
+  # host's. To read the host's file systems, processes and the rest, mount the
+  # host's / and set `root_path` to where it is mounted.
+  host_metrics:
+    collection_interval: 10s
+    scrapers:
+      system: {}
+
+processors:
+  # Ward's own signals do not go back to Ward. That is the only thing filtered:
+  # rules change while Ward runs and this file does not, so a Collector that
+  # filtered by content would silently starve the rule written tomorrow. What a
+  # rule does not read, Ward drops.
+  #
+  # Only `ward`: the canary is `ward-canary` and has to come back.
+  filter/diag:
+    error_mode: ignore
+    logs:
+      log_record:
+        - 'resource.attributes["service.name"] == "ward"'
+    metrics:
+      metric:
+        - 'resource.attributes["service.name"] == "ward"'
+
+  # Names the node. Ward tells which node a signal came from by its resource
+  # attributes (`nodes.<name>.match`), and this Collector is what knows which
+  # node it is on. Upsert, since a service's SDK may have set host.name to
+  # something of its own, such as its container's id.
+  #
+  # On a host, `resource_detection` can find the name instead:
+  #
+  #   resource_detection/node:
+  #     detectors: [system]
+  #     system: {hostname_sources: [os]}
+  #     override: true
+  resource/node:
+    attributes:
+      - key: host.name
+        value: ${env:NODE_HOST_NAME}
+        action: upsert
+
+  # A rule reads attributes, never a log's body. When what a rule needs is only
+  # in the body, make it an attribute here. This adds; it drops nothing.
+  transform/diag:
+    error_mode: ignore
+    log_statements:
+      - 'set(log.attributes["error.type"], "timeout") where log.attributes["error.type"] == nil and IsMatch(log.body, "(?i)timed? ?out")'
+
+  # Batches what goes to Ward. It also stands between the receiver and the
+  # exporter's queue: when that queue is full, the error stops here rather than
+  # going back to the services and to the canary. That last part is the
+  # design's reasoning and has not been measured.
+  batch/diag:
+    timeout: 200ms
+
+exporters:
+  # To Ward. The queue is what keeps Ward's trouble away from this node's
+  # services: the exporter takes a batch into the queue and answers at once, so
+  # an app's Export does not wait on Ward, slow or down. The retries keep what
+  # was sent while Ward restarted: 120 s of them, which is the
+  # `engine.recovery_window` of Ward's configuration -- Ward down longer than
+  # that has lost signals and says so. 1000 requests of 200 ms batches is some
+  # 200 s, more than the retries last.
+  #
+  # Caveat: every exporter of this Collector shares the `otlp` receiver. One
+  # without a sending_queue answers its failures back through the receiver, to
+  # the services, which retry and fall behind, and to Ward's canary. Ward then
+  # sees the node as unobservable and holds every verdict that rests on
+  # silence there, until the canary passes again. Give every exporter here a
+  # sending_queue.
+  otlp_http/diag:
+    endpoint: ${env:WARD_OTLP_HTTP_ENDPOINT}
+    # Protobuf, gzipped: Ward's OTLP/HTTP receiver reads both. Both are the
+    # exporter's defaults, written out.
+    encoding: proto
+    compression: gzip
+    timeout: 2s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 1s
+      max_interval: 5s
+      max_elapsed_time: 120s
+    sending_queue:
+      enabled: true
+      queue_size: 1000
+
+service:
+  pipelines:
+    logs/diag:
+      receivers: [otlp]
+      processors: [filter/diag, resource/node, transform/diag, batch/diag]
+      exporters: [otlp_http/diag]
+    metrics/diag:
+      receivers: [otlp, host_metrics]
+      processors: [filter/diag, resource/node, batch/diag]
+      exporters: [otlp_http/diag]

@@ -1,0 +1,13 @@
+# The build needs the module and nothing else: no history, no local databases,
+# and none of the deployment examples, so that editing them rebuilds nothing.
+.git
+.github
+.claude
+deploy
+**/*.db
+**/*.db-*
+**/*.bak
+*-checkpoints.pem
+node_modules
+dist
+.gen

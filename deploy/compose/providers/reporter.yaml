@@ -1,0 +1,17 @@
+# The reporter: a service that only logs, and whose silence says nothing.
+version: 1
+sources: {}
+rules:
+  # Any ERROR without a diag.condition.type: no instrumentation needed. It is
+  # not known to repeat, so it is forgotten after a quiet minute rather than
+  # resolved.
+  #   POST /error/once (on the reporter's port, 18083)
+  - id: reporter.error
+    kind: log
+    source: reporter
+    severity: error
+    match: {severity: {gte: error}, attributes: {diag.condition.type: {exists: false}}}
+    key: []
+    activate: {count: 1}
+    forget_after: 1m
+    operator: {ack: none, latch: false}
