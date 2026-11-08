@@ -51,6 +51,7 @@ type Engine struct {
 	ops            atomic.Uint64
 
 	overruns atomic.Int64
+	lastTick atomic.Int64 // how long the last tick took, in nanoseconds
 	ready    chan struct{}
 }
 
@@ -118,6 +119,9 @@ func (e *Engine) Ready() <-chan struct{} { return e.ready }
 // tick.
 func (e *Engine) Overruns() int64 { return e.overruns.Load() }
 
+// LastTick is how long the last tick took.
+func (e *Engine) LastTick() time.Duration { return time.Duration(e.lastTick.Load()) }
+
 // Late is how many signals arrived after their time had been judged.
 func (e *Engine) Late() int64 { return e.snap.Load().Late }
 
@@ -146,7 +150,9 @@ func (e *Engine) Run(ctx context.Context) error {
 		case <-t.C:
 			start := e.now()
 			e.tick(ctx, start)
-			if d := e.now().Sub(start); d > e.cfg.Engine.Tick {
+			d := e.now().Sub(start)
+			e.lastTick.Store(int64(d))
+			if d > e.cfg.Engine.Tick {
 				e.overruns.Add(int64(d / e.cfg.Engine.Tick))
 			}
 		}

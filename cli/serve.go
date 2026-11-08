@@ -86,7 +86,7 @@ func Assemble(ctx context.Context, s *cmd.Server, w conf.Ward, queue int) (*Runn
 	r.Exporter = &exporter.Exporter{Engine: e, Receiver: stats, Configs: w.Exporters, Log: log.From(ctx)}
 
 	s.Backend.Set(e)
-	svc := &api.Services{Engine: e, Providers: reg.Status, Receiver: stats, Tick: w.Engine.Tick}
+	svc := &api.Services{Engine: e, Providers: reg.Status, Receiver: stats}
 	s.Register = append(s.Register, svc.Register)
 	return r, nil
 }

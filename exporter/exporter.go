@@ -205,6 +205,7 @@ func (x *Exporter) metrics(now time.Time) pmetric.Metrics {
 		point(gauge("diag.receiver.queue.size", "{request}"), int64(r.Queued), "receiver", "otlp")
 	}
 	point(counter("diag.tick.overrun", "{tick}"), x.Engine.Overruns())
+	point(gauge("diag.tick.duration", "us"), x.Engine.LastTick().Microseconds())
 
 	snap := x.Engine.Snapshot()
 	point(counter("diag.signals.late", "{signal}"), snap.Late)

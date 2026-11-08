@@ -32,7 +32,6 @@ type Services struct {
 	Engine    *engine.Engine
 	Providers func() []provider.Status
 	Receiver  func() otlp.Stats
-	Tick      time.Duration
 }
 
 // Register registers every service on g.
@@ -392,7 +391,7 @@ func (x statuses) Get(context.Context, *app.StatusGetRequest) (*app.Status, erro
 	st := e.Norm.Stats()
 
 	b := app.Status_builder{
-		Run: e.RunID, DateStarted: ts(e.Started), Tick: durationpb.New(x.s.Tick),
+		Run: e.RunID, DateStarted: ts(e.Started), Tick: durationpb.New(e.LastTick()),
 		Overruns: e.Overruns(), Late: snap.Late,
 	}
 	if x.s.Receiver != nil {
