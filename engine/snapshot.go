@@ -33,6 +33,18 @@ type ConditionView struct {
 
 	DateChanged time.Time
 
+	// Whether Ward expects it: a Component's member names it.
+	Declared bool
+
+	// What a metric rule judged last; Value is nil when it judged no number
+	// (a state read from an attribute, or nothing yet).
+	Value         *float64
+	ValueState    string
+	DateEvaluated time.Time
+
+	// The time of its last signal.
+	DateSignaled time.Time
+
 	// The open Issue; nil when there is none.
 	Issue *Issue
 }
@@ -141,6 +153,14 @@ func (ev *Evaluator) view(k condKey) ConditionView {
 	v.HoldReason = c.holdReason
 	v.Suppressed = c.suppressed
 	v.DateChanged = c.changed
+	v.Declared = c.declared
+	v.DateSignaled = c.lastSignal
+	if c.hasValue {
+		x := c.value
+		v.Value = &x
+	}
+	v.ValueState = c.valueState
+	v.DateEvaluated = c.evaluated
 	if c.cur.rank > 0 {
 		v.Level, v.Severity = c.cur.level, c.cur.severity
 	}

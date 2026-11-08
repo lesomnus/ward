@@ -138,6 +138,16 @@ type cond struct {
 	floodSeen time.Time
 
 	suppressed bool
+
+	// A Component's member names it: Ward keeps it before any signal of it,
+	// and does not forget it.
+	declared bool
+
+	// What a metric rule judged last, and the time it is of.
+	value      float64
+	hasValue   bool
+	valueState string
+	evaluated  time.Time
 }
 
 // NewEvaluator answers with an evaluator that has no definitions yet.
@@ -286,9 +296,53 @@ func (e *Evaluator) Apply(d *Definitions, now time.Time) {
 		}
 	}
 
+	e.declare()
+
 	orphans := e.orphans
 	e.orphans = nil
 	e.Restore(orphans)
+}
+
+// declare keeps the Conditions the Components expect -- a member that names
+// its rule, node and Key (design §9) -- and lets go of those they no longer do.
+func (e *Evaluator) declare() {
+	want := map[condKey]*rule{}
+	if s := e.defs.Set; s != nil {
+		for _, name := range slices.Sorted(maps.Keys(s.Components)) {
+			for _, m := range s.Components[name].Members {
+				r := e.defs.Rules[m.Rule]
+				if r == nil || m.Node == "" || (r.Kind != def.KindLog && r.Kind != def.KindMetric) {
+					continue
+				}
+				key := ""
+				switch {
+				case m.Key != nil:
+					key = *m.Key
+				case len(r.Key) > 0:
+					continue // any Key: it matches, it expects nothing
+				}
+				want[condKey{r.ID, m.Node, key}] = r
+			}
+		}
+	}
+	for _, k := range slices.SortedFunc(maps.Keys(e.conds), compareKeys) {
+		c := e.conds[k]
+		if !c.declared || want[k] != nil {
+			continue
+		}
+		c.declared = false
+		if c.state == StateUnobserved {
+			e.dropCond(c)
+		}
+	}
+	for _, k := range slices.SortedFunc(maps.Keys(want), compareKeys) {
+		c := e.conds[k]
+		if c == nil {
+			c = e.newCond(k, want[k])
+			c.state = StateUnobserved
+		}
+		c.declared = true
+	}
 }
 
 // Restore takes in the Issues the Store had open when Ward stopped. They go on
@@ -852,7 +906,7 @@ func (e *Evaluator) logTick(c *cond, hLog, hMetric time.Time) {
 
 	i := c.issue
 	if i == nil || i.State == StateCleared {
-		e.unhold(c)
+		e.idle(c, hMetric)
 		return
 	}
 	d := c.r.ForgetAfter
@@ -918,6 +972,38 @@ func (e *Evaluator) logTick(c *cond, hLog, hMetric time.Time) {
 	e.unhold(c)
 }
 
+// idle judges a log Condition with nothing open. Quiet is normal only while
+// the source is seen alive on the node: quiet from a dead source says nothing
+// (design §4.3). One that is expected is unobserved until something of its
+// source -- its liveness counter, or a record of it -- has been seen there.
+func (e *Evaluator) idle(c *cond, hMetric time.Time) {
+	if c.issue != nil || c.state == StatePending {
+		e.unhold(c)
+		return
+	}
+	var src *def.Source
+	if e.defs.Set != nil {
+		src = e.defs.Set.Sources[c.r.Source]
+	}
+	l := e.live[srcKey{c.k.node, c.r.Source}].latest()
+	if c.state == StateUnobserved {
+		if l == nil {
+			return
+		}
+		c.state = StateInactive
+		c.changed = e.now
+	}
+	if src == nil || src.Liveness.None {
+		e.unhold(c)
+		return
+	}
+	if l == nil || hMetric.Sub(l.last) > src.Liveness.MaxGap {
+		e.hold(c, "source not alive", false)
+		return
+	}
+	e.unhold(c)
+}
+
 // -- metric rules --
 
 func (e *Evaluator) point(x pointIn) {
@@ -962,6 +1048,15 @@ func (e *Evaluator) point(x pointIn) {
 func (e *Evaluator) metricTick(c *cond, h time.Time) {
 	r := c.r
 	node := c.k.node
+	if c.issue == nil && c.first.IsZero() {
+		// Expected, and no data point of it yet: nothing to judge.
+		c.state = StateUnobserved
+		return
+	}
+	if c.state == StateUnobserved {
+		c.state = StateInactive
+		c.changed = e.now
+	}
 	b := e.boots[node]
 	okM, whyM, sinceM := e.gate.Observable(node, PathMetric)
 
@@ -992,6 +1087,10 @@ func (e *Evaluator) metricTick(c *cond, h time.Time) {
 				m.v -= ref.v
 			}
 		}
+	}
+	if m.known {
+		c.value, c.valueState, c.evaluated = m.v, m.state, h
+		c.hasValue = r.State == nil || r.State.FromValue
 	}
 	i := c.issue
 	if !m.known {
@@ -1428,7 +1527,7 @@ func truthOf(c *cond) tri {
 	switch c.state {
 	case StateActive:
 		return triTrue
-	case StateStale:
+	case StateStale, StateUnobserved:
 		return triUnknown
 	}
 	return triFalse
@@ -1440,7 +1539,7 @@ func truthOf(c *cond) tri {
 func (e *Evaluator) forget() {
 	for _, k := range slices.SortedFunc(maps.Keys(e.conds), compareKeys) {
 		c := e.conds[k]
-		if c.issue != nil || len(c.pending) > 0 || c.cur.rank > 0 {
+		if c.issue != nil || len(c.pending) > 0 || c.cur.rank > 0 || c.declared {
 			continue
 		}
 		if c.r.Kind != def.KindLog && c.r.Kind != def.KindMetric {

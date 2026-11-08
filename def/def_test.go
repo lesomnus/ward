@@ -234,3 +234,39 @@ func TestMatchHolds(t *testing.T) {
 		t.Error("the release does not hold")
 	}
 }
+
+// A member that names a Condition its rule cannot have is refused: it would be
+// expected and never observed.
+func TestMemberMustBeObservable(t *testing.T) {
+	merge := func(components string) error {
+		f, err := def.Parse([]byte(base))
+		if err != nil {
+			t.Fatal(err)
+		}
+		g, err := def.Parse([]byte(rules + components))
+		if err != nil {
+			t.Fatalf("parse: %v", err)
+		}
+		_, _, err = def.Merge([]string{"n1", "n2"}, def.Definitions{Provider: "base", File: f}, def.Definitions{Provider: "rules", File: g})
+		return err
+	}
+	if err := merge(`
+components:
+  ok:
+    parent: ""
+    members:
+      - {rule: detector.inference_failed, node: n1, key: front}
+      - {rule: detector.down, node: n2}
+      - {rule: battery.low, node: n1}
+`); err != nil {
+		t.Errorf("observable members refused: %v", err)
+	}
+	for _, bad := range []string{
+		"      - {rule: detector.down, node: n1, key: front}\n", // a rule with key: []
+		"      - {rule: battery.low, node: n2}\n",               // battery.low reads n1 only
+	} {
+		if err := merge("\ncomponents:\n  bad:\n    parent: \"\"\n    members:\n" + bad); err == nil {
+			t.Errorf("accepted %s", bad)
+		}
+	}
+}

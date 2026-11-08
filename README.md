@@ -48,11 +48,11 @@ gRPC on `:14319`, every service in package `ward`:
 | --- | --- |
 | `IssueService` | `Get`, `List` (by state, rule, node, attention), `Search` (by when it opened and closed); `Acknowledge`, `Comment`, `Reset` |
 | `IssueEventService` | `Get`, `List`; `Follow`, the change feed, from a cursor |
-| `ConditionService` | the current state of every (rule, node, key); `Shelve`, `Unshelve`, `RemoveFromService`, `PlaceInService` |
+| `ConditionService` | the current state of every (rule, node, key) -- normal ones too, with the value last judged -- and of the ones a Component expects before any signal of them (`unobserved`); `Shelve`, `Unshelve`, `RemoveFromService`, `PlaceInService` |
 | `SourceService`, `RuleService`, `ProviderService` | what is defined, by whom, and what each source is doing on each node |
 | `NodeService` | whether each node is observable, and why not |
 | `StatusService` | Ward itself: receiver queue, late signals, records no rule reads, attributes of the wrong type, unknown hosts, silent sources |
-| `ComponentService` | the component tree and its health |
+| `ComponentService` | the component tree: each component's health, the kinds of alarm that can open under it, and its Conditions -- an inventory, when its members name rule, node and Key |
 
 ## Layout
 

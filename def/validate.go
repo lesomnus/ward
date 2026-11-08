@@ -132,6 +132,16 @@ func Merge(nodes []string, ds ...Definitions) (*Set, []string, error) {
 			if m.Node != "" && !slices.Contains(nodes, m.Node) {
 				fail(c.Provider, mat+".node", fmt.Sprintf("no node %q", m.Node))
 			}
+			// A member names Conditions its rule can have, or it expects one
+			// that is never observed.
+			if r, ok := s.Rules[m.Rule]; ok {
+				if m.Node != "" && len(r.Nodes) > 0 && !slices.Contains(r.Nodes, m.Node) {
+					fail(c.Provider, mat+".node", fmt.Sprintf("rule %s does not read node %q", m.Rule, m.Node))
+				}
+				if m.Key != nil && *m.Key != "" && len(r.Key) == 0 {
+					fail(c.Provider, mat+".key", fmt.Sprintf("rule %s has no key: its Conditions' key is \"\"", m.Rule))
+				}
+			}
 		}
 	}
 	if cyc := componentCycle(s.Components); cyc != "" {

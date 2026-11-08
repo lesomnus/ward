@@ -24,7 +24,8 @@ message Condition {
   string node = 2;
   string key = 3;
 
-  // inactive, pending, active, stale or cleared.
+  // unobserved (expected, and no evidence of it yet), inactive, pending,
+  // active, stale or cleared.
   string state = 4;
 
   // A metric rule's current level; empty without levels.
@@ -46,6 +47,20 @@ message Condition {
   bytes issue_id = 13;
 
   google.protobuf.Timestamp date_changed = 14;
+
+  // Whether Ward expects it: a Component's member names its rule, node and
+  // Key. It is there before any signal of it, and never forgotten.
+  bool declared = 15;
+
+  // What a metric rule judged last: the value its levels were compared with
+  // (less the reference, with relative_to), and the state a state rule read,
+  // normal or not. date_evaluated is the time they are of.
+  double value = 16 [features.field_presence = EXPLICIT];
+  string value_state = 17;
+  google.protobuf.Timestamp date_evaluated = 18;
+
+  // The time of its last signal: a record its rule matched, or a data point.
+  google.protobuf.Timestamp date_signaled = 19;
 }
 
 message ConditionRef {
@@ -405,6 +420,13 @@ message Component {
 
   // Conditions under it, by state, its children's included.
   map<string, int64> counts = 4;
+
+  // The rules its members name: the kinds of Issue that can open under it.
+  repeated string rules = 5;
+
+  // Its own Conditions: those its members match, and those they expect even
+  // before any signal of them (state unobserved).
+  repeated Condition conditions = 6;
 }
 
 message ComponentRef {

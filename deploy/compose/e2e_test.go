@@ -21,7 +21,9 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	app "github.com/lesomnus/ward"
@@ -180,6 +182,42 @@ func TestEndToEnd(t *testing.T) {
 		e.t = t
 		e.waitFor(90*time.Second, "edge-1", e.observable("edge-1", true))
 		e.waitFor(30*time.Second, "edge-2", e.observable("edge-2", true))
+	})
+
+	t.Run("what is expected shows normal, or not seen", func(t *testing.T) {
+		e.t = t
+		cond := func(rule, node, key string) (*app.Condition, error) {
+			return e.conds.Get(e.ctx, app.ConditionGetRequest_builder{Ref: app.ConditionRef_builder{Rule: rule, Node: node, Key: key}.Build()}.Build())
+		}
+		e.waitFor(30*time.Second, "emitter-1 is up, with a number", func() (bool, string) {
+			c, err := cond("emitter.down", "edge-1", "")
+			if err != nil {
+				return false, err.Error()
+			}
+			return c.GetState() == "inactive" && !c.GetHeld() && c.GetDeclared() && c.HasValue() && c.GetValue() >= 1,
+				fmt.Sprintf("%s held=%v value=%v", c.GetState(), c.GetHeld(), c.GetValue())
+		})
+		e.waitFor(10*time.Second, "no overheat on emitter-1, which is alive", func() (bool, string) {
+			c, err := cond("emitter.overheat", "edge-1", "left")
+			if err != nil {
+				return false, err.Error()
+			}
+			return c.GetState() == "inactive" && !c.GetHeld(), fmt.Sprintf("%s held=%v %s", c.GetState(), c.GetHeld(), c.GetHoldReason())
+		})
+		if c, err := cond("emitter.hardware", "edge-2", "disk9"); err != nil || c.GetState() != "unobserved" {
+			t.Errorf("disk9, which never reports: %v %v", c.GetState(), err)
+		}
+		if _, err := cond("emitter.overheat", "edge-1", "nobody"); status.Code(err) != codes.NotFound {
+			t.Errorf("a condition nothing saw nor expects: %v, want NotFound", err)
+		}
+		comp, err := app.NewComponentServiceClient(e.conn).Get(e.ctx, app.ComponentGetRequest_builder{Ref: app.ComponentRef_builder{Name: "edge-2-disks"}.Build()}.Build())
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("edge-2-disks: %s rules=%v conditions=%d", comp.GetHealth(), comp.GetRules(), len(comp.GetConditions()))
+		if comp.GetHealth() != "no_data" || len(comp.GetConditions()) != 2 {
+			t.Errorf("edge-2-disks: %s, %d conditions", comp.GetHealth(), len(comp.GetConditions()))
+		}
 	})
 
 	t.Run("a repeating condition opens and resolves by silence", func(t *testing.T) {

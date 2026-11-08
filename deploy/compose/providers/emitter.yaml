@@ -167,3 +167,17 @@ components:
     parent: fleet
     members:
       - {rule: emitter.battery.low}
+
+  # What Ward expects to be there: a member that names the rule, the node and
+  # the Key is a Condition Ward keeps before any signal of it -- normal on
+  # evidence, `unobserved` without. disk9 never reports: it stays unobserved.
+  edge-1-emitter:
+    parent: fleet
+    members:
+      - {rule: emitter.down, node: edge-1}
+      - {rule: emitter.overheat, node: edge-1, key: left}
+  edge-2-disks:
+    parent: fleet
+    members:
+      - {rule: emitter.hardware, node: edge-2, key: disk0}
+      - {rule: emitter.hardware, node: edge-2, key: disk9}

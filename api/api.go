@@ -87,6 +87,8 @@ func toCondition(v engine.ConditionView) *app.Condition {
 		Held: v.Held, HoldReason: v.HoldReason,
 		Suppressed: v.Suppressed, Shelved: v.Shelved, OutOfService: v.OutOfService,
 		DateUnshelve: ts(v.DateUnshelve), DateChanged: ts(v.DateChanged),
+		Declared: v.Declared, Value: v.Value, ValueState: v.ValueState,
+		DateEvaluated: ts(v.DateEvaluated), DateSignaled: ts(v.DateSignaled),
 	}
 	if v.Issue != nil {
 		b.IssueId = v.Issue.ID[:]
@@ -115,8 +117,9 @@ func (x conditions) Get(_ context.Context, req *app.ConditionGetRequest) (*app.C
 	if snap.Defs == nil || snap.Defs.Rules[ref.Rule] == nil {
 		return nil, status.Errorf(codes.NotFound, "no rule %q", ref.Rule)
 	}
-	// Nothing has come for it: inactive.
-	return app.Condition_builder{Rule: ref.Rule, Node: ref.Node, Key: ref.Key, State: engine.StateInactive, Severity: snap.Defs.Rules[ref.Rule].Severity}.Build(), nil
+	// Not "inactive": nothing of it has been seen, and nothing expects it, so
+	// nobody can say it is fine. A Component's member makes Ward expect it.
+	return nil, status.Errorf(codes.NotFound, "no condition of %s on %q with key %q: nothing of it seen, and no component expects it", ref.Rule, ref.Node, ref.Key)
 }
 
 func (x conditions) List(_ context.Context, req *app.ConditionListRequest) (*app.ConditionListResponse, error) {
@@ -437,8 +440,9 @@ const (
 
 var healthRank = map[string]int{HealthHealthy: 0, HealthNoData: 1, HealthDegraded: 2, HealthUnknown: 3, HealthUnhealthy: 4}
 
-// health works out every Component's health and its counts of the states of
-// what it holds, its children's included.
+// health works out every Component: its health and the counts of the states
+// of what it holds, its children's included, the rules its members name, and
+// its own Conditions -- the expected ones too, before any signal of them.
 func (x components) health() map[string]*app.Component {
 	snap := x.s.Engine.Snapshot()
 	out := map[string]*app.Component{}
@@ -450,25 +454,27 @@ func (x components) health() map[string]*app.Component {
 	for _, n := range snap.Nodes {
 		observable[n.Name] = n.Gate.Observable
 	}
-	alive := map[string]bool{}
-	for _, src := range snap.Sources {
-		for _, n := range src.Nodes {
-			alive[src.Name+"\x00"+n.Node] = n.Alive
-		}
-	}
 
 	own := map[string]string{}
 	counts := map[string]map[string]int64{}
+	conds := map[string][]*app.Condition{}
+	rules := map[string][]string{}
 	for _, name := range slices.Sorted(maps.Keys(cs)) {
 		c := cs[name]
-		h := HealthNoData
-		evidence := false
-		cnt := map[string]int64{}
+		for _, m := range c.Members {
+			if !slices.Contains(rules[name], m.Rule) {
+				rules[name] = append(rules[name], m.Rule)
+			}
+		}
+		slices.Sort(rules[name])
+
+		h := HealthHealthy
 		worse := func(x string) {
 			if healthRank[x] > healthRank[h] {
 				h = x
 			}
 		}
+		cnt := map[string]int64{}
 		for _, v := range snap.Conditions {
 			if !slices.ContainsFunc(c.Members, func(m def.Member) bool {
 				return m.Rule == v.Rule && (m.Node == "" || m.Node == v.Node) && (m.Key == nil || *m.Key == v.Key)
@@ -476,31 +482,32 @@ func (x components) health() map[string]*app.Component {
 				continue
 			}
 			cnt[v.State]++
-			if v.Node != "" && !observable[v.Node] {
-				worse(HealthUnknown)
-			}
-			r := snap.Defs.Rules[v.Rule]
-			if r != nil && r.Source != "" && v.Node != "" {
-				if alive[r.Source+"\x00"+v.Node] {
-					evidence = true
-				}
-			} else {
-				evidence = true
-			}
-			switch v.State {
-			case engine.StateActive:
+			conds[name] = append(conds[name], toCondition(v))
+			switch {
+			case v.State == engine.StateActive:
 				switch v.Severity {
 				case def.SeverityCritical, def.SeverityError:
 					worse(HealthUnhealthy)
 				case def.SeverityWarning:
 					worse(HealthDegraded)
 				}
-			case engine.StateStale:
+				if v.Held {
+					worse(HealthUnknown)
+				}
+			case v.State == engine.StateStale || v.Held:
+				worse(HealthUnknown)
+			case v.State == engine.StateUnobserved:
+				worse(HealthNoData)
+			}
+			if v.Node != "" && !observable[v.Node] {
 				worse(HealthUnknown)
 			}
 		}
-		if evidence && h == HealthNoData {
-			h = HealthHealthy
+		switch {
+		case len(c.Members) == 0:
+			h = "" // a grouping: as good or as bad as what is under it
+		case len(cnt) == 0:
+			h = HealthNoData
 		}
 		own[name] = h
 		counts[name] = cnt
@@ -511,21 +518,23 @@ func (x components) health() map[string]*app.Component {
 	total = func(name string, seen map[string]bool) (string, map[string]int64) {
 		h := own[name]
 		cnt := maps.Clone(counts[name])
-		if seen[name] {
-			return h, cnt
+		if !seen[name] {
+			seen[name] = true
+			for _, child := range slices.Sorted(maps.Keys(cs)) {
+				if cs[child].Parent != name {
+					continue
+				}
+				ch, cc := total(child, seen)
+				if h == "" || healthRank[ch] > healthRank[h] {
+					h = ch
+				}
+				for k, v := range cc {
+					cnt[k] += v
+				}
+			}
 		}
-		seen[name] = true
-		for _, child := range slices.Sorted(maps.Keys(cs)) {
-			if cs[child].Parent != name {
-				continue
-			}
-			ch, cc := total(child, seen)
-			if healthRank[ch] > healthRank[h] {
-				h = ch
-			}
-			for k, v := range cc {
-				cnt[k] += v
-			}
+		if h == "" {
+			h = HealthNoData // a grouping with nothing under it
 		}
 		return h, cnt
 	}
@@ -534,7 +543,10 @@ func (x components) health() map[string]*app.Component {
 		if cnt == nil {
 			cnt = map[string]int64{}
 		}
-		out[name] = app.Component_builder{Name: name, Parent: c.Parent, Health: h, Counts: cnt}.Build()
+		out[name] = app.Component_builder{
+			Name: name, Parent: c.Parent, Health: h, Counts: cnt,
+			Rules: rules[name], Conditions: conds[name],
+		}.Build()
 	}
 	return out
 }

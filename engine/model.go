@@ -13,6 +13,10 @@ import (
 
 // States of a Condition, and of an Issue.
 const (
+	// A Condition's only: Ward expects it (a Component's member names it),
+	// and nothing of it has been seen yet.
+	StateUnobserved = "unobserved"
+
 	StateInactive = "inactive"
 	StatePending  = "pending"
 	StateActive   = "active"

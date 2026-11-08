@@ -25,23 +25,30 @@ const (
 // Condition is one (rule, node, key): what a rule says about one target on one
 // node, now.
 type Condition struct {
-	state                   protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Rule         string                 `protobuf:"bytes,1,opt,name=rule"`
-	xxx_hidden_Node         string                 `protobuf:"bytes,2,opt,name=node"`
-	xxx_hidden_Key          string                 `protobuf:"bytes,3,opt,name=key"`
-	xxx_hidden_State        string                 `protobuf:"bytes,4,opt,name=state"`
-	xxx_hidden_Level        string                 `protobuf:"bytes,5,opt,name=level"`
-	xxx_hidden_Severity     string                 `protobuf:"bytes,6,opt,name=severity"`
-	xxx_hidden_Held         bool                   `protobuf:"varint,7,opt,name=held"`
-	xxx_hidden_HoldReason   string                 `protobuf:"bytes,8,opt,name=hold_reason,json=holdReason"`
-	xxx_hidden_Suppressed   bool                   `protobuf:"varint,9,opt,name=suppressed"`
-	xxx_hidden_Shelved      bool                   `protobuf:"varint,10,opt,name=shelved"`
-	xxx_hidden_OutOfService bool                   `protobuf:"varint,11,opt,name=out_of_service,json=outOfService"`
-	xxx_hidden_DateUnshelve *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=date_unshelve,json=dateUnshelve"`
-	xxx_hidden_IssueId      []byte                 `protobuf:"bytes,13,opt,name=issue_id,json=issueId"`
-	xxx_hidden_DateChanged  *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=date_changed,json=dateChanged"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Rule          string                 `protobuf:"bytes,1,opt,name=rule"`
+	xxx_hidden_Node          string                 `protobuf:"bytes,2,opt,name=node"`
+	xxx_hidden_Key           string                 `protobuf:"bytes,3,opt,name=key"`
+	xxx_hidden_State         string                 `protobuf:"bytes,4,opt,name=state"`
+	xxx_hidden_Level         string                 `protobuf:"bytes,5,opt,name=level"`
+	xxx_hidden_Severity      string                 `protobuf:"bytes,6,opt,name=severity"`
+	xxx_hidden_Held          bool                   `protobuf:"varint,7,opt,name=held"`
+	xxx_hidden_HoldReason    string                 `protobuf:"bytes,8,opt,name=hold_reason,json=holdReason"`
+	xxx_hidden_Suppressed    bool                   `protobuf:"varint,9,opt,name=suppressed"`
+	xxx_hidden_Shelved       bool                   `protobuf:"varint,10,opt,name=shelved"`
+	xxx_hidden_OutOfService  bool                   `protobuf:"varint,11,opt,name=out_of_service,json=outOfService"`
+	xxx_hidden_DateUnshelve  *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=date_unshelve,json=dateUnshelve"`
+	xxx_hidden_IssueId       []byte                 `protobuf:"bytes,13,opt,name=issue_id,json=issueId"`
+	xxx_hidden_DateChanged   *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=date_changed,json=dateChanged"`
+	xxx_hidden_Declared      bool                   `protobuf:"varint,15,opt,name=declared"`
+	xxx_hidden_Value         float64                `protobuf:"fixed64,16,opt,name=value"`
+	xxx_hidden_ValueState    string                 `protobuf:"bytes,17,opt,name=value_state,json=valueState"`
+	xxx_hidden_DateEvaluated *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=date_evaluated,json=dateEvaluated"`
+	xxx_hidden_DateSignaled  *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=date_signaled,json=dateSignaled"`
+	XXX_raceDetectHookData   protoimpl.RaceDetectHookData
+	XXX_presence             [1]uint32
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *Condition) Reset() {
@@ -167,6 +174,41 @@ func (x *Condition) GetDateChanged() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Condition) GetDeclared() bool {
+	if x != nil {
+		return x.xxx_hidden_Declared
+	}
+	return false
+}
+
+func (x *Condition) GetValue() float64 {
+	if x != nil {
+		return x.xxx_hidden_Value
+	}
+	return 0
+}
+
+func (x *Condition) GetValueState() string {
+	if x != nil {
+		return x.xxx_hidden_ValueState
+	}
+	return ""
+}
+
+func (x *Condition) GetDateEvaluated() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateEvaluated
+	}
+	return nil
+}
+
+func (x *Condition) GetDateSignaled() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateSignaled
+	}
+	return nil
+}
+
 func (x *Condition) SetRule(v string) {
 	x.xxx_hidden_Rule = v
 }
@@ -226,6 +268,27 @@ func (x *Condition) SetDateChanged(v *timestamppb.Timestamp) {
 	x.xxx_hidden_DateChanged = v
 }
 
+func (x *Condition) SetDeclared(v bool) {
+	x.xxx_hidden_Declared = v
+}
+
+func (x *Condition) SetValue(v float64) {
+	x.xxx_hidden_Value = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 19)
+}
+
+func (x *Condition) SetValueState(v string) {
+	x.xxx_hidden_ValueState = v
+}
+
+func (x *Condition) SetDateEvaluated(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateEvaluated = v
+}
+
+func (x *Condition) SetDateSignaled(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateSignaled = v
+}
+
 func (x *Condition) HasDateUnshelve() bool {
 	if x == nil {
 		return false
@@ -240,6 +303,27 @@ func (x *Condition) HasDateChanged() bool {
 	return x.xxx_hidden_DateChanged != nil
 }
 
+func (x *Condition) HasValue() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 15)
+}
+
+func (x *Condition) HasDateEvaluated() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateEvaluated != nil
+}
+
+func (x *Condition) HasDateSignaled() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateSignaled != nil
+}
+
 func (x *Condition) ClearDateUnshelve() {
 	x.xxx_hidden_DateUnshelve = nil
 }
@@ -248,13 +332,27 @@ func (x *Condition) ClearDateChanged() {
 	x.xxx_hidden_DateChanged = nil
 }
 
+func (x *Condition) ClearValue() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 15)
+	x.xxx_hidden_Value = 0
+}
+
+func (x *Condition) ClearDateEvaluated() {
+	x.xxx_hidden_DateEvaluated = nil
+}
+
+func (x *Condition) ClearDateSignaled() {
+	x.xxx_hidden_DateSignaled = nil
+}
+
 type Condition_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
 	Rule string
 	Node string
 	Key  string
-	// inactive, pending, active, stale or cleared.
+	// unobserved (expected, and no evidence of it yet), inactive, pending,
+	// active, stale or cleared.
 	State string
 	// A metric rule's current level; empty without levels.
 	Level    string
@@ -271,6 +369,17 @@ type Condition_builder struct {
 	// The open Issue, if any.
 	IssueId     []byte
 	DateChanged *timestamppb.Timestamp
+	// Whether Ward expects it: a Component's member names its rule, node and
+	// Key. It is there before any signal of it, and never forgotten.
+	Declared bool
+	// What a metric rule judged last: the value its levels were compared with
+	// (less the reference, with relative_to), and the state a state rule read,
+	// normal or not. date_evaluated is the time they are of.
+	Value         *float64
+	ValueState    string
+	DateEvaluated *timestamppb.Timestamp
+	// The time of its last signal: a record its rule matched, or a data point.
+	DateSignaled *timestamppb.Timestamp
 }
 
 func (b0 Condition_builder) Build() *Condition {
@@ -291,6 +400,14 @@ func (b0 Condition_builder) Build() *Condition {
 	x.xxx_hidden_DateUnshelve = b.DateUnshelve
 	x.xxx_hidden_IssueId = b.IssueId
 	x.xxx_hidden_DateChanged = b.DateChanged
+	x.xxx_hidden_Declared = b.Declared
+	if b.Value != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 19)
+		x.xxx_hidden_Value = *b.Value
+	}
+	x.xxx_hidden_ValueState = b.ValueState
+	x.xxx_hidden_DateEvaluated = b.DateEvaluated
+	x.xxx_hidden_DateSignaled = b.DateSignaled
 	return m0
 }
 
@@ -3827,13 +3944,15 @@ func (b0 StatusGetRequest_builder) Build() *StatusGetRequest {
 // Component is a node of the component tree a provider defines, and its health:
 // the worst of what it holds.
 type Component struct {
-	state             protoimpl.MessageState `protogen:"opaque.v1"`
-	xxx_hidden_Name   string                 `protobuf:"bytes,1,opt,name=name"`
-	xxx_hidden_Parent string                 `protobuf:"bytes,2,opt,name=parent"`
-	xxx_hidden_Health string                 `protobuf:"bytes,3,opt,name=health"`
-	xxx_hidden_Counts map[string]int64       `protobuf:"bytes,4,rep,name=counts" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Name       string                 `protobuf:"bytes,1,opt,name=name"`
+	xxx_hidden_Parent     string                 `protobuf:"bytes,2,opt,name=parent"`
+	xxx_hidden_Health     string                 `protobuf:"bytes,3,opt,name=health"`
+	xxx_hidden_Counts     map[string]int64       `protobuf:"bytes,4,rep,name=counts" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	xxx_hidden_Rules      []string               `protobuf:"bytes,5,rep,name=rules"`
+	xxx_hidden_Conditions *[]*Condition          `protobuf:"bytes,6,rep,name=conditions"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *Component) Reset() {
@@ -3889,6 +4008,22 @@ func (x *Component) GetCounts() map[string]int64 {
 	return nil
 }
 
+func (x *Component) GetRules() []string {
+	if x != nil {
+		return x.xxx_hidden_Rules
+	}
+	return nil
+}
+
+func (x *Component) GetConditions() []*Condition {
+	if x != nil {
+		if x.xxx_hidden_Conditions != nil {
+			return *x.xxx_hidden_Conditions
+		}
+	}
+	return nil
+}
+
 func (x *Component) SetName(v string) {
 	x.xxx_hidden_Name = v
 }
@@ -3905,6 +4040,14 @@ func (x *Component) SetCounts(v map[string]int64) {
 	x.xxx_hidden_Counts = v
 }
 
+func (x *Component) SetRules(v []string) {
+	x.xxx_hidden_Rules = v
+}
+
+func (x *Component) SetConditions(v []*Condition) {
+	x.xxx_hidden_Conditions = &v
+}
+
 type Component_builder struct {
 	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
 
@@ -3914,6 +4057,11 @@ type Component_builder struct {
 	Health string
 	// Conditions under it, by state, its children's included.
 	Counts map[string]int64
+	// The rules its members name: the kinds of Issue that can open under it.
+	Rules []string
+	// Its own Conditions: those its members match, and those they expect even
+	// before any signal of them (state unobserved).
+	Conditions []*Condition
 }
 
 func (b0 Component_builder) Build() *Component {
@@ -3924,6 +4072,8 @@ func (b0 Component_builder) Build() *Component {
 	x.xxx_hidden_Parent = b.Parent
 	x.xxx_hidden_Health = b.Health
 	x.xxx_hidden_Counts = b.Counts
+	x.xxx_hidden_Rules = b.Rules
+	x.xxx_hidden_Conditions = &b.Conditions
 	return m0
 }
 
@@ -4287,7 +4437,7 @@ var File_ward_state_proto protoreflect.FileDescriptor
 
 const file_ward_state_proto_rawDesc = "" +
 	"\n" +
-	"\x10ward/state.proto\x12\x04ward\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbd\x03\n" +
+	"\x10ward/state.proto\x12\x04ward\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9b\x05\n" +
 	"\tCondition\x12\x12\n" +
 	"\x04rule\x18\x01 \x01(\tR\x04rule\x12\x12\n" +
 	"\x04node\x18\x02 \x01(\tR\x04node\x12\x10\n" +
@@ -4306,7 +4456,13 @@ const file_ward_state_proto_rawDesc = "" +
 	"\x0eout_of_service\x18\v \x01(\bR\foutOfService\x12?\n" +
 	"\rdate_unshelve\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\fdateUnshelve\x12\x19\n" +
 	"\bissue_id\x18\r \x01(\fR\aissueId\x12=\n" +
-	"\fdate_changed\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\vdateChanged\"H\n" +
+	"\fdate_changed\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\vdateChanged\x12\x1a\n" +
+	"\bdeclared\x18\x0f \x01(\bR\bdeclared\x12\x1b\n" +
+	"\x05value\x18\x10 \x01(\x01B\x05\xaa\x01\x02\b\x01R\x05value\x12\x1f\n" +
+	"\vvalue_state\x18\x11 \x01(\tR\n" +
+	"valueState\x12A\n" +
+	"\x0edate_evaluated\x18\x12 \x01(\v2\x1a.google.protobuf.TimestampR\rdateEvaluated\x12?\n" +
+	"\rdate_signaled\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\fdateSignaled\"H\n" +
 	"\fConditionRef\x12\x12\n" +
 	"\x04rule\x18\x01 \x01(\tR\x04rule\x12\x12\n" +
 	"\x04node\x18\x02 \x01(\tR\x04node\x12\x10\n" +
@@ -4470,12 +4626,16 @@ const file_ward_state_proto_rawDesc = "" +
 	"\x04want\x18\x03 \x01(\tR\x04want\x12\x10\n" +
 	"\x03got\x18\x04 \x01(\tR\x03got\x12\x14\n" +
 	"\x05count\x18\x05 \x01(\x03R\x05count\"\x12\n" +
-	"\x10StatusGetRequest\"\xbf\x01\n" +
+	"\x10StatusGetRequest\"\x86\x02\n" +
 	"\tComponent\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06parent\x18\x02 \x01(\tR\x06parent\x12\x16\n" +
 	"\x06health\x18\x03 \x01(\tR\x06health\x123\n" +
-	"\x06counts\x18\x04 \x03(\v2\x1b.ward.Component.CountsEntryR\x06counts\x1a9\n" +
+	"\x06counts\x18\x04 \x03(\v2\x1b.ward.Component.CountsEntryR\x06counts\x12\x14\n" +
+	"\x05rules\x18\x05 \x03(\tR\x05rules\x12/\n" +
+	"\n" +
+	"conditions\x18\x06 \x03(\v2\x0f.ward.ConditionR\n" +
+	"conditions\x1a9\n" +
 	"\vCountsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"\"\n" +
@@ -4574,86 +4734,89 @@ var file_ward_state_proto_goTypes = []any{
 var file_ward_state_proto_depIdxs = []int32{
 	46, // 0: ward.Condition.date_unshelve:type_name -> google.protobuf.Timestamp
 	46, // 1: ward.Condition.date_changed:type_name -> google.protobuf.Timestamp
-	1,  // 2: ward.ConditionGetRequest.ref:type_name -> ward.ConditionRef
-	3,  // 3: ward.ConditionListRequest.filters:type_name -> ward.ConditionFilter
-	0,  // 4: ward.ConditionListResponse.items:type_name -> ward.Condition
-	1,  // 5: ward.ConditionShelveRequest.ref:type_name -> ward.ConditionRef
-	47, // 6: ward.ConditionShelveRequest.duration:type_name -> google.protobuf.Duration
-	1,  // 7: ward.ConditionUnshelveRequest.ref:type_name -> ward.ConditionRef
-	1,  // 8: ward.ConditionRemoveFromServiceRequest.ref:type_name -> ward.ConditionRef
-	1,  // 9: ward.ConditionPlaceInServiceRequest.ref:type_name -> ward.ConditionRef
-	47, // 10: ward.Source.max_gap:type_name -> google.protobuf.Duration
-	11, // 11: ward.Source.nodes:type_name -> ward.SourceNode
-	46, // 12: ward.SourceNode.date_signaled:type_name -> google.protobuf.Timestamp
-	46, // 13: ward.SourceNode.date_alive:type_name -> google.protobuf.Timestamp
-	46, // 14: ward.SourceNode.date_started:type_name -> google.protobuf.Timestamp
-	46, // 15: ward.SourceNode.date_restarted:type_name -> google.protobuf.Timestamp
-	12, // 16: ward.SourceGetRequest.ref:type_name -> ward.SourceRef
-	14, // 17: ward.SourceListRequest.filters:type_name -> ward.SourceFilter
-	10, // 18: ward.SourceListResponse.items:type_name -> ward.Source
-	18, // 19: ward.RuleGetRequest.ref:type_name -> ward.RuleRef
-	20, // 20: ward.RuleListRequest.filters:type_name -> ward.RuleFilter
-	17, // 21: ward.RuleListResponse.items:type_name -> ward.Rule
-	46, // 22: ward.Provider.date_applied:type_name -> google.protobuf.Timestamp
-	46, // 23: ward.Provider.date_refused:type_name -> google.protobuf.Timestamp
-	24, // 24: ward.ProviderGetRequest.ref:type_name -> ward.ProviderRef
-	23, // 25: ward.ProviderListResponse.items:type_name -> ward.Provider
-	46, // 26: ward.Node.date_booted:type_name -> google.protobuf.Timestamp
-	29, // 27: ward.Node.canary:type_name -> ward.Canary
-	30, // 28: ward.Node.gaps:type_name -> ward.Gap
-	47, // 29: ward.Canary.rtt:type_name -> google.protobuf.Duration
-	46, // 30: ward.Canary.date_failed:type_name -> google.protobuf.Timestamp
-	46, // 31: ward.Gap.date_from:type_name -> google.protobuf.Timestamp
-	46, // 32: ward.Gap.date_to:type_name -> google.protobuf.Timestamp
-	31, // 33: ward.NodeGetRequest.ref:type_name -> ward.NodeRef
-	28, // 34: ward.NodeListResponse.items:type_name -> ward.Node
-	46, // 35: ward.Status.date_started:type_name -> google.protobuf.Timestamp
-	47, // 36: ward.Status.tick:type_name -> google.protobuf.Duration
-	36, // 37: ward.Status.unmatched:type_name -> ward.Unmatched
-	37, // 38: ward.Status.violations:type_name -> ward.TypeViolation
-	45, // 39: ward.Component.counts:type_name -> ward.Component.CountsEntry
-	40, // 40: ward.ComponentGetRequest.ref:type_name -> ward.ComponentRef
-	42, // 41: ward.ComponentListRequest.filters:type_name -> ward.ComponentFilter
-	39, // 42: ward.ComponentListResponse.items:type_name -> ward.Component
-	2,  // 43: ward.ConditionService.Get:input_type -> ward.ConditionGetRequest
-	4,  // 44: ward.ConditionService.List:input_type -> ward.ConditionListRequest
-	6,  // 45: ward.ConditionService.Shelve:input_type -> ward.ConditionShelveRequest
-	7,  // 46: ward.ConditionService.Unshelve:input_type -> ward.ConditionUnshelveRequest
-	8,  // 47: ward.ConditionService.RemoveFromService:input_type -> ward.ConditionRemoveFromServiceRequest
-	9,  // 48: ward.ConditionService.PlaceInService:input_type -> ward.ConditionPlaceInServiceRequest
-	13, // 49: ward.SourceService.Get:input_type -> ward.SourceGetRequest
-	15, // 50: ward.SourceService.List:input_type -> ward.SourceListRequest
-	19, // 51: ward.RuleService.Get:input_type -> ward.RuleGetRequest
-	21, // 52: ward.RuleService.List:input_type -> ward.RuleListRequest
-	25, // 53: ward.ProviderService.Get:input_type -> ward.ProviderGetRequest
-	26, // 54: ward.ProviderService.List:input_type -> ward.ProviderListRequest
-	32, // 55: ward.NodeService.Get:input_type -> ward.NodeGetRequest
-	33, // 56: ward.NodeService.List:input_type -> ward.NodeListRequest
-	38, // 57: ward.StatusService.Get:input_type -> ward.StatusGetRequest
-	41, // 58: ward.ComponentService.Get:input_type -> ward.ComponentGetRequest
-	43, // 59: ward.ComponentService.List:input_type -> ward.ComponentListRequest
-	0,  // 60: ward.ConditionService.Get:output_type -> ward.Condition
-	5,  // 61: ward.ConditionService.List:output_type -> ward.ConditionListResponse
-	0,  // 62: ward.ConditionService.Shelve:output_type -> ward.Condition
-	0,  // 63: ward.ConditionService.Unshelve:output_type -> ward.Condition
-	0,  // 64: ward.ConditionService.RemoveFromService:output_type -> ward.Condition
-	0,  // 65: ward.ConditionService.PlaceInService:output_type -> ward.Condition
-	10, // 66: ward.SourceService.Get:output_type -> ward.Source
-	16, // 67: ward.SourceService.List:output_type -> ward.SourceListResponse
-	17, // 68: ward.RuleService.Get:output_type -> ward.Rule
-	22, // 69: ward.RuleService.List:output_type -> ward.RuleListResponse
-	23, // 70: ward.ProviderService.Get:output_type -> ward.Provider
-	27, // 71: ward.ProviderService.List:output_type -> ward.ProviderListResponse
-	28, // 72: ward.NodeService.Get:output_type -> ward.Node
-	34, // 73: ward.NodeService.List:output_type -> ward.NodeListResponse
-	35, // 74: ward.StatusService.Get:output_type -> ward.Status
-	39, // 75: ward.ComponentService.Get:output_type -> ward.Component
-	44, // 76: ward.ComponentService.List:output_type -> ward.ComponentListResponse
-	60, // [60:77] is the sub-list for method output_type
-	43, // [43:60] is the sub-list for method input_type
-	43, // [43:43] is the sub-list for extension type_name
-	43, // [43:43] is the sub-list for extension extendee
-	0,  // [0:43] is the sub-list for field type_name
+	46, // 2: ward.Condition.date_evaluated:type_name -> google.protobuf.Timestamp
+	46, // 3: ward.Condition.date_signaled:type_name -> google.protobuf.Timestamp
+	1,  // 4: ward.ConditionGetRequest.ref:type_name -> ward.ConditionRef
+	3,  // 5: ward.ConditionListRequest.filters:type_name -> ward.ConditionFilter
+	0,  // 6: ward.ConditionListResponse.items:type_name -> ward.Condition
+	1,  // 7: ward.ConditionShelveRequest.ref:type_name -> ward.ConditionRef
+	47, // 8: ward.ConditionShelveRequest.duration:type_name -> google.protobuf.Duration
+	1,  // 9: ward.ConditionUnshelveRequest.ref:type_name -> ward.ConditionRef
+	1,  // 10: ward.ConditionRemoveFromServiceRequest.ref:type_name -> ward.ConditionRef
+	1,  // 11: ward.ConditionPlaceInServiceRequest.ref:type_name -> ward.ConditionRef
+	47, // 12: ward.Source.max_gap:type_name -> google.protobuf.Duration
+	11, // 13: ward.Source.nodes:type_name -> ward.SourceNode
+	46, // 14: ward.SourceNode.date_signaled:type_name -> google.protobuf.Timestamp
+	46, // 15: ward.SourceNode.date_alive:type_name -> google.protobuf.Timestamp
+	46, // 16: ward.SourceNode.date_started:type_name -> google.protobuf.Timestamp
+	46, // 17: ward.SourceNode.date_restarted:type_name -> google.protobuf.Timestamp
+	12, // 18: ward.SourceGetRequest.ref:type_name -> ward.SourceRef
+	14, // 19: ward.SourceListRequest.filters:type_name -> ward.SourceFilter
+	10, // 20: ward.SourceListResponse.items:type_name -> ward.Source
+	18, // 21: ward.RuleGetRequest.ref:type_name -> ward.RuleRef
+	20, // 22: ward.RuleListRequest.filters:type_name -> ward.RuleFilter
+	17, // 23: ward.RuleListResponse.items:type_name -> ward.Rule
+	46, // 24: ward.Provider.date_applied:type_name -> google.protobuf.Timestamp
+	46, // 25: ward.Provider.date_refused:type_name -> google.protobuf.Timestamp
+	24, // 26: ward.ProviderGetRequest.ref:type_name -> ward.ProviderRef
+	23, // 27: ward.ProviderListResponse.items:type_name -> ward.Provider
+	46, // 28: ward.Node.date_booted:type_name -> google.protobuf.Timestamp
+	29, // 29: ward.Node.canary:type_name -> ward.Canary
+	30, // 30: ward.Node.gaps:type_name -> ward.Gap
+	47, // 31: ward.Canary.rtt:type_name -> google.protobuf.Duration
+	46, // 32: ward.Canary.date_failed:type_name -> google.protobuf.Timestamp
+	46, // 33: ward.Gap.date_from:type_name -> google.protobuf.Timestamp
+	46, // 34: ward.Gap.date_to:type_name -> google.protobuf.Timestamp
+	31, // 35: ward.NodeGetRequest.ref:type_name -> ward.NodeRef
+	28, // 36: ward.NodeListResponse.items:type_name -> ward.Node
+	46, // 37: ward.Status.date_started:type_name -> google.protobuf.Timestamp
+	47, // 38: ward.Status.tick:type_name -> google.protobuf.Duration
+	36, // 39: ward.Status.unmatched:type_name -> ward.Unmatched
+	37, // 40: ward.Status.violations:type_name -> ward.TypeViolation
+	45, // 41: ward.Component.counts:type_name -> ward.Component.CountsEntry
+	0,  // 42: ward.Component.conditions:type_name -> ward.Condition
+	40, // 43: ward.ComponentGetRequest.ref:type_name -> ward.ComponentRef
+	42, // 44: ward.ComponentListRequest.filters:type_name -> ward.ComponentFilter
+	39, // 45: ward.ComponentListResponse.items:type_name -> ward.Component
+	2,  // 46: ward.ConditionService.Get:input_type -> ward.ConditionGetRequest
+	4,  // 47: ward.ConditionService.List:input_type -> ward.ConditionListRequest
+	6,  // 48: ward.ConditionService.Shelve:input_type -> ward.ConditionShelveRequest
+	7,  // 49: ward.ConditionService.Unshelve:input_type -> ward.ConditionUnshelveRequest
+	8,  // 50: ward.ConditionService.RemoveFromService:input_type -> ward.ConditionRemoveFromServiceRequest
+	9,  // 51: ward.ConditionService.PlaceInService:input_type -> ward.ConditionPlaceInServiceRequest
+	13, // 52: ward.SourceService.Get:input_type -> ward.SourceGetRequest
+	15, // 53: ward.SourceService.List:input_type -> ward.SourceListRequest
+	19, // 54: ward.RuleService.Get:input_type -> ward.RuleGetRequest
+	21, // 55: ward.RuleService.List:input_type -> ward.RuleListRequest
+	25, // 56: ward.ProviderService.Get:input_type -> ward.ProviderGetRequest
+	26, // 57: ward.ProviderService.List:input_type -> ward.ProviderListRequest
+	32, // 58: ward.NodeService.Get:input_type -> ward.NodeGetRequest
+	33, // 59: ward.NodeService.List:input_type -> ward.NodeListRequest
+	38, // 60: ward.StatusService.Get:input_type -> ward.StatusGetRequest
+	41, // 61: ward.ComponentService.Get:input_type -> ward.ComponentGetRequest
+	43, // 62: ward.ComponentService.List:input_type -> ward.ComponentListRequest
+	0,  // 63: ward.ConditionService.Get:output_type -> ward.Condition
+	5,  // 64: ward.ConditionService.List:output_type -> ward.ConditionListResponse
+	0,  // 65: ward.ConditionService.Shelve:output_type -> ward.Condition
+	0,  // 66: ward.ConditionService.Unshelve:output_type -> ward.Condition
+	0,  // 67: ward.ConditionService.RemoveFromService:output_type -> ward.Condition
+	0,  // 68: ward.ConditionService.PlaceInService:output_type -> ward.Condition
+	10, // 69: ward.SourceService.Get:output_type -> ward.Source
+	16, // 70: ward.SourceService.List:output_type -> ward.SourceListResponse
+	17, // 71: ward.RuleService.Get:output_type -> ward.Rule
+	22, // 72: ward.RuleService.List:output_type -> ward.RuleListResponse
+	23, // 73: ward.ProviderService.Get:output_type -> ward.Provider
+	27, // 74: ward.ProviderService.List:output_type -> ward.ProviderListResponse
+	28, // 75: ward.NodeService.Get:output_type -> ward.Node
+	34, // 76: ward.NodeService.List:output_type -> ward.NodeListResponse
+	35, // 77: ward.StatusService.Get:output_type -> ward.Status
+	39, // 78: ward.ComponentService.Get:output_type -> ward.Component
+	44, // 79: ward.ComponentService.List:output_type -> ward.ComponentListResponse
+	63, // [63:80] is the sub-list for method output_type
+	46, // [46:63] is the sub-list for method input_type
+	46, // [46:46] is the sub-list for extension type_name
+	46, // [46:46] is the sub-list for extension extendee
+	0,  // [0:46] is the sub-list for field type_name
 }
 
 func init() { file_ward_state_proto_init() }

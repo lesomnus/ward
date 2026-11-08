@@ -18,7 +18,9 @@ import (
 	"go.opentelemetry.io/collector/pdata/pmetric/pmetricotlp"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
 	app "github.com/lesomnus/ward"
@@ -99,7 +101,41 @@ version: 1
 sources:
   app:
     liveness: {metric: app.frames, max_gap: 1s}
+  ghost:
+    liveness: {metric: ghost.beats, max_gap: 1s}
+components:
+  app:
+    parent: ""
+    members:
+      - {rule: app.fail, node: n1, key: x}
+      - {rule: app.down, node: n1}
+  ghost:
+    parent: ""
+    members:
+      - {rule: ghost.fail, node: n1, key: k}
 rules:
+  - id: app.down
+    kind: metric
+    source: app
+    severity: error
+    metric: {name: app.frames}
+    key: []
+    value: {of: points, window: 2s, across: sum}
+    limit: {levels: [{name: down, below: 1, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 1s}
+    startup_grace: 0s
+    operator: {ack: none, latch: false}
+  - id: ghost.fail
+    kind: log
+    source: ghost
+    severity: error
+    match: {attributes: {diag.condition.type: ghost.fail}}
+    key: [{attribute: diag.condition.key}]
+    activate: {count: 1}
+    resolve_after: 1s
+    on_source_restart: close
+    operator: {ack: none, latch: false}
   - id: app.fail
     kind: log
     source: app
@@ -334,6 +370,38 @@ func TestServe(t *testing.T) {
 	i, _ := issue()
 	if !i.GetAttention() || i.GetCount() != 2 {
 		t.Errorf("closed issue: attention %v count %d", i.GetAttention(), i.GetCount())
+	}
+
+	// The component tree says what is expected, normal or not seen at all.
+	comps := app.NewComponentServiceClient(conn)
+	conds := app.NewConditionServiceClient(conn)
+	waitFor(5*time.Second, "the app's component", func() (bool, string) {
+		c, err := comps.Get(ctx, app.ComponentGetRequest_builder{Ref: app.ComponentRef_builder{Name: "app"}.Build()}.Build())
+		if err != nil {
+			return false, err.Error()
+		}
+		var states []string
+		ok := c.GetHealth() == "healthy" && slices.Equal(c.GetRules(), []string{"app.down", "app.fail"}) && len(c.GetConditions()) == 2
+		for _, x := range c.GetConditions() {
+			states = append(states, fmt.Sprintf("%s/%s=%s held=%v value=%v", x.GetRule(), x.GetKey(), x.GetState(), x.GetHeld(), x.GetValue()))
+			if x.GetState() != "inactive" || x.GetHeld() || !x.GetDeclared() {
+				ok = false
+			}
+			if x.GetRule() == "app.down" && (!x.HasValue() || x.GetValue() < 1) {
+				ok = false
+			}
+		}
+		return ok, c.GetHealth() + " " + fmt.Sprint(c.GetRules(), states)
+	})
+	ghost, err := comps.Get(ctx, app.ComponentGetRequest_builder{Ref: app.ComponentRef_builder{Name: "ghost"}.Build()}.Build())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ghost.GetHealth() != "no_data" || len(ghost.GetConditions()) != 1 || ghost.GetConditions()[0].GetState() != "unobserved" {
+		t.Errorf("a source that sends nothing: %s %v", ghost.GetHealth(), ghost.GetConditions())
+	}
+	if _, err := conds.Get(ctx, app.ConditionGetRequest_builder{Ref: app.ConditionRef_builder{Rule: "app.fail", Node: "n1", Key: "nobody"}.Build()}.Build()); status.Code(err) != codes.NotFound {
+		t.Errorf("a condition nothing saw nor expects: %v, want NotFound", err)
 	}
 
 	waitFor(5*time.Second, "exported", func() (bool, string) {

@@ -979,3 +979,109 @@ func TestDeadbandComingDown(t *testing.T) {
 		t.Errorf("from fast at -95: %q; slow is the other direction and was never entered", got)
 	}
 }
+
+const expectedRules = `
+version: 1
+sources: {}
+rules:
+  - id: det.fail
+    kind: log
+    source: det
+    severity: error
+    match: {attributes: {diag.condition.type: det.fail}}
+    key: [{attribute: diag.condition.key}]
+    activate: {count: 2, within: 5s}
+    resolve_after: 10s
+    on_source_restart: close
+    operator: {ack: none, latch: false}
+  - id: det.down
+    kind: metric
+    source: det
+    severity: error
+    metric: {name: det.frames}
+    key: []
+    value: {of: points, window: 10s, across: sum}
+    limit: {levels: [{name: down, below: 1, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 5s}
+    startup_grace: 0s
+    operator: {ack: none, latch: false}
+components:
+  det:
+    parent: ""
+    members:
+      - {rule: det.fail, node: n1, key: front}
+      - {rule: det.fail, node: n2, key: rear}
+      - {rule: det.down, node: n1}
+      - {rule: det.fail}
+`
+
+// What a Component's members name is there before any signal of it, is
+// normal only on evidence, and is never forgotten (design §4.3, §9).
+func TestExpectedConditions(t *testing.T) {
+	h := newHarness(t, expectedRules)
+	state := func(rule, node, key string) string {
+		c := h.cond(rule, node, key)
+		if c == nil {
+			return "none"
+		}
+		s := c.state
+		if c.held {
+			s += " held: " + c.holdReason
+		}
+		return s
+	}
+	for _, k := range [][3]string{{"det.fail", "n1", "front"}, {"det.fail", "n2", "rear"}, {"det.down", "n1", ""}} {
+		if c := h.cond(k[0], k[1], k[2]); c == nil || c.state != StateUnobserved || !c.declared {
+			t.Fatalf("%v before any signal: %s", k, state(k[0], k[1], k[2]))
+		}
+	}
+	if len(h.ev.byRule["det.fail"]) != 2 {
+		t.Errorf("a member that names no node and Key expects nothing: %d conditions", len(h.ev.byRule["det.fail"]))
+	}
+	if got := h.ev.eval(&def.Expr{Rule: "det.fail"}, "n2"); got != triUnknown {
+		t.Errorf("an unobserved condition reads %d, want unknown", got)
+	}
+
+	start := t0.Add(-time.Hour)
+	h.live("n1", "det", start, t0, t0.Add(30*s))
+	for tt := t0; tt.Before(t0.Add(30 * s)); tt = tt.Add(s) {
+		h.point("det.down", "n1", "", start, tt, 1)
+	}
+	h.run(t0.Add(15 * s))
+	if s := state("det.fail", "n1", "front"); s != StateInactive {
+		t.Errorf("front with its source alive: %s", s)
+	}
+	if s := state("det.fail", "n2", "rear"); s != StateUnobserved {
+		t.Errorf("rear, nothing of its source on n2: %s", s)
+	}
+	if c := h.cond("det.down", "n1", ""); c.state != StateInactive || !c.hasValue || c.value < 5 {
+		t.Errorf("det.down: %s value %v (%v)", c.state, c.value, c.hasValue)
+	}
+
+	h.run(t0.Add(40 * s)) // the source stopped at 30s
+	if s := state("det.fail", "n1", "front"); s != StateInactive+" held: source not alive" {
+		t.Errorf("front with its source gone: %s", s)
+	}
+
+	h.run(t0.Add(40 * time.Minute))
+	if h.cond("det.fail", "n2", "rear") == nil || h.cond("det.fail", "n1", "front") == nil {
+		t.Error("an expected condition was forgotten")
+	}
+
+	// No longer expected: the unobserved one goes; the other is an ordinary
+	// condition again.
+	f, err := def.Parse([]byte(strings.Replace(expectedRules, "      - {rule: det.fail, node: n2, key: rear}\n", "", 1)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	g, _ := def.Parse([]byte(sources))
+	set, _, err := def.Merge([]string{"n1", "n2"}, def.Definitions{Provider: "p0", File: g}, def.Definitions{Provider: "p1", File: f})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h.ev.Apply(Compile(set), h.now)
+	if h.cond("det.fail", "n2", "rear") != nil {
+		t.Error("an unobserved condition stayed after nothing expected it")
+	}
+}
