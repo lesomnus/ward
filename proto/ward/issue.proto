@@ -1,0 +1,117 @@
+edition = "2023";
+
+package ward;
+
+import "google/protobuf/timestamp.proto";
+import "orm.proto";
+import "payday.proto";
+
+option features.field_presence = IMPLICIT;
+option go_package = "github.com/lesomnus/ward";
+
+// Issue is one interval during which a Condition -- one (rule, node, key) --
+// was active: opened by the signal that met the rule's activation, closed by
+// the evidence that it ended, with the reason it ended.
+//
+// Only the evaluation loop writes one. Callers read them, and act on them
+// through the operator RPCs; the generated Add and Erase are refused to
+// callers by the Seal layer, and Patch and Apply are closed at the transport.
+message Issue {
+  // hash(rule, node, key, date_opened) with payday's version, variant and
+  // domain bits, so the same signal yields the same Issue after a restart.
+  bytes id = 1 [(orm.field) = {
+    type: TYPE_UUID
+    key: true
+    default: ""
+  }];
+
+  // 2..7 are payday's (tenant, set, alias, name, desc, labels). An Issue has
+  // none of them and leaves the numbers empty.
+
+  string rule = 8;
+  string source = 9;
+  string node = 10;
+  string key = 11;
+
+  // info, warning, error or critical. With levels, the current level's.
+  string severity = 12;
+
+  google.protobuf.Timestamp date_updated = 13 [(orm.field) = {version: {}}];
+  google.protobuf.Timestamp date_created = 15 [(orm.field) = {
+    immutable: true
+    default: ""
+  }];
+
+  // active, stale, cleared (a latching rule waiting for a reset) or closed.
+  string state = 16;
+
+  // The metric rule's current level; empty without levels.
+  string level = 17;
+
+  // The event time of the signal that met the activation.
+  google.protobuf.Timestamp date_opened = 18 [(orm.field) = {default: ""}];
+
+  // The event time of the last signal.
+  google.protobuf.Timestamp date_seen = 19 [(orm.field) = {default: ""}];
+
+  // When a latching rule's condition ended.
+  google.protobuf.Timestamp date_cleared = 20 [(orm.field) = {nullable: true}];
+
+  // When it closed: date_seen when it closed by silence, the reset when latched.
+  google.protobuf.Timestamp date_closed = 21 [(orm.field) = {nullable: true}];
+
+  // resolved.silence, resolved.explicit, resolved.condition, quiet,
+  // interrupted.source_restart, interrupted.reboot, interrupted.diag_gap or
+  // rule_changed. A string, since a List filters by equality only.
+  string close_reason = 22;
+
+  // Signals in the interval, after duplicates are taken out.
+  int64 count = 23;
+
+  // Source restarts in the interval.
+  int64 restarts = 24;
+
+  // Whether somebody should look at it: not closed, or closed but not yet
+  // acknowledged where the rule asks for an acknowledgement.
+  bool attention = 25;
+
+  bool acked = 26;
+  google.protobuf.Timestamp date_acked = 27 [(orm.field) = {nullable: true}];
+  google.protobuf.Timestamp date_reset = 28 [(orm.field) = {nullable: true}];
+
+  bool suppressed = 29;
+  bool shelved = 30;
+  bool out_of_service = 31;
+
+  option (orm.message) = {
+    rpc: {crud: true}
+    indexes: [
+      {
+        name: "page"
+        refs: [
+          {name: "date_created", number: 15},
+          {name: "id", number: 1}
+        ]
+      },
+      {
+        name: "state"
+        refs: [
+          {name: "state", number: 16},
+          {name: "date_created", number: 15},
+          {name: "id", number: 1}
+        ]
+      }
+    ]
+  };
+  option (payday.entity) = {
+    domain: 7
+    global: {}
+    erase: {hard: {}}
+    list: {
+      order: [{field: {name: "date_created"}}, {field: {name: "id"}}]
+      by: [{name: "ref"}, {name: "state"}, {name: "rule"}, {name: "node"}, {name: "attention"}]
+      size: 50
+      max: 500
+    }
+  };
+}

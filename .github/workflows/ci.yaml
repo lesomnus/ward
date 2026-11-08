@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Generated code matches the schema
+        run: go tool pd gen --check .
+
+      - name: pd doctor
+        run: go tool pd doctor .
+
+      - name: Migrations are planned for the schema
+        run: |
+          go run ./cmd/ward migrate plan ci
+          if [ -n "$(git status --porcelain -- migrations)" ]; then
+            git status --porcelain -- migrations
+            echo "::error::the schema changed without a migration; run: go run ./cmd/ward migrate plan <name>"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...

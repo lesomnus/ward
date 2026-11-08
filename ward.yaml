@@ -1,0 +1,27 @@
+# Ward's static configuration. Every value is written out; nothing is filled in
+# for a value left out. A file, then the environment over the top of it:
+# WARD_DB_DSN beats what is written here. `ward config` prints what came out,
+# and `ward config env` lists every variable there is.
+
+server:
+  addr: ":14319"
+
+db:
+  driver: sqlite3
+  # WAL, and synchronous(FULL): a committed Issue transition survives a power cut.
+  dsn: "file:ward.db?_pragma=journal_mode(WAL)&_pragma=synchronous(FULL)&_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)"
+
+watch:
+  # Ward publishes no Watch. Its change feed is IssueEventService/Follow.
+  broker: none
+
+spin:
+  # One process runs the sweeps.
+  lease: local
+
+audit:
+  # The trail holds what callers did, such as an operator's acknowledgement. The
+  # evaluation loop's own writes are not on it. Kept a year, then removed rather
+  # than archived.
+  retain: 8760h
+  discard: true

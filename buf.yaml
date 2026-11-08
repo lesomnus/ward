@@ -1,0 +1,33 @@
+version: v2
+modules:
+  - path: ./proto
+    excludes:
+      # The overlays: what this app adds to a generated contract. They are
+      # fragments rather than files that compile -- a message in one names
+      # types that exist only after the merge -- so buf must not read them.
+      # `pd gen` hands them to protobuf-merge by path.
+      - proto/ext
+deps:
+  # payday's own: the `(payday.entity)` option every entity carries, and the
+  # batch service. It is the `dev` label rather than a version because payday
+  # has no users yet -- pin a commit when it does.
+  - buf.build/payday/payday:dev
+  - buf.build/orm/orm
+  - buf.build/patch/patch
+lint:
+  use:
+    - STANDARD
+  except:
+    # The service contracts are generated from the entities: a request is named
+    # after the entity it is about and the answer is the entity itself. That is
+    # the shape of the whole stack, and it is not what buf expects of a service
+    # somebody wrote by hand.
+    - RPC_REQUEST_STANDARD_NAME
+    - RPC_RESPONSE_STANDARD_NAME
+    - RPC_REQUEST_RESPONSE_UNIQUE
+    - PACKAGE_VERSION_SUFFIX
+    - PACKAGE_DIRECTORY_MATCH
+    - PACKAGE_SAME_DIRECTORY
+breaking:
+  use:
+    - FILE
