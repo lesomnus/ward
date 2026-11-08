@@ -115,3 +115,87 @@ message Issue {
     }
   };
 }
+
+// IssueEvent is one transition of an Issue, in the order it was committed:
+// the evaluation loop's (open, update, clear, close) and an operator's (ack,
+// comment, reset). It carries the Issue as it was after the transition, so a
+// reader following the feed needs nothing else.
+message IssueEvent {
+  bytes id = 1 [(orm.field) = {
+    type: TYPE_UUID
+    key: true
+    default: ""
+  }];
+
+  // Increases in commit order; the position in the change feed. Unique, so it
+  // is also a key of IssueEventRef.
+  int64 cursor = 8 [(orm.field) = {unique: true}];
+
+  bytes issue_id = 9;
+
+  // open, update, clear, close, ack, comment or reset.
+  string event = 10;
+
+  // The signal's event time for an evaluation transition, the time of the
+  // operation for an operator's.
+  google.protobuf.Timestamp date_occurred = 11 [(orm.field) = {default: ""}];
+
+  // What an operator wrote with an ack, a comment or a reset.
+  string comment = 12;
+
+  google.protobuf.Timestamp date_created = 15 [(orm.field) = {
+    immutable: true
+    default: ""
+  }];
+
+  // The Issue after the transition.
+  string rule = 16;
+  string source = 17;
+  string node = 18;
+  string key = 19;
+  string severity = 20;
+  string level = 21;
+  string state = 22;
+  google.protobuf.Timestamp date_opened = 23 [(orm.field) = {default: ""}];
+  google.protobuf.Timestamp date_seen = 24 [(orm.field) = {default: ""}];
+  google.protobuf.Timestamp date_closed = 25 [(orm.field) = {nullable: true}];
+  string close_reason = 26;
+  int64 count = 27;
+  int64 restarts = 28;
+  bool attention = 29;
+  bool acked = 30;
+  bool suppressed = 31;
+  bool shelved = 32;
+  bool out_of_service = 33;
+
+  option (orm.message) = {
+    rpc: {crud: true}
+    indexes: [
+      {
+        name: "page"
+        refs: [
+          {name: "cursor", number: 8},
+          {name: "id", number: 1}
+        ]
+      },
+      {
+        name: "issue"
+        refs: [
+          {name: "issue_id", number: 9},
+          {name: "cursor", number: 8}
+        ]
+      }
+    ]
+  };
+  option (payday.entity) = {
+    domain: 8
+    global: {}
+    erase: {hard: {}}
+    list: {
+      order: [{field: {name: "cursor"}}, {field: {name: "id"}}]
+      by: [{name: "ref"}, {name: "issue_id"}]
+      size: 100
+      max: 1000
+    }
+  };
+}

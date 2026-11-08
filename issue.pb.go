@@ -516,6 +516,471 @@ func (b0 Issue_builder) Build() *Issue {
 	return m0
 }
 
+// IssueEvent is one transition of an Issue, in the order it was committed:
+// the evaluation loop's (open, update, clear, close) and an operator's (ack,
+// comment, reset). It carries the Issue as it was after the transition, so a
+// reader following the feed needs nothing else.
+type IssueEvent struct {
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id           []byte                 `protobuf:"bytes,1,opt,name=id"`
+	xxx_hidden_Cursor       int64                  `protobuf:"varint,8,opt,name=cursor"`
+	xxx_hidden_IssueId      []byte                 `protobuf:"bytes,9,opt,name=issue_id,json=issueId"`
+	xxx_hidden_Event        string                 `protobuf:"bytes,10,opt,name=event"`
+	xxx_hidden_DateOccurred *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=date_occurred,json=dateOccurred"`
+	xxx_hidden_Comment      string                 `protobuf:"bytes,12,opt,name=comment"`
+	xxx_hidden_DateCreated  *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=date_created,json=dateCreated"`
+	xxx_hidden_Rule         string                 `protobuf:"bytes,16,opt,name=rule"`
+	xxx_hidden_Source       string                 `protobuf:"bytes,17,opt,name=source"`
+	xxx_hidden_Node         string                 `protobuf:"bytes,18,opt,name=node"`
+	xxx_hidden_Key          string                 `protobuf:"bytes,19,opt,name=key"`
+	xxx_hidden_Severity     string                 `protobuf:"bytes,20,opt,name=severity"`
+	xxx_hidden_Level        string                 `protobuf:"bytes,21,opt,name=level"`
+	xxx_hidden_State        string                 `protobuf:"bytes,22,opt,name=state"`
+	xxx_hidden_DateOpened   *timestamppb.Timestamp `protobuf:"bytes,23,opt,name=date_opened,json=dateOpened"`
+	xxx_hidden_DateSeen     *timestamppb.Timestamp `protobuf:"bytes,24,opt,name=date_seen,json=dateSeen"`
+	xxx_hidden_DateClosed   *timestamppb.Timestamp `protobuf:"bytes,25,opt,name=date_closed,json=dateClosed"`
+	xxx_hidden_CloseReason  string                 `protobuf:"bytes,26,opt,name=close_reason,json=closeReason"`
+	xxx_hidden_Count        int64                  `protobuf:"varint,27,opt,name=count"`
+	xxx_hidden_Restarts     int64                  `protobuf:"varint,28,opt,name=restarts"`
+	xxx_hidden_Attention    bool                   `protobuf:"varint,29,opt,name=attention"`
+	xxx_hidden_Acked        bool                   `protobuf:"varint,30,opt,name=acked"`
+	xxx_hidden_Suppressed   bool                   `protobuf:"varint,31,opt,name=suppressed"`
+	xxx_hidden_Shelved      bool                   `protobuf:"varint,32,opt,name=shelved"`
+	xxx_hidden_OutOfService bool                   `protobuf:"varint,33,opt,name=out_of_service,json=outOfService"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *IssueEvent) Reset() {
+	*x = IssueEvent{}
+	mi := &file_ward_issue_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueEvent) ProtoMessage() {}
+
+func (x *IssueEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueEvent) GetId() []byte {
+	if x != nil {
+		return x.xxx_hidden_Id
+	}
+	return nil
+}
+
+func (x *IssueEvent) GetCursor() int64 {
+	if x != nil {
+		return x.xxx_hidden_Cursor
+	}
+	return 0
+}
+
+func (x *IssueEvent) GetIssueId() []byte {
+	if x != nil {
+		return x.xxx_hidden_IssueId
+	}
+	return nil
+}
+
+func (x *IssueEvent) GetEvent() string {
+	if x != nil {
+		return x.xxx_hidden_Event
+	}
+	return ""
+}
+
+func (x *IssueEvent) GetDateOccurred() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateOccurred
+	}
+	return nil
+}
+
+func (x *IssueEvent) GetComment() string {
+	if x != nil {
+		return x.xxx_hidden_Comment
+	}
+	return ""
+}
+
+func (x *IssueEvent) GetDateCreated() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateCreated
+	}
+	return nil
+}
+
+func (x *IssueEvent) GetRule() string {
+	if x != nil {
+		return x.xxx_hidden_Rule
+	}
+	return ""
+}
+
+func (x *IssueEvent) GetSource() string {
+	if x != nil {
+		return x.xxx_hidden_Source
+	}
+	return ""
+}
+
+func (x *IssueEvent) GetNode() string {
+	if x != nil {
+		return x.xxx_hidden_Node
+	}
+	return ""
+}
+
+func (x *IssueEvent) GetKey() string {
+	if x != nil {
+		return x.xxx_hidden_Key
+	}
+	return ""
+}
+
+func (x *IssueEvent) GetSeverity() string {
+	if x != nil {
+		return x.xxx_hidden_Severity
+	}
+	return ""
+}
+
+func (x *IssueEvent) GetLevel() string {
+	if x != nil {
+		return x.xxx_hidden_Level
+	}
+	return ""
+}
+
+func (x *IssueEvent) GetState() string {
+	if x != nil {
+		return x.xxx_hidden_State
+	}
+	return ""
+}
+
+func (x *IssueEvent) GetDateOpened() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateOpened
+	}
+	return nil
+}
+
+func (x *IssueEvent) GetDateSeen() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateSeen
+	}
+	return nil
+}
+
+func (x *IssueEvent) GetDateClosed() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateClosed
+	}
+	return nil
+}
+
+func (x *IssueEvent) GetCloseReason() string {
+	if x != nil {
+		return x.xxx_hidden_CloseReason
+	}
+	return ""
+}
+
+func (x *IssueEvent) GetCount() int64 {
+	if x != nil {
+		return x.xxx_hidden_Count
+	}
+	return 0
+}
+
+func (x *IssueEvent) GetRestarts() int64 {
+	if x != nil {
+		return x.xxx_hidden_Restarts
+	}
+	return 0
+}
+
+func (x *IssueEvent) GetAttention() bool {
+	if x != nil {
+		return x.xxx_hidden_Attention
+	}
+	return false
+}
+
+func (x *IssueEvent) GetAcked() bool {
+	if x != nil {
+		return x.xxx_hidden_Acked
+	}
+	return false
+}
+
+func (x *IssueEvent) GetSuppressed() bool {
+	if x != nil {
+		return x.xxx_hidden_Suppressed
+	}
+	return false
+}
+
+func (x *IssueEvent) GetShelved() bool {
+	if x != nil {
+		return x.xxx_hidden_Shelved
+	}
+	return false
+}
+
+func (x *IssueEvent) GetOutOfService() bool {
+	if x != nil {
+		return x.xxx_hidden_OutOfService
+	}
+	return false
+}
+
+func (x *IssueEvent) SetId(v []byte) {
+	if v == nil {
+		v = []byte{}
+	}
+	x.xxx_hidden_Id = v
+}
+
+func (x *IssueEvent) SetCursor(v int64) {
+	x.xxx_hidden_Cursor = v
+}
+
+func (x *IssueEvent) SetIssueId(v []byte) {
+	if v == nil {
+		v = []byte{}
+	}
+	x.xxx_hidden_IssueId = v
+}
+
+func (x *IssueEvent) SetEvent(v string) {
+	x.xxx_hidden_Event = v
+}
+
+func (x *IssueEvent) SetDateOccurred(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateOccurred = v
+}
+
+func (x *IssueEvent) SetComment(v string) {
+	x.xxx_hidden_Comment = v
+}
+
+func (x *IssueEvent) SetDateCreated(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateCreated = v
+}
+
+func (x *IssueEvent) SetRule(v string) {
+	x.xxx_hidden_Rule = v
+}
+
+func (x *IssueEvent) SetSource(v string) {
+	x.xxx_hidden_Source = v
+}
+
+func (x *IssueEvent) SetNode(v string) {
+	x.xxx_hidden_Node = v
+}
+
+func (x *IssueEvent) SetKey(v string) {
+	x.xxx_hidden_Key = v
+}
+
+func (x *IssueEvent) SetSeverity(v string) {
+	x.xxx_hidden_Severity = v
+}
+
+func (x *IssueEvent) SetLevel(v string) {
+	x.xxx_hidden_Level = v
+}
+
+func (x *IssueEvent) SetState(v string) {
+	x.xxx_hidden_State = v
+}
+
+func (x *IssueEvent) SetDateOpened(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateOpened = v
+}
+
+func (x *IssueEvent) SetDateSeen(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateSeen = v
+}
+
+func (x *IssueEvent) SetDateClosed(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateClosed = v
+}
+
+func (x *IssueEvent) SetCloseReason(v string) {
+	x.xxx_hidden_CloseReason = v
+}
+
+func (x *IssueEvent) SetCount(v int64) {
+	x.xxx_hidden_Count = v
+}
+
+func (x *IssueEvent) SetRestarts(v int64) {
+	x.xxx_hidden_Restarts = v
+}
+
+func (x *IssueEvent) SetAttention(v bool) {
+	x.xxx_hidden_Attention = v
+}
+
+func (x *IssueEvent) SetAcked(v bool) {
+	x.xxx_hidden_Acked = v
+}
+
+func (x *IssueEvent) SetSuppressed(v bool) {
+	x.xxx_hidden_Suppressed = v
+}
+
+func (x *IssueEvent) SetShelved(v bool) {
+	x.xxx_hidden_Shelved = v
+}
+
+func (x *IssueEvent) SetOutOfService(v bool) {
+	x.xxx_hidden_OutOfService = v
+}
+
+func (x *IssueEvent) HasDateOccurred() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateOccurred != nil
+}
+
+func (x *IssueEvent) HasDateCreated() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateCreated != nil
+}
+
+func (x *IssueEvent) HasDateOpened() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateOpened != nil
+}
+
+func (x *IssueEvent) HasDateSeen() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateSeen != nil
+}
+
+func (x *IssueEvent) HasDateClosed() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateClosed != nil
+}
+
+func (x *IssueEvent) ClearDateOccurred() {
+	x.xxx_hidden_DateOccurred = nil
+}
+
+func (x *IssueEvent) ClearDateCreated() {
+	x.xxx_hidden_DateCreated = nil
+}
+
+func (x *IssueEvent) ClearDateOpened() {
+	x.xxx_hidden_DateOpened = nil
+}
+
+func (x *IssueEvent) ClearDateSeen() {
+	x.xxx_hidden_DateSeen = nil
+}
+
+func (x *IssueEvent) ClearDateClosed() {
+	x.xxx_hidden_DateClosed = nil
+}
+
+type IssueEvent_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Id []byte
+	// Increases in commit order; the position in the change feed. Unique, so it
+	// is also a key of IssueEventRef.
+	Cursor  int64
+	IssueId []byte
+	// open, update, clear, close, ack, comment or reset.
+	Event string
+	// The signal's event time for an evaluation transition, the time of the
+	// operation for an operator's.
+	DateOccurred *timestamppb.Timestamp
+	// What an operator wrote with an ack, a comment or a reset.
+	Comment     string
+	DateCreated *timestamppb.Timestamp
+	// The Issue after the transition.
+	Rule         string
+	Source       string
+	Node         string
+	Key          string
+	Severity     string
+	Level        string
+	State        string
+	DateOpened   *timestamppb.Timestamp
+	DateSeen     *timestamppb.Timestamp
+	DateClosed   *timestamppb.Timestamp
+	CloseReason  string
+	Count        int64
+	Restarts     int64
+	Attention    bool
+	Acked        bool
+	Suppressed   bool
+	Shelved      bool
+	OutOfService bool
+}
+
+func (b0 IssueEvent_builder) Build() *IssueEvent {
+	m0 := &IssueEvent{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Id = b.Id
+	x.xxx_hidden_Cursor = b.Cursor
+	x.xxx_hidden_IssueId = b.IssueId
+	x.xxx_hidden_Event = b.Event
+	x.xxx_hidden_DateOccurred = b.DateOccurred
+	x.xxx_hidden_Comment = b.Comment
+	x.xxx_hidden_DateCreated = b.DateCreated
+	x.xxx_hidden_Rule = b.Rule
+	x.xxx_hidden_Source = b.Source
+	x.xxx_hidden_Node = b.Node
+	x.xxx_hidden_Key = b.Key
+	x.xxx_hidden_Severity = b.Severity
+	x.xxx_hidden_Level = b.Level
+	x.xxx_hidden_State = b.State
+	x.xxx_hidden_DateOpened = b.DateOpened
+	x.xxx_hidden_DateSeen = b.DateSeen
+	x.xxx_hidden_DateClosed = b.DateClosed
+	x.xxx_hidden_CloseReason = b.CloseReason
+	x.xxx_hidden_Count = b.Count
+	x.xxx_hidden_Restarts = b.Restarts
+	x.xxx_hidden_Attention = b.Attention
+	x.xxx_hidden_Acked = b.Acked
+	x.xxx_hidden_Suppressed = b.Suppressed
+	x.xxx_hidden_Shelved = b.Shelved
+	x.xxx_hidden_OutOfService = b.OutOfService
+	return m0
+}
+
 var File_ward_issue_proto protoreflect.FileDescriptor
 
 const file_ward_issue_proto_rawDesc = "" +
@@ -569,27 +1034,82 @@ const file_ward_issue_proto_rawDesc = "" +
 	"\x04rule\x1a\x06\n" +
 	"\x04node\x1a\v\n" +
 	"\tattention 2(\xf4\x03B\x02\n" +
+	"\x00*\x00\"\xfc\a\n" +
+	"\n" +
+	"IssueEvent\x12\x1b\n" +
+	"\x02id\x18\x01 \x01(\fB\v\xea\x82\x16\a\x10@(\x01\x82\x01\x00R\x02id\x12\x1e\n" +
+	"\x06cursor\x18\b \x01(\x03B\x06\xea\x82\x16\x020\x01R\x06cursor\x12\x19\n" +
+	"\bissue_id\x18\t \x01(\fR\aissueId\x12\x14\n" +
+	"\x05event\x18\n" +
+	" \x01(\tR\x05event\x12H\n" +
+	"\rdate_occurred\x18\v \x01(\v2\x1a.google.protobuf.TimestampB\a\xea\x82\x16\x03\x82\x01\x00R\fdateOccurred\x12\x18\n" +
+	"\acomment\x18\f \x01(\tR\acomment\x12H\n" +
+	"\fdate_created\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampB\t\xea\x82\x16\x05@\x01\x82\x01\x00R\vdateCreated\x12\x12\n" +
+	"\x04rule\x18\x10 \x01(\tR\x04rule\x12\x16\n" +
+	"\x06source\x18\x11 \x01(\tR\x06source\x12\x12\n" +
+	"\x04node\x18\x12 \x01(\tR\x04node\x12\x10\n" +
+	"\x03key\x18\x13 \x01(\tR\x03key\x12\x1a\n" +
+	"\bseverity\x18\x14 \x01(\tR\bseverity\x12\x14\n" +
+	"\x05level\x18\x15 \x01(\tR\x05level\x12\x14\n" +
+	"\x05state\x18\x16 \x01(\tR\x05state\x12D\n" +
+	"\vdate_opened\x18\x17 \x01(\v2\x1a.google.protobuf.TimestampB\a\xea\x82\x16\x03\x82\x01\x00R\n" +
+	"dateOpened\x12@\n" +
+	"\tdate_seen\x18\x18 \x01(\v2\x1a.google.protobuf.TimestampB\a\xea\x82\x16\x03\x82\x01\x00R\bdateSeen\x12C\n" +
+	"\vdate_closed\x18\x19 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xea\x82\x16\x028\x01R\n" +
+	"dateClosed\x12!\n" +
+	"\fclose_reason\x18\x1a \x01(\tR\vcloseReason\x12\x14\n" +
+	"\x05count\x18\x1b \x01(\x03R\x05count\x12\x1a\n" +
+	"\brestarts\x18\x1c \x01(\x03R\brestarts\x12\x1c\n" +
+	"\tattention\x18\x1d \x01(\bR\tattention\x12\x14\n" +
+	"\x05acked\x18\x1e \x01(\bR\x05acked\x12\x1e\n" +
+	"\n" +
+	"suppressed\x18\x1f \x01(\bR\n" +
+	"suppressed\x12\x18\n" +
+	"\ashelved\x18  \x01(\bR\ashelved\x12$\n" +
+	"\x0eout_of_service\x18! \x01(\bR\foutOfService:\x81\x01\xca\xfc\x15C\x12\x02\x10\x01\x1a\x1a\x12\x04page\x1a\n" +
+	"\n" +
+	"\x06cursor\x10\b\x1a\x06\n" +
+	"\x02id\x10\x01\x1a!\x12\x05issue\x1a\f\n" +
+	"\bissue_id\x10\t\x1a\n" +
+	"\n" +
+	"\x06cursor\x10\b\x8a\xbb\x166\b\b2,\n" +
+	"\n" +
+	"\n" +
+	"\b\n" +
+	"\x06cursor\n" +
+	"\x06\n" +
+	"\x04\n" +
+	"\x02id\x1a\x05\n" +
+	"\x03ref\x1a\n" +
+	"\n" +
+	"\bissue_id d(\xe8\aB\x02\n" +
 	"\x00*\x00B\x1fZ\x18github.com/lesomnus/ward\x92\x03\x02\b\x02b\beditionsp\xe8\a"
 
-var file_ward_issue_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_ward_issue_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_ward_issue_proto_goTypes = []any{
 	(*Issue)(nil),                 // 0: ward.Issue
-	(*timestamppb.Timestamp)(nil), // 1: google.protobuf.Timestamp
+	(*IssueEvent)(nil),            // 1: ward.IssueEvent
+	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
 }
 var file_ward_issue_proto_depIdxs = []int32{
-	1, // 0: ward.Issue.date_updated:type_name -> google.protobuf.Timestamp
-	1, // 1: ward.Issue.date_created:type_name -> google.protobuf.Timestamp
-	1, // 2: ward.Issue.date_opened:type_name -> google.protobuf.Timestamp
-	1, // 3: ward.Issue.date_seen:type_name -> google.protobuf.Timestamp
-	1, // 4: ward.Issue.date_cleared:type_name -> google.protobuf.Timestamp
-	1, // 5: ward.Issue.date_closed:type_name -> google.protobuf.Timestamp
-	1, // 6: ward.Issue.date_acked:type_name -> google.protobuf.Timestamp
-	1, // 7: ward.Issue.date_reset:type_name -> google.protobuf.Timestamp
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	2,  // 0: ward.Issue.date_updated:type_name -> google.protobuf.Timestamp
+	2,  // 1: ward.Issue.date_created:type_name -> google.protobuf.Timestamp
+	2,  // 2: ward.Issue.date_opened:type_name -> google.protobuf.Timestamp
+	2,  // 3: ward.Issue.date_seen:type_name -> google.protobuf.Timestamp
+	2,  // 4: ward.Issue.date_cleared:type_name -> google.protobuf.Timestamp
+	2,  // 5: ward.Issue.date_closed:type_name -> google.protobuf.Timestamp
+	2,  // 6: ward.Issue.date_acked:type_name -> google.protobuf.Timestamp
+	2,  // 7: ward.Issue.date_reset:type_name -> google.protobuf.Timestamp
+	2,  // 8: ward.IssueEvent.date_occurred:type_name -> google.protobuf.Timestamp
+	2,  // 9: ward.IssueEvent.date_created:type_name -> google.protobuf.Timestamp
+	2,  // 10: ward.IssueEvent.date_opened:type_name -> google.protobuf.Timestamp
+	2,  // 11: ward.IssueEvent.date_seen:type_name -> google.protobuf.Timestamp
+	2,  // 12: ward.IssueEvent.date_closed:type_name -> google.protobuf.Timestamp
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_ward_issue_proto_init() }
@@ -603,7 +1123,7 @@ func file_ward_issue_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ward_issue_proto_rawDesc), len(file_ward_issue_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

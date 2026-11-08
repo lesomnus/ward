@@ -18,12 +18,18 @@ type Tx struct {
 	Archived *ArchivedClient
 	// Audit is the client for interacting with the Audit builders.
 	Audit *AuditClient
+	// Checkpoint is the client for interacting with the Checkpoint builders.
+	Checkpoint *CheckpointClient
 	// Holder is the client for interacting with the Holder builders.
 	Holder *HolderClient
 	// Issue is the client for interacting with the Issue builders.
 	Issue *IssueClient
+	// IssueEvent is the client for interacting with the IssueEvent builders.
+	IssueEvent *IssueEventClient
 	// Outbox is the client for interacting with the Outbox builders.
 	Outbox *OutboxClient
+	// Override is the client for interacting with the Override builders.
+	Override *OverrideClient
 	// Owed is the client for interacting with the Owed builders.
 	Owed *OwedClient
 	// RowSeal is the client for interacting with the RowSeal builders.
@@ -164,9 +170,12 @@ func (tx *Tx) init() {
 	tx.Access = NewAccessClient(tx.config)
 	tx.Archived = NewArchivedClient(tx.config)
 	tx.Audit = NewAuditClient(tx.config)
+	tx.Checkpoint = NewCheckpointClient(tx.config)
 	tx.Holder = NewHolderClient(tx.config)
 	tx.Issue = NewIssueClient(tx.config)
+	tx.IssueEvent = NewIssueEventClient(tx.config)
 	tx.Outbox = NewOutboxClient(tx.config)
+	tx.Override = NewOverrideClient(tx.config)
 	tx.Owed = NewOwedClient(tx.config)
 	tx.RowSeal = NewRowSealClient(tx.config)
 	tx.Tenant = NewTenantClient(tx.config)

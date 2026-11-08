@@ -1,0 +1,41 @@
+edition = "2023";
+
+package ward;
+
+import "google/protobuf/timestamp.proto";
+import "orm.proto";
+import "payday.proto";
+
+option features.field_presence = IMPLICIT;
+option go_package = "github.com/lesomnus/ward";
+
+// Checkpoint is the one row that says when Ward was last alive, so that a
+// restart knows how long it was down: longer than engine.recovery_window and
+// the Issues it left open are closed as interrupted.diag_gap.
+message Checkpoint {
+  bytes id = 1 [(orm.field) = {
+    type: TYPE_UUID
+    key: true
+    default: ""
+  }];
+
+  google.protobuf.Timestamp date_alive = 8 [(orm.field) = {default: ""}];
+
+  // The run that wrote it; a new one on every start.
+  string run = 9;
+
+  google.protobuf.Timestamp date_updated = 13 [(orm.field) = {version: {}}];
+  google.protobuf.Timestamp date_created = 15 [(orm.field) = {
+    immutable: true
+    default: ""
+  }];
+
+  option (orm.message) = {
+    rpc: {crud: true}
+  };
+  option (payday.entity) = {
+    domain: 10
+    global: {}
+    erase: {hard: {}}
+  };
+}

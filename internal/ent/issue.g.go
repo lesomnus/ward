@@ -44,3 +44,34 @@ func (e *Issue) Proto() *ward.Issue {
 	x.SetOutOfService(e.OutOfService)
 	return x
 }
+func (e *IssueEvent) Proto() *ward.IssueEvent {
+	x := &ward.IssueEvent{}
+	x.SetId(e.Id[:])
+	x.SetCursor(e.Cursor)
+	x.SetIssueId(e.IssueId)
+	x.SetEvent(e.Event)
+	x.SetDateOccurred(timestamppb.New(e.DateOccurred))
+	x.SetComment(e.Comment)
+	x.SetDateCreated(timestamppb.New(e.DateCreated))
+	x.SetRule(e.Rule)
+	x.SetSource(e.Source)
+	x.SetNode(e.Node)
+	x.SetKey(e.Key)
+	x.SetSeverity(e.Severity)
+	x.SetLevel(e.Level)
+	x.SetState(e.State)
+	x.SetDateOpened(timestamppb.New(e.DateOpened))
+	x.SetDateSeen(timestamppb.New(e.DateSeen))
+	if e.DateClosed != nil {
+		x.SetDateClosed(timestamppb.New(*e.DateClosed))
+	}
+	x.SetCloseReason(e.CloseReason)
+	x.SetCount(e.Count)
+	x.SetRestarts(e.Restarts)
+	x.SetAttention(e.Attention)
+	x.SetAcked(e.Acked)
+	x.SetSuppressed(e.Suppressed)
+	x.SetShelved(e.Shelved)
+	x.SetOutOfService(e.OutOfService)
+	return x
+}

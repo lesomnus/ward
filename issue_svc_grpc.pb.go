@@ -19,12 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	IssueService_Add_FullMethodName   = "/ward.IssueService/Add"
-	IssueService_Get_FullMethodName   = "/ward.IssueService/Get"
-	IssueService_Patch_FullMethodName = "/ward.IssueService/Patch"
-	IssueService_Apply_FullMethodName = "/ward.IssueService/Apply"
-	IssueService_Erase_FullMethodName = "/ward.IssueService/Erase"
-	IssueService_List_FullMethodName  = "/ward.IssueService/List"
+	IssueService_Add_FullMethodName         = "/ward.IssueService/Add"
+	IssueService_Get_FullMethodName         = "/ward.IssueService/Get"
+	IssueService_Patch_FullMethodName       = "/ward.IssueService/Patch"
+	IssueService_Apply_FullMethodName       = "/ward.IssueService/Apply"
+	IssueService_Erase_FullMethodName       = "/ward.IssueService/Erase"
+	IssueService_List_FullMethodName        = "/ward.IssueService/List"
+	IssueService_Search_FullMethodName      = "/ward.IssueService/Search"
+	IssueService_Acknowledge_FullMethodName = "/ward.IssueService/Acknowledge"
+	IssueService_Comment_FullMethodName     = "/ward.IssueService/Comment"
+	IssueService_Reset_FullMethodName       = "/ward.IssueService/Reset"
 )
 
 // IssueServiceClient is the client API for IssueService service.
@@ -43,6 +47,14 @@ type IssueServiceClient interface {
 	Erase(ctx context.Context, in *IssueRef, opts ...grpc.CallOption) (*IssueEraseResponse, error)
 	// List reads Issues a page at a time.
 	List(ctx context.Context, in *IssueListRequest, opts ...grpc.CallOption) (*IssueListResponse, error)
+	// Issues by when they opened and closed.
+	Search(ctx context.Context, in *IssueSearchRequest, opts ...grpc.CallOption) (*IssueListResponse, error)
+	// An operator has seen it. Refused for an Issue already acknowledged.
+	Acknowledge(ctx context.Context, in *IssueAcknowledgeRequest, opts ...grpc.CallOption) (*Issue, error)
+	// An operator's note, kept as an IssueEvent.
+	Comment(ctx context.Context, in *IssueCommentRequest, opts ...grpc.CallOption) (*IssueEvent, error)
+	// Closes an Issue a latching rule left cleared. Refused while it is active.
+	Reset(ctx context.Context, in *IssueResetRequest, opts ...grpc.CallOption) (*Issue, error)
 }
 
 type issueServiceClient struct {
@@ -113,6 +125,46 @@ func (c *issueServiceClient) List(ctx context.Context, in *IssueListRequest, opt
 	return out, nil
 }
 
+func (c *issueServiceClient) Search(ctx context.Context, in *IssueSearchRequest, opts ...grpc.CallOption) (*IssueListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueListResponse)
+	err := c.cc.Invoke(ctx, IssueService_Search_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *issueServiceClient) Acknowledge(ctx context.Context, in *IssueAcknowledgeRequest, opts ...grpc.CallOption) (*Issue, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Issue)
+	err := c.cc.Invoke(ctx, IssueService_Acknowledge_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *issueServiceClient) Comment(ctx context.Context, in *IssueCommentRequest, opts ...grpc.CallOption) (*IssueEvent, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueEvent)
+	err := c.cc.Invoke(ctx, IssueService_Comment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *issueServiceClient) Reset(ctx context.Context, in *IssueResetRequest, opts ...grpc.CallOption) (*Issue, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Issue)
+	err := c.cc.Invoke(ctx, IssueService_Reset_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // IssueServiceServer is the server API for IssueService service.
 // All implementations must embed UnimplementedIssueServiceServer
 // for forward compatibility.
@@ -129,6 +181,14 @@ type IssueServiceServer interface {
 	Erase(context.Context, *IssueRef) (*IssueEraseResponse, error)
 	// List reads Issues a page at a time.
 	List(context.Context, *IssueListRequest) (*IssueListResponse, error)
+	// Issues by when they opened and closed.
+	Search(context.Context, *IssueSearchRequest) (*IssueListResponse, error)
+	// An operator has seen it. Refused for an Issue already acknowledged.
+	Acknowledge(context.Context, *IssueAcknowledgeRequest) (*Issue, error)
+	// An operator's note, kept as an IssueEvent.
+	Comment(context.Context, *IssueCommentRequest) (*IssueEvent, error)
+	// Closes an Issue a latching rule left cleared. Refused while it is active.
+	Reset(context.Context, *IssueResetRequest) (*Issue, error)
 	mustEmbedUnimplementedIssueServiceServer()
 }
 
@@ -156,6 +216,18 @@ func (UnimplementedIssueServiceServer) Erase(context.Context, *IssueRef) (*Issue
 }
 func (UnimplementedIssueServiceServer) List(context.Context, *IssueListRequest) (*IssueListResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method List not implemented")
+}
+func (UnimplementedIssueServiceServer) Search(context.Context, *IssueSearchRequest) (*IssueListResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Search not implemented")
+}
+func (UnimplementedIssueServiceServer) Acknowledge(context.Context, *IssueAcknowledgeRequest) (*Issue, error) {
+	return nil, status.Error(codes.Unimplemented, "method Acknowledge not implemented")
+}
+func (UnimplementedIssueServiceServer) Comment(context.Context, *IssueCommentRequest) (*IssueEvent, error) {
+	return nil, status.Error(codes.Unimplemented, "method Comment not implemented")
+}
+func (UnimplementedIssueServiceServer) Reset(context.Context, *IssueResetRequest) (*Issue, error) {
+	return nil, status.Error(codes.Unimplemented, "method Reset not implemented")
 }
 func (UnimplementedIssueServiceServer) mustEmbedUnimplementedIssueServiceServer() {}
 func (UnimplementedIssueServiceServer) testEmbeddedByValue()                      {}
@@ -286,6 +358,78 @@ func _IssueService_List_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IssueService_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueSearchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IssueServiceServer).Search(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IssueService_Search_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IssueServiceServer).Search(ctx, req.(*IssueSearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IssueService_Acknowledge_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueAcknowledgeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IssueServiceServer).Acknowledge(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IssueService_Acknowledge_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IssueServiceServer).Acknowledge(ctx, req.(*IssueAcknowledgeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IssueService_Comment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IssueServiceServer).Comment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IssueService_Comment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IssueServiceServer).Comment(ctx, req.(*IssueCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IssueService_Reset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueResetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IssueServiceServer).Reset(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IssueService_Reset_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IssueServiceServer).Reset(ctx, req.(*IssueResetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // IssueService_ServiceDesc is the grpc.ServiceDesc for IssueService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -317,7 +461,375 @@ var IssueService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "List",
 			Handler:    _IssueService_List_Handler,
 		},
+		{
+			MethodName: "Search",
+			Handler:    _IssueService_Search_Handler,
+		},
+		{
+			MethodName: "Acknowledge",
+			Handler:    _IssueService_Acknowledge_Handler,
+		},
+		{
+			MethodName: "Comment",
+			Handler:    _IssueService_Comment_Handler,
+		},
+		{
+			MethodName: "Reset",
+			Handler:    _IssueService_Reset_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
+	Metadata: "ward/issue_svc.g.proto",
+}
+
+const (
+	IssueEventService_Add_FullMethodName    = "/ward.IssueEventService/Add"
+	IssueEventService_Get_FullMethodName    = "/ward.IssueEventService/Get"
+	IssueEventService_Patch_FullMethodName  = "/ward.IssueEventService/Patch"
+	IssueEventService_Apply_FullMethodName  = "/ward.IssueEventService/Apply"
+	IssueEventService_Erase_FullMethodName  = "/ward.IssueEventService/Erase"
+	IssueEventService_List_FullMethodName   = "/ward.IssueEventService/List"
+	IssueEventService_Follow_FullMethodName = "/ward.IssueEventService/Follow"
+)
+
+// IssueEventServiceClient is the client API for IssueEventService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type IssueEventServiceClient interface {
+	// Add creates a new IssueEvent
+	Add(ctx context.Context, in *IssueEventAddRequest, opts ...grpc.CallOption) (*IssueEvent, error)
+	// Get retrieves a IssueEvent
+	Get(ctx context.Context, in *IssueEventGetRequest, opts ...grpc.CallOption) (*IssueEvent, error)
+	// Patch updates an existing IssueEvent
+	Patch(ctx context.Context, in *IssueEventPatchRequest, opts ...grpc.CallOption) (*IssueEvent, error)
+	// Apply applies a patch document to an existing IssueEvent
+	Apply(ctx context.Context, in *IssueEventApplyRequest, opts ...grpc.CallOption) (*IssueEvent, error)
+	// Erase deletes a IssueEvent
+	Erase(ctx context.Context, in *IssueEventRef, opts ...grpc.CallOption) (*IssueEventEraseResponse, error)
+	// List reads IssueEvents a page at a time.
+	List(ctx context.Context, in *IssueEventListRequest, opts ...grpc.CallOption) (*IssueEventListResponse, error)
+	// The transitions after a cursor, then each new one as it is committed.
+	// At-least-once: a follower that reconnects with the last cursor it saw may
+	// see a transition again. A cursor older than store.retention is refused.
+	Follow(ctx context.Context, in *IssueEventFollowRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[IssueEvent], error)
+}
+
+type issueEventServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewIssueEventServiceClient(cc grpc.ClientConnInterface) IssueEventServiceClient {
+	return &issueEventServiceClient{cc}
+}
+
+func (c *issueEventServiceClient) Add(ctx context.Context, in *IssueEventAddRequest, opts ...grpc.CallOption) (*IssueEvent, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueEvent)
+	err := c.cc.Invoke(ctx, IssueEventService_Add_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *issueEventServiceClient) Get(ctx context.Context, in *IssueEventGetRequest, opts ...grpc.CallOption) (*IssueEvent, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueEvent)
+	err := c.cc.Invoke(ctx, IssueEventService_Get_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *issueEventServiceClient) Patch(ctx context.Context, in *IssueEventPatchRequest, opts ...grpc.CallOption) (*IssueEvent, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueEvent)
+	err := c.cc.Invoke(ctx, IssueEventService_Patch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *issueEventServiceClient) Apply(ctx context.Context, in *IssueEventApplyRequest, opts ...grpc.CallOption) (*IssueEvent, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueEvent)
+	err := c.cc.Invoke(ctx, IssueEventService_Apply_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *issueEventServiceClient) Erase(ctx context.Context, in *IssueEventRef, opts ...grpc.CallOption) (*IssueEventEraseResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueEventEraseResponse)
+	err := c.cc.Invoke(ctx, IssueEventService_Erase_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *issueEventServiceClient) List(ctx context.Context, in *IssueEventListRequest, opts ...grpc.CallOption) (*IssueEventListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IssueEventListResponse)
+	err := c.cc.Invoke(ctx, IssueEventService_List_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *issueEventServiceClient) Follow(ctx context.Context, in *IssueEventFollowRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[IssueEvent], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &IssueEventService_ServiceDesc.Streams[0], IssueEventService_Follow_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[IssueEventFollowRequest, IssueEvent]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type IssueEventService_FollowClient = grpc.ServerStreamingClient[IssueEvent]
+
+// IssueEventServiceServer is the server API for IssueEventService service.
+// All implementations must embed UnimplementedIssueEventServiceServer
+// for forward compatibility.
+type IssueEventServiceServer interface {
+	// Add creates a new IssueEvent
+	Add(context.Context, *IssueEventAddRequest) (*IssueEvent, error)
+	// Get retrieves a IssueEvent
+	Get(context.Context, *IssueEventGetRequest) (*IssueEvent, error)
+	// Patch updates an existing IssueEvent
+	Patch(context.Context, *IssueEventPatchRequest) (*IssueEvent, error)
+	// Apply applies a patch document to an existing IssueEvent
+	Apply(context.Context, *IssueEventApplyRequest) (*IssueEvent, error)
+	// Erase deletes a IssueEvent
+	Erase(context.Context, *IssueEventRef) (*IssueEventEraseResponse, error)
+	// List reads IssueEvents a page at a time.
+	List(context.Context, *IssueEventListRequest) (*IssueEventListResponse, error)
+	// The transitions after a cursor, then each new one as it is committed.
+	// At-least-once: a follower that reconnects with the last cursor it saw may
+	// see a transition again. A cursor older than store.retention is refused.
+	Follow(*IssueEventFollowRequest, grpc.ServerStreamingServer[IssueEvent]) error
+	mustEmbedUnimplementedIssueEventServiceServer()
+}
+
+// UnimplementedIssueEventServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedIssueEventServiceServer struct{}
+
+func (UnimplementedIssueEventServiceServer) Add(context.Context, *IssueEventAddRequest) (*IssueEvent, error) {
+	return nil, status.Error(codes.Unimplemented, "method Add not implemented")
+}
+func (UnimplementedIssueEventServiceServer) Get(context.Context, *IssueEventGetRequest) (*IssueEvent, error) {
+	return nil, status.Error(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedIssueEventServiceServer) Patch(context.Context, *IssueEventPatchRequest) (*IssueEvent, error) {
+	return nil, status.Error(codes.Unimplemented, "method Patch not implemented")
+}
+func (UnimplementedIssueEventServiceServer) Apply(context.Context, *IssueEventApplyRequest) (*IssueEvent, error) {
+	return nil, status.Error(codes.Unimplemented, "method Apply not implemented")
+}
+func (UnimplementedIssueEventServiceServer) Erase(context.Context, *IssueEventRef) (*IssueEventEraseResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Erase not implemented")
+}
+func (UnimplementedIssueEventServiceServer) List(context.Context, *IssueEventListRequest) (*IssueEventListResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method List not implemented")
+}
+func (UnimplementedIssueEventServiceServer) Follow(*IssueEventFollowRequest, grpc.ServerStreamingServer[IssueEvent]) error {
+	return status.Error(codes.Unimplemented, "method Follow not implemented")
+}
+func (UnimplementedIssueEventServiceServer) mustEmbedUnimplementedIssueEventServiceServer() {}
+func (UnimplementedIssueEventServiceServer) testEmbeddedByValue()                           {}
+
+// UnsafeIssueEventServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to IssueEventServiceServer will
+// result in compilation errors.
+type UnsafeIssueEventServiceServer interface {
+	mustEmbedUnimplementedIssueEventServiceServer()
+}
+
+func RegisterIssueEventServiceServer(s grpc.ServiceRegistrar, srv IssueEventServiceServer) {
+	// If the following call panics, it indicates UnimplementedIssueEventServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&IssueEventService_ServiceDesc, srv)
+}
+
+func _IssueEventService_Add_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueEventAddRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IssueEventServiceServer).Add(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IssueEventService_Add_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IssueEventServiceServer).Add(ctx, req.(*IssueEventAddRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IssueEventService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueEventGetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IssueEventServiceServer).Get(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IssueEventService_Get_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IssueEventServiceServer).Get(ctx, req.(*IssueEventGetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IssueEventService_Patch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueEventPatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IssueEventServiceServer).Patch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IssueEventService_Patch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IssueEventServiceServer).Patch(ctx, req.(*IssueEventPatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IssueEventService_Apply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueEventApplyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IssueEventServiceServer).Apply(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IssueEventService_Apply_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IssueEventServiceServer).Apply(ctx, req.(*IssueEventApplyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IssueEventService_Erase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueEventRef)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IssueEventServiceServer).Erase(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IssueEventService_Erase_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IssueEventServiceServer).Erase(ctx, req.(*IssueEventRef))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IssueEventService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IssueEventListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IssueEventServiceServer).List(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: IssueEventService_List_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IssueEventServiceServer).List(ctx, req.(*IssueEventListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IssueEventService_Follow_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(IssueEventFollowRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(IssueEventServiceServer).Follow(m, &grpc.GenericServerStream[IssueEventFollowRequest, IssueEvent]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type IssueEventService_FollowServer = grpc.ServerStreamingServer[IssueEvent]
+
+// IssueEventService_ServiceDesc is the grpc.ServiceDesc for IssueEventService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var IssueEventService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "ward.IssueEventService",
+	HandlerType: (*IssueEventServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Add",
+			Handler:    _IssueEventService_Add_Handler,
+		},
+		{
+			MethodName: "Get",
+			Handler:    _IssueEventService_Get_Handler,
+		},
+		{
+			MethodName: "Patch",
+			Handler:    _IssueEventService_Patch_Handler,
+		},
+		{
+			MethodName: "Apply",
+			Handler:    _IssueEventService_Apply_Handler,
+		},
+		{
+			MethodName: "Erase",
+			Handler:    _IssueEventService_Erase_Handler,
+		},
+		{
+			MethodName: "List",
+			Handler:    _IssueEventService_List_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Follow",
+			Handler:       _IssueEventService_Follow_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "ward/issue_svc.g.proto",
 }

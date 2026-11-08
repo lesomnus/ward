@@ -2932,6 +2932,3299 @@ func (b0 IssueFilter_builder) Build() *IssueFilter {
 	return m0
 }
 
+type IssueSearchRequest struct {
+	state                     protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_DateOpenedFrom *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=date_opened_from,json=dateOpenedFrom"`
+	xxx_hidden_DateOpenedTo   *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=date_opened_to,json=dateOpenedTo"`
+	xxx_hidden_DateClosedFrom *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=date_closed_from,json=dateClosedFrom"`
+	xxx_hidden_DateClosedTo   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=date_closed_to,json=dateClosedTo"`
+	xxx_hidden_State          string                 `protobuf:"bytes,5,opt,name=state"`
+	xxx_hidden_Size           int32                  `protobuf:"varint,6,opt,name=size"`
+	xxx_hidden_After          string                 `protobuf:"bytes,7,opt,name=after"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *IssueSearchRequest) Reset() {
+	*x = IssueSearchRequest{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueSearchRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueSearchRequest) ProtoMessage() {}
+
+func (x *IssueSearchRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueSearchRequest) GetDateOpenedFrom() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateOpenedFrom
+	}
+	return nil
+}
+
+func (x *IssueSearchRequest) GetDateOpenedTo() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateOpenedTo
+	}
+	return nil
+}
+
+func (x *IssueSearchRequest) GetDateClosedFrom() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateClosedFrom
+	}
+	return nil
+}
+
+func (x *IssueSearchRequest) GetDateClosedTo() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateClosedTo
+	}
+	return nil
+}
+
+func (x *IssueSearchRequest) GetState() string {
+	if x != nil {
+		return x.xxx_hidden_State
+	}
+	return ""
+}
+
+func (x *IssueSearchRequest) GetSize() int32 {
+	if x != nil {
+		return x.xxx_hidden_Size
+	}
+	return 0
+}
+
+func (x *IssueSearchRequest) GetAfter() string {
+	if x != nil {
+		return x.xxx_hidden_After
+	}
+	return ""
+}
+
+func (x *IssueSearchRequest) SetDateOpenedFrom(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateOpenedFrom = v
+}
+
+func (x *IssueSearchRequest) SetDateOpenedTo(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateOpenedTo = v
+}
+
+func (x *IssueSearchRequest) SetDateClosedFrom(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateClosedFrom = v
+}
+
+func (x *IssueSearchRequest) SetDateClosedTo(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateClosedTo = v
+}
+
+func (x *IssueSearchRequest) SetState(v string) {
+	x.xxx_hidden_State = v
+}
+
+func (x *IssueSearchRequest) SetSize(v int32) {
+	x.xxx_hidden_Size = v
+}
+
+func (x *IssueSearchRequest) SetAfter(v string) {
+	x.xxx_hidden_After = v
+}
+
+func (x *IssueSearchRequest) HasDateOpenedFrom() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateOpenedFrom != nil
+}
+
+func (x *IssueSearchRequest) HasDateOpenedTo() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateOpenedTo != nil
+}
+
+func (x *IssueSearchRequest) HasDateClosedFrom() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateClosedFrom != nil
+}
+
+func (x *IssueSearchRequest) HasDateClosedTo() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateClosedTo != nil
+}
+
+func (x *IssueSearchRequest) ClearDateOpenedFrom() {
+	x.xxx_hidden_DateOpenedFrom = nil
+}
+
+func (x *IssueSearchRequest) ClearDateOpenedTo() {
+	x.xxx_hidden_DateOpenedTo = nil
+}
+
+func (x *IssueSearchRequest) ClearDateClosedFrom() {
+	x.xxx_hidden_DateClosedFrom = nil
+}
+
+func (x *IssueSearchRequest) ClearDateClosedTo() {
+	x.xxx_hidden_DateClosedTo = nil
+}
+
+type IssueSearchRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	DateOpenedFrom *timestamppb.Timestamp
+	DateOpenedTo   *timestamppb.Timestamp
+	DateClosedFrom *timestamppb.Timestamp
+	DateClosedTo   *timestamppb.Timestamp
+	// open or closed; empty for both.
+	State string
+	Size  int32
+	After string
+}
+
+func (b0 IssueSearchRequest_builder) Build() *IssueSearchRequest {
+	m0 := &IssueSearchRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_DateOpenedFrom = b.DateOpenedFrom
+	x.xxx_hidden_DateOpenedTo = b.DateOpenedTo
+	x.xxx_hidden_DateClosedFrom = b.DateClosedFrom
+	x.xxx_hidden_DateClosedTo = b.DateClosedTo
+	x.xxx_hidden_State = b.State
+	x.xxx_hidden_Size = b.Size
+	x.xxx_hidden_After = b.After
+	return m0
+}
+
+type IssueAcknowledgeRequest struct {
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Ref     *IssueRef              `protobuf:"bytes,1,opt,name=ref"`
+	xxx_hidden_Comment string                 `protobuf:"bytes,2,opt,name=comment"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *IssueAcknowledgeRequest) Reset() {
+	*x = IssueAcknowledgeRequest{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueAcknowledgeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueAcknowledgeRequest) ProtoMessage() {}
+
+func (x *IssueAcknowledgeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueAcknowledgeRequest) GetRef() *IssueRef {
+	if x != nil {
+		return x.xxx_hidden_Ref
+	}
+	return nil
+}
+
+func (x *IssueAcknowledgeRequest) GetComment() string {
+	if x != nil {
+		return x.xxx_hidden_Comment
+	}
+	return ""
+}
+
+func (x *IssueAcknowledgeRequest) SetRef(v *IssueRef) {
+	x.xxx_hidden_Ref = v
+}
+
+func (x *IssueAcknowledgeRequest) SetComment(v string) {
+	x.xxx_hidden_Comment = v
+}
+
+func (x *IssueAcknowledgeRequest) HasRef() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Ref != nil
+}
+
+func (x *IssueAcknowledgeRequest) ClearRef() {
+	x.xxx_hidden_Ref = nil
+}
+
+type IssueAcknowledgeRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Ref     *IssueRef
+	Comment string
+}
+
+func (b0 IssueAcknowledgeRequest_builder) Build() *IssueAcknowledgeRequest {
+	m0 := &IssueAcknowledgeRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Ref = b.Ref
+	x.xxx_hidden_Comment = b.Comment
+	return m0
+}
+
+type IssueCommentRequest struct {
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Ref     *IssueRef              `protobuf:"bytes,1,opt,name=ref"`
+	xxx_hidden_Comment string                 `protobuf:"bytes,2,opt,name=comment"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *IssueCommentRequest) Reset() {
+	*x = IssueCommentRequest{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueCommentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueCommentRequest) ProtoMessage() {}
+
+func (x *IssueCommentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueCommentRequest) GetRef() *IssueRef {
+	if x != nil {
+		return x.xxx_hidden_Ref
+	}
+	return nil
+}
+
+func (x *IssueCommentRequest) GetComment() string {
+	if x != nil {
+		return x.xxx_hidden_Comment
+	}
+	return ""
+}
+
+func (x *IssueCommentRequest) SetRef(v *IssueRef) {
+	x.xxx_hidden_Ref = v
+}
+
+func (x *IssueCommentRequest) SetComment(v string) {
+	x.xxx_hidden_Comment = v
+}
+
+func (x *IssueCommentRequest) HasRef() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Ref != nil
+}
+
+func (x *IssueCommentRequest) ClearRef() {
+	x.xxx_hidden_Ref = nil
+}
+
+type IssueCommentRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Ref     *IssueRef
+	Comment string
+}
+
+func (b0 IssueCommentRequest_builder) Build() *IssueCommentRequest {
+	m0 := &IssueCommentRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Ref = b.Ref
+	x.xxx_hidden_Comment = b.Comment
+	return m0
+}
+
+type IssueResetRequest struct {
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Ref     *IssueRef              `protobuf:"bytes,1,opt,name=ref"`
+	xxx_hidden_Comment string                 `protobuf:"bytes,2,opt,name=comment"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *IssueResetRequest) Reset() {
+	*x = IssueResetRequest{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueResetRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueResetRequest) ProtoMessage() {}
+
+func (x *IssueResetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueResetRequest) GetRef() *IssueRef {
+	if x != nil {
+		return x.xxx_hidden_Ref
+	}
+	return nil
+}
+
+func (x *IssueResetRequest) GetComment() string {
+	if x != nil {
+		return x.xxx_hidden_Comment
+	}
+	return ""
+}
+
+func (x *IssueResetRequest) SetRef(v *IssueRef) {
+	x.xxx_hidden_Ref = v
+}
+
+func (x *IssueResetRequest) SetComment(v string) {
+	x.xxx_hidden_Comment = v
+}
+
+func (x *IssueResetRequest) HasRef() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Ref != nil
+}
+
+func (x *IssueResetRequest) ClearRef() {
+	x.xxx_hidden_Ref = nil
+}
+
+type IssueResetRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Ref     *IssueRef
+	Comment string
+}
+
+func (b0 IssueResetRequest_builder) Build() *IssueResetRequest {
+	m0 := &IssueResetRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Ref = b.Ref
+	x.xxx_hidden_Comment = b.Comment
+	return m0
+}
+
+type IssueEventAddRequest struct {
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id           []byte                 `protobuf:"bytes,1,opt,name=id"`
+	xxx_hidden_Cursor       int64                  `protobuf:"varint,8,opt,name=cursor"`
+	xxx_hidden_IssueId      []byte                 `protobuf:"bytes,9,opt,name=issue_id,json=issueId"`
+	xxx_hidden_Event        string                 `protobuf:"bytes,10,opt,name=event"`
+	xxx_hidden_DateOccurred *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=date_occurred,json=dateOccurred"`
+	xxx_hidden_Comment      string                 `protobuf:"bytes,12,opt,name=comment"`
+	xxx_hidden_DateCreated  *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=date_created,json=dateCreated"`
+	xxx_hidden_Rule         string                 `protobuf:"bytes,16,opt,name=rule"`
+	xxx_hidden_Source       string                 `protobuf:"bytes,17,opt,name=source"`
+	xxx_hidden_Node         string                 `protobuf:"bytes,18,opt,name=node"`
+	xxx_hidden_Key          string                 `protobuf:"bytes,19,opt,name=key"`
+	xxx_hidden_Severity     string                 `protobuf:"bytes,20,opt,name=severity"`
+	xxx_hidden_Level        string                 `protobuf:"bytes,21,opt,name=level"`
+	xxx_hidden_State        string                 `protobuf:"bytes,22,opt,name=state"`
+	xxx_hidden_DateOpened   *timestamppb.Timestamp `protobuf:"bytes,23,opt,name=date_opened,json=dateOpened"`
+	xxx_hidden_DateSeen     *timestamppb.Timestamp `protobuf:"bytes,24,opt,name=date_seen,json=dateSeen"`
+	xxx_hidden_DateClosed   *timestamppb.Timestamp `protobuf:"bytes,25,opt,name=date_closed,json=dateClosed"`
+	xxx_hidden_CloseReason  string                 `protobuf:"bytes,26,opt,name=close_reason,json=closeReason"`
+	xxx_hidden_Count        int64                  `protobuf:"varint,27,opt,name=count"`
+	xxx_hidden_Restarts     int64                  `protobuf:"varint,28,opt,name=restarts"`
+	xxx_hidden_Attention    bool                   `protobuf:"varint,29,opt,name=attention"`
+	xxx_hidden_Acked        bool                   `protobuf:"varint,30,opt,name=acked"`
+	xxx_hidden_Suppressed   bool                   `protobuf:"varint,31,opt,name=suppressed"`
+	xxx_hidden_Shelved      bool                   `protobuf:"varint,32,opt,name=shelved"`
+	xxx_hidden_OutOfService bool                   `protobuf:"varint,33,opt,name=out_of_service,json=outOfService"`
+	XXX_raceDetectHookData  protoimpl.RaceDetectHookData
+	XXX_presence            [1]uint32
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *IssueEventAddRequest) Reset() {
+	*x = IssueEventAddRequest{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueEventAddRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueEventAddRequest) ProtoMessage() {}
+
+func (x *IssueEventAddRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueEventAddRequest) GetId() []byte {
+	if x != nil {
+		return x.xxx_hidden_Id
+	}
+	return nil
+}
+
+func (x *IssueEventAddRequest) GetCursor() int64 {
+	if x != nil {
+		return x.xxx_hidden_Cursor
+	}
+	return 0
+}
+
+func (x *IssueEventAddRequest) GetIssueId() []byte {
+	if x != nil {
+		return x.xxx_hidden_IssueId
+	}
+	return nil
+}
+
+func (x *IssueEventAddRequest) GetEvent() string {
+	if x != nil {
+		return x.xxx_hidden_Event
+	}
+	return ""
+}
+
+func (x *IssueEventAddRequest) GetDateOccurred() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateOccurred
+	}
+	return nil
+}
+
+func (x *IssueEventAddRequest) GetComment() string {
+	if x != nil {
+		return x.xxx_hidden_Comment
+	}
+	return ""
+}
+
+func (x *IssueEventAddRequest) GetDateCreated() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateCreated
+	}
+	return nil
+}
+
+func (x *IssueEventAddRequest) GetRule() string {
+	if x != nil {
+		return x.xxx_hidden_Rule
+	}
+	return ""
+}
+
+func (x *IssueEventAddRequest) GetSource() string {
+	if x != nil {
+		return x.xxx_hidden_Source
+	}
+	return ""
+}
+
+func (x *IssueEventAddRequest) GetNode() string {
+	if x != nil {
+		return x.xxx_hidden_Node
+	}
+	return ""
+}
+
+func (x *IssueEventAddRequest) GetKey() string {
+	if x != nil {
+		return x.xxx_hidden_Key
+	}
+	return ""
+}
+
+func (x *IssueEventAddRequest) GetSeverity() string {
+	if x != nil {
+		return x.xxx_hidden_Severity
+	}
+	return ""
+}
+
+func (x *IssueEventAddRequest) GetLevel() string {
+	if x != nil {
+		return x.xxx_hidden_Level
+	}
+	return ""
+}
+
+func (x *IssueEventAddRequest) GetState() string {
+	if x != nil {
+		return x.xxx_hidden_State
+	}
+	return ""
+}
+
+func (x *IssueEventAddRequest) GetDateOpened() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateOpened
+	}
+	return nil
+}
+
+func (x *IssueEventAddRequest) GetDateSeen() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateSeen
+	}
+	return nil
+}
+
+func (x *IssueEventAddRequest) GetDateClosed() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateClosed
+	}
+	return nil
+}
+
+func (x *IssueEventAddRequest) GetCloseReason() string {
+	if x != nil {
+		return x.xxx_hidden_CloseReason
+	}
+	return ""
+}
+
+func (x *IssueEventAddRequest) GetCount() int64 {
+	if x != nil {
+		return x.xxx_hidden_Count
+	}
+	return 0
+}
+
+func (x *IssueEventAddRequest) GetRestarts() int64 {
+	if x != nil {
+		return x.xxx_hidden_Restarts
+	}
+	return 0
+}
+
+func (x *IssueEventAddRequest) GetAttention() bool {
+	if x != nil {
+		return x.xxx_hidden_Attention
+	}
+	return false
+}
+
+func (x *IssueEventAddRequest) GetAcked() bool {
+	if x != nil {
+		return x.xxx_hidden_Acked
+	}
+	return false
+}
+
+func (x *IssueEventAddRequest) GetSuppressed() bool {
+	if x != nil {
+		return x.xxx_hidden_Suppressed
+	}
+	return false
+}
+
+func (x *IssueEventAddRequest) GetShelved() bool {
+	if x != nil {
+		return x.xxx_hidden_Shelved
+	}
+	return false
+}
+
+func (x *IssueEventAddRequest) GetOutOfService() bool {
+	if x != nil {
+		return x.xxx_hidden_OutOfService
+	}
+	return false
+}
+
+func (x *IssueEventAddRequest) SetId(v []byte) {
+	if v == nil {
+		v = []byte{}
+	}
+	x.xxx_hidden_Id = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 25)
+}
+
+func (x *IssueEventAddRequest) SetCursor(v int64) {
+	x.xxx_hidden_Cursor = v
+}
+
+func (x *IssueEventAddRequest) SetIssueId(v []byte) {
+	if v == nil {
+		v = []byte{}
+	}
+	x.xxx_hidden_IssueId = v
+}
+
+func (x *IssueEventAddRequest) SetEvent(v string) {
+	x.xxx_hidden_Event = v
+}
+
+func (x *IssueEventAddRequest) SetDateOccurred(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateOccurred = v
+}
+
+func (x *IssueEventAddRequest) SetComment(v string) {
+	x.xxx_hidden_Comment = v
+}
+
+func (x *IssueEventAddRequest) SetDateCreated(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateCreated = v
+}
+
+func (x *IssueEventAddRequest) SetRule(v string) {
+	x.xxx_hidden_Rule = v
+}
+
+func (x *IssueEventAddRequest) SetSource(v string) {
+	x.xxx_hidden_Source = v
+}
+
+func (x *IssueEventAddRequest) SetNode(v string) {
+	x.xxx_hidden_Node = v
+}
+
+func (x *IssueEventAddRequest) SetKey(v string) {
+	x.xxx_hidden_Key = v
+}
+
+func (x *IssueEventAddRequest) SetSeverity(v string) {
+	x.xxx_hidden_Severity = v
+}
+
+func (x *IssueEventAddRequest) SetLevel(v string) {
+	x.xxx_hidden_Level = v
+}
+
+func (x *IssueEventAddRequest) SetState(v string) {
+	x.xxx_hidden_State = v
+}
+
+func (x *IssueEventAddRequest) SetDateOpened(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateOpened = v
+}
+
+func (x *IssueEventAddRequest) SetDateSeen(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateSeen = v
+}
+
+func (x *IssueEventAddRequest) SetDateClosed(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateClosed = v
+}
+
+func (x *IssueEventAddRequest) SetCloseReason(v string) {
+	x.xxx_hidden_CloseReason = v
+}
+
+func (x *IssueEventAddRequest) SetCount(v int64) {
+	x.xxx_hidden_Count = v
+}
+
+func (x *IssueEventAddRequest) SetRestarts(v int64) {
+	x.xxx_hidden_Restarts = v
+}
+
+func (x *IssueEventAddRequest) SetAttention(v bool) {
+	x.xxx_hidden_Attention = v
+}
+
+func (x *IssueEventAddRequest) SetAcked(v bool) {
+	x.xxx_hidden_Acked = v
+}
+
+func (x *IssueEventAddRequest) SetSuppressed(v bool) {
+	x.xxx_hidden_Suppressed = v
+}
+
+func (x *IssueEventAddRequest) SetShelved(v bool) {
+	x.xxx_hidden_Shelved = v
+}
+
+func (x *IssueEventAddRequest) SetOutOfService(v bool) {
+	x.xxx_hidden_OutOfService = v
+}
+
+func (x *IssueEventAddRequest) HasId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *IssueEventAddRequest) HasDateOccurred() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateOccurred != nil
+}
+
+func (x *IssueEventAddRequest) HasDateCreated() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateCreated != nil
+}
+
+func (x *IssueEventAddRequest) HasDateOpened() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateOpened != nil
+}
+
+func (x *IssueEventAddRequest) HasDateSeen() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateSeen != nil
+}
+
+func (x *IssueEventAddRequest) HasDateClosed() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateClosed != nil
+}
+
+func (x *IssueEventAddRequest) ClearId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Id = nil
+}
+
+func (x *IssueEventAddRequest) ClearDateOccurred() {
+	x.xxx_hidden_DateOccurred = nil
+}
+
+func (x *IssueEventAddRequest) ClearDateCreated() {
+	x.xxx_hidden_DateCreated = nil
+}
+
+func (x *IssueEventAddRequest) ClearDateOpened() {
+	x.xxx_hidden_DateOpened = nil
+}
+
+func (x *IssueEventAddRequest) ClearDateSeen() {
+	x.xxx_hidden_DateSeen = nil
+}
+
+func (x *IssueEventAddRequest) ClearDateClosed() {
+	x.xxx_hidden_DateClosed = nil
+}
+
+type IssueEventAddRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Id           []byte
+	Cursor       int64
+	IssueId      []byte
+	Event        string
+	DateOccurred *timestamppb.Timestamp
+	Comment      string
+	DateCreated  *timestamppb.Timestamp
+	Rule         string
+	Source       string
+	Node         string
+	Key          string
+	Severity     string
+	Level        string
+	State        string
+	DateOpened   *timestamppb.Timestamp
+	DateSeen     *timestamppb.Timestamp
+	DateClosed   *timestamppb.Timestamp
+	CloseReason  string
+	Count        int64
+	Restarts     int64
+	Attention    bool
+	Acked        bool
+	Suppressed   bool
+	Shelved      bool
+	OutOfService bool
+}
+
+func (b0 IssueEventAddRequest_builder) Build() *IssueEventAddRequest {
+	m0 := &IssueEventAddRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Id != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 25)
+		x.xxx_hidden_Id = b.Id
+	}
+	x.xxx_hidden_Cursor = b.Cursor
+	x.xxx_hidden_IssueId = b.IssueId
+	x.xxx_hidden_Event = b.Event
+	x.xxx_hidden_DateOccurred = b.DateOccurred
+	x.xxx_hidden_Comment = b.Comment
+	x.xxx_hidden_DateCreated = b.DateCreated
+	x.xxx_hidden_Rule = b.Rule
+	x.xxx_hidden_Source = b.Source
+	x.xxx_hidden_Node = b.Node
+	x.xxx_hidden_Key = b.Key
+	x.xxx_hidden_Severity = b.Severity
+	x.xxx_hidden_Level = b.Level
+	x.xxx_hidden_State = b.State
+	x.xxx_hidden_DateOpened = b.DateOpened
+	x.xxx_hidden_DateSeen = b.DateSeen
+	x.xxx_hidden_DateClosed = b.DateClosed
+	x.xxx_hidden_CloseReason = b.CloseReason
+	x.xxx_hidden_Count = b.Count
+	x.xxx_hidden_Restarts = b.Restarts
+	x.xxx_hidden_Attention = b.Attention
+	x.xxx_hidden_Acked = b.Acked
+	x.xxx_hidden_Suppressed = b.Suppressed
+	x.xxx_hidden_Shelved = b.Shelved
+	x.xxx_hidden_OutOfService = b.OutOfService
+	return m0
+}
+
+type IssueEventGetRequest struct {
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Ref    *IssueEventRef         `protobuf:"bytes,1,opt,name=ref"`
+	xxx_hidden_Select *IssueEventSelect      `protobuf:"bytes,2,opt,name=select"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *IssueEventGetRequest) Reset() {
+	*x = IssueEventGetRequest{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueEventGetRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueEventGetRequest) ProtoMessage() {}
+
+func (x *IssueEventGetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueEventGetRequest) GetRef() *IssueEventRef {
+	if x != nil {
+		return x.xxx_hidden_Ref
+	}
+	return nil
+}
+
+func (x *IssueEventGetRequest) GetSelect() *IssueEventSelect {
+	if x != nil {
+		return x.xxx_hidden_Select
+	}
+	return nil
+}
+
+func (x *IssueEventGetRequest) SetRef(v *IssueEventRef) {
+	x.xxx_hidden_Ref = v
+}
+
+func (x *IssueEventGetRequest) SetSelect(v *IssueEventSelect) {
+	x.xxx_hidden_Select = v
+}
+
+func (x *IssueEventGetRequest) HasRef() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Ref != nil
+}
+
+func (x *IssueEventGetRequest) HasSelect() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Select != nil
+}
+
+func (x *IssueEventGetRequest) ClearRef() {
+	x.xxx_hidden_Ref = nil
+}
+
+func (x *IssueEventGetRequest) ClearSelect() {
+	x.xxx_hidden_Select = nil
+}
+
+type IssueEventGetRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Ref    *IssueEventRef
+	Select *IssueEventSelect
+}
+
+func (b0 IssueEventGetRequest_builder) Build() *IssueEventGetRequest {
+	m0 := &IssueEventGetRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Ref = b.Ref
+	x.xxx_hidden_Select = b.Select
+	return m0
+}
+
+type IssueEventRef struct {
+	state          protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Key isIssueEventRef_Key    `protobuf_oneof:"key"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *IssueEventRef) Reset() {
+	*x = IssueEventRef{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueEventRef) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueEventRef) ProtoMessage() {}
+
+func (x *IssueEventRef) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueEventRef) GetId() []byte {
+	if x != nil {
+		if x, ok := x.xxx_hidden_Key.(*issueEventRef_Id); ok {
+			return x.Id
+		}
+	}
+	return nil
+}
+
+func (x *IssueEventRef) GetCursor() int64 {
+	if x != nil {
+		if x, ok := x.xxx_hidden_Key.(*issueEventRef_Cursor); ok {
+			return x.Cursor
+		}
+	}
+	return 0
+}
+
+func (x *IssueEventRef) SetId(v []byte) {
+	if v == nil {
+		v = []byte{}
+	}
+	x.xxx_hidden_Key = &issueEventRef_Id{v}
+}
+
+func (x *IssueEventRef) SetCursor(v int64) {
+	x.xxx_hidden_Key = &issueEventRef_Cursor{v}
+}
+
+func (x *IssueEventRef) HasKey() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Key != nil
+}
+
+func (x *IssueEventRef) HasId() bool {
+	if x == nil {
+		return false
+	}
+	_, ok := x.xxx_hidden_Key.(*issueEventRef_Id)
+	return ok
+}
+
+func (x *IssueEventRef) HasCursor() bool {
+	if x == nil {
+		return false
+	}
+	_, ok := x.xxx_hidden_Key.(*issueEventRef_Cursor)
+	return ok
+}
+
+func (x *IssueEventRef) ClearKey() {
+	x.xxx_hidden_Key = nil
+}
+
+func (x *IssueEventRef) ClearId() {
+	if _, ok := x.xxx_hidden_Key.(*issueEventRef_Id); ok {
+		x.xxx_hidden_Key = nil
+	}
+}
+
+func (x *IssueEventRef) ClearCursor() {
+	if _, ok := x.xxx_hidden_Key.(*issueEventRef_Cursor); ok {
+		x.xxx_hidden_Key = nil
+	}
+}
+
+const IssueEventRef_Key_not_set_case case_IssueEventRef_Key = 0
+const IssueEventRef_Id_case case_IssueEventRef_Key = 1
+const IssueEventRef_Cursor_case case_IssueEventRef_Key = 8
+
+func (x *IssueEventRef) WhichKey() case_IssueEventRef_Key {
+	if x == nil {
+		return IssueEventRef_Key_not_set_case
+	}
+	switch x.xxx_hidden_Key.(type) {
+	case *issueEventRef_Id:
+		return IssueEventRef_Id_case
+	case *issueEventRef_Cursor:
+		return IssueEventRef_Cursor_case
+	default:
+		return IssueEventRef_Key_not_set_case
+	}
+}
+
+type IssueEventRef_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// Fields of oneof xxx_hidden_Key:
+	Id     []byte
+	Cursor *int64
+	// -- end of xxx_hidden_Key
+}
+
+func (b0 IssueEventRef_builder) Build() *IssueEventRef {
+	m0 := &IssueEventRef{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Id != nil {
+		x.xxx_hidden_Key = &issueEventRef_Id{b.Id}
+	}
+	if b.Cursor != nil {
+		x.xxx_hidden_Key = &issueEventRef_Cursor{*b.Cursor}
+	}
+	return m0
+}
+
+type case_IssueEventRef_Key protoreflect.FieldNumber
+
+func (x case_IssueEventRef_Key) String() string {
+	md := file_ward_issue_svc_g_proto_msgTypes[16].Descriptor()
+	if x == 0 {
+		return "not set"
+	}
+	return protoimpl.X.MessageFieldStringOf(md, protoreflect.FieldNumber(x))
+}
+
+type isIssueEventRef_Key interface {
+	isIssueEventRef_Key()
+}
+
+type issueEventRef_Id struct {
+	Id []byte `protobuf:"bytes,1,opt,name=id,oneof"`
+}
+
+type issueEventRef_Cursor struct {
+	Cursor int64 `protobuf:"varint,8,opt,name=cursor,oneof"`
+}
+
+func (*issueEventRef_Id) isIssueEventRef_Key() {}
+
+func (*issueEventRef_Cursor) isIssueEventRef_Key() {}
+
+type IssueEventSelect struct {
+	state                   protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_All          bool                   `protobuf:"varint,1,opt,name=all"`
+	xxx_hidden_Cursor       bool                   `protobuf:"varint,8,opt,name=cursor"`
+	xxx_hidden_IssueId      bool                   `protobuf:"varint,9,opt,name=issue_id,json=issueId"`
+	xxx_hidden_Event        bool                   `protobuf:"varint,10,opt,name=event"`
+	xxx_hidden_DateOccurred bool                   `protobuf:"varint,11,opt,name=date_occurred,json=dateOccurred"`
+	xxx_hidden_Comment      bool                   `protobuf:"varint,12,opt,name=comment"`
+	xxx_hidden_DateCreated  bool                   `protobuf:"varint,15,opt,name=date_created,json=dateCreated"`
+	xxx_hidden_Rule         bool                   `protobuf:"varint,16,opt,name=rule"`
+	xxx_hidden_Source       bool                   `protobuf:"varint,17,opt,name=source"`
+	xxx_hidden_Node         bool                   `protobuf:"varint,18,opt,name=node"`
+	xxx_hidden_Key          bool                   `protobuf:"varint,19,opt,name=key"`
+	xxx_hidden_Severity     bool                   `protobuf:"varint,20,opt,name=severity"`
+	xxx_hidden_Level        bool                   `protobuf:"varint,21,opt,name=level"`
+	xxx_hidden_State        bool                   `protobuf:"varint,22,opt,name=state"`
+	xxx_hidden_DateOpened   bool                   `protobuf:"varint,23,opt,name=date_opened,json=dateOpened"`
+	xxx_hidden_DateSeen     bool                   `protobuf:"varint,24,opt,name=date_seen,json=dateSeen"`
+	xxx_hidden_DateClosed   bool                   `protobuf:"varint,25,opt,name=date_closed,json=dateClosed"`
+	xxx_hidden_CloseReason  bool                   `protobuf:"varint,26,opt,name=close_reason,json=closeReason"`
+	xxx_hidden_Count        bool                   `protobuf:"varint,27,opt,name=count"`
+	xxx_hidden_Restarts     bool                   `protobuf:"varint,28,opt,name=restarts"`
+	xxx_hidden_Attention    bool                   `protobuf:"varint,29,opt,name=attention"`
+	xxx_hidden_Acked        bool                   `protobuf:"varint,30,opt,name=acked"`
+	xxx_hidden_Suppressed   bool                   `protobuf:"varint,31,opt,name=suppressed"`
+	xxx_hidden_Shelved      bool                   `protobuf:"varint,32,opt,name=shelved"`
+	xxx_hidden_OutOfService bool                   `protobuf:"varint,33,opt,name=out_of_service,json=outOfService"`
+	XXX_raceDetectHookData  protoimpl.RaceDetectHookData
+	XXX_presence            [1]uint32
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *IssueEventSelect) Reset() {
+	*x = IssueEventSelect{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueEventSelect) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueEventSelect) ProtoMessage() {}
+
+func (x *IssueEventSelect) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueEventSelect) GetAll() bool {
+	if x != nil {
+		return x.xxx_hidden_All
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetCursor() bool {
+	if x != nil {
+		return x.xxx_hidden_Cursor
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetIssueId() bool {
+	if x != nil {
+		return x.xxx_hidden_IssueId
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetEvent() bool {
+	if x != nil {
+		return x.xxx_hidden_Event
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetDateOccurred() bool {
+	if x != nil {
+		return x.xxx_hidden_DateOccurred
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetComment() bool {
+	if x != nil {
+		return x.xxx_hidden_Comment
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetDateCreated() bool {
+	if x != nil {
+		return x.xxx_hidden_DateCreated
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetRule() bool {
+	if x != nil {
+		return x.xxx_hidden_Rule
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetSource() bool {
+	if x != nil {
+		return x.xxx_hidden_Source
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetNode() bool {
+	if x != nil {
+		return x.xxx_hidden_Node
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetKey() bool {
+	if x != nil {
+		return x.xxx_hidden_Key
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetSeverity() bool {
+	if x != nil {
+		return x.xxx_hidden_Severity
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetLevel() bool {
+	if x != nil {
+		return x.xxx_hidden_Level
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetState() bool {
+	if x != nil {
+		return x.xxx_hidden_State
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetDateOpened() bool {
+	if x != nil {
+		return x.xxx_hidden_DateOpened
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetDateSeen() bool {
+	if x != nil {
+		return x.xxx_hidden_DateSeen
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetDateClosed() bool {
+	if x != nil {
+		return x.xxx_hidden_DateClosed
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetCloseReason() bool {
+	if x != nil {
+		return x.xxx_hidden_CloseReason
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetCount() bool {
+	if x != nil {
+		return x.xxx_hidden_Count
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetRestarts() bool {
+	if x != nil {
+		return x.xxx_hidden_Restarts
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetAttention() bool {
+	if x != nil {
+		return x.xxx_hidden_Attention
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetAcked() bool {
+	if x != nil {
+		return x.xxx_hidden_Acked
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetSuppressed() bool {
+	if x != nil {
+		return x.xxx_hidden_Suppressed
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetShelved() bool {
+	if x != nil {
+		return x.xxx_hidden_Shelved
+	}
+	return false
+}
+
+func (x *IssueEventSelect) GetOutOfService() bool {
+	if x != nil {
+		return x.xxx_hidden_OutOfService
+	}
+	return false
+}
+
+func (x *IssueEventSelect) SetAll(v bool) {
+	x.xxx_hidden_All = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 25)
+}
+
+func (x *IssueEventSelect) SetCursor(v bool) {
+	x.xxx_hidden_Cursor = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 25)
+}
+
+func (x *IssueEventSelect) SetIssueId(v bool) {
+	x.xxx_hidden_IssueId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 25)
+}
+
+func (x *IssueEventSelect) SetEvent(v bool) {
+	x.xxx_hidden_Event = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 25)
+}
+
+func (x *IssueEventSelect) SetDateOccurred(v bool) {
+	x.xxx_hidden_DateOccurred = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 25)
+}
+
+func (x *IssueEventSelect) SetComment(v bool) {
+	x.xxx_hidden_Comment = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 25)
+}
+
+func (x *IssueEventSelect) SetDateCreated(v bool) {
+	x.xxx_hidden_DateCreated = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 25)
+}
+
+func (x *IssueEventSelect) SetRule(v bool) {
+	x.xxx_hidden_Rule = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 25)
+}
+
+func (x *IssueEventSelect) SetSource(v bool) {
+	x.xxx_hidden_Source = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 25)
+}
+
+func (x *IssueEventSelect) SetNode(v bool) {
+	x.xxx_hidden_Node = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 25)
+}
+
+func (x *IssueEventSelect) SetKey(v bool) {
+	x.xxx_hidden_Key = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 25)
+}
+
+func (x *IssueEventSelect) SetSeverity(v bool) {
+	x.xxx_hidden_Severity = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 25)
+}
+
+func (x *IssueEventSelect) SetLevel(v bool) {
+	x.xxx_hidden_Level = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 25)
+}
+
+func (x *IssueEventSelect) SetState(v bool) {
+	x.xxx_hidden_State = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 13, 25)
+}
+
+func (x *IssueEventSelect) SetDateOpened(v bool) {
+	x.xxx_hidden_DateOpened = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 14, 25)
+}
+
+func (x *IssueEventSelect) SetDateSeen(v bool) {
+	x.xxx_hidden_DateSeen = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 15, 25)
+}
+
+func (x *IssueEventSelect) SetDateClosed(v bool) {
+	x.xxx_hidden_DateClosed = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 25)
+}
+
+func (x *IssueEventSelect) SetCloseReason(v bool) {
+	x.xxx_hidden_CloseReason = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 25)
+}
+
+func (x *IssueEventSelect) SetCount(v bool) {
+	x.xxx_hidden_Count = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 25)
+}
+
+func (x *IssueEventSelect) SetRestarts(v bool) {
+	x.xxx_hidden_Restarts = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 19, 25)
+}
+
+func (x *IssueEventSelect) SetAttention(v bool) {
+	x.xxx_hidden_Attention = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 20, 25)
+}
+
+func (x *IssueEventSelect) SetAcked(v bool) {
+	x.xxx_hidden_Acked = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 21, 25)
+}
+
+func (x *IssueEventSelect) SetSuppressed(v bool) {
+	x.xxx_hidden_Suppressed = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 22, 25)
+}
+
+func (x *IssueEventSelect) SetShelved(v bool) {
+	x.xxx_hidden_Shelved = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 23, 25)
+}
+
+func (x *IssueEventSelect) SetOutOfService(v bool) {
+	x.xxx_hidden_OutOfService = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 24, 25)
+}
+
+func (x *IssueEventSelect) HasAll() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *IssueEventSelect) HasCursor() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *IssueEventSelect) HasIssueId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *IssueEventSelect) HasEvent() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *IssueEventSelect) HasDateOccurred() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
+}
+
+func (x *IssueEventSelect) HasComment() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *IssueEventSelect) HasDateCreated() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *IssueEventSelect) HasRule() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
+}
+
+func (x *IssueEventSelect) HasSource() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
+}
+
+func (x *IssueEventSelect) HasNode() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
+}
+
+func (x *IssueEventSelect) HasKey() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 10)
+}
+
+func (x *IssueEventSelect) HasSeverity() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
+}
+
+func (x *IssueEventSelect) HasLevel() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 12)
+}
+
+func (x *IssueEventSelect) HasState() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 13)
+}
+
+func (x *IssueEventSelect) HasDateOpened() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 14)
+}
+
+func (x *IssueEventSelect) HasDateSeen() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 15)
+}
+
+func (x *IssueEventSelect) HasDateClosed() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 16)
+}
+
+func (x *IssueEventSelect) HasCloseReason() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 17)
+}
+
+func (x *IssueEventSelect) HasCount() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 18)
+}
+
+func (x *IssueEventSelect) HasRestarts() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 19)
+}
+
+func (x *IssueEventSelect) HasAttention() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 20)
+}
+
+func (x *IssueEventSelect) HasAcked() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 21)
+}
+
+func (x *IssueEventSelect) HasSuppressed() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 22)
+}
+
+func (x *IssueEventSelect) HasShelved() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 23)
+}
+
+func (x *IssueEventSelect) HasOutOfService() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 24)
+}
+
+func (x *IssueEventSelect) ClearAll() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_All = false
+}
+
+func (x *IssueEventSelect) ClearCursor() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Cursor = false
+}
+
+func (x *IssueEventSelect) ClearIssueId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_IssueId = false
+}
+
+func (x *IssueEventSelect) ClearEvent() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Event = false
+}
+
+func (x *IssueEventSelect) ClearDateOccurred() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_DateOccurred = false
+}
+
+func (x *IssueEventSelect) ClearComment() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_Comment = false
+}
+
+func (x *IssueEventSelect) ClearDateCreated() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_DateCreated = false
+}
+
+func (x *IssueEventSelect) ClearRule() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
+	x.xxx_hidden_Rule = false
+}
+
+func (x *IssueEventSelect) ClearSource() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
+	x.xxx_hidden_Source = false
+}
+
+func (x *IssueEventSelect) ClearNode() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
+	x.xxx_hidden_Node = false
+}
+
+func (x *IssueEventSelect) ClearKey() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
+	x.xxx_hidden_Key = false
+}
+
+func (x *IssueEventSelect) ClearSeverity() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
+	x.xxx_hidden_Severity = false
+}
+
+func (x *IssueEventSelect) ClearLevel() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 12)
+	x.xxx_hidden_Level = false
+}
+
+func (x *IssueEventSelect) ClearState() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 13)
+	x.xxx_hidden_State = false
+}
+
+func (x *IssueEventSelect) ClearDateOpened() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 14)
+	x.xxx_hidden_DateOpened = false
+}
+
+func (x *IssueEventSelect) ClearDateSeen() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 15)
+	x.xxx_hidden_DateSeen = false
+}
+
+func (x *IssueEventSelect) ClearDateClosed() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 16)
+	x.xxx_hidden_DateClosed = false
+}
+
+func (x *IssueEventSelect) ClearCloseReason() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 17)
+	x.xxx_hidden_CloseReason = false
+}
+
+func (x *IssueEventSelect) ClearCount() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 18)
+	x.xxx_hidden_Count = false
+}
+
+func (x *IssueEventSelect) ClearRestarts() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 19)
+	x.xxx_hidden_Restarts = false
+}
+
+func (x *IssueEventSelect) ClearAttention() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 20)
+	x.xxx_hidden_Attention = false
+}
+
+func (x *IssueEventSelect) ClearAcked() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 21)
+	x.xxx_hidden_Acked = false
+}
+
+func (x *IssueEventSelect) ClearSuppressed() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 22)
+	x.xxx_hidden_Suppressed = false
+}
+
+func (x *IssueEventSelect) ClearShelved() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 23)
+	x.xxx_hidden_Shelved = false
+}
+
+func (x *IssueEventSelect) ClearOutOfService() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 24)
+	x.xxx_hidden_OutOfService = false
+}
+
+type IssueEventSelect_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	All          *bool
+	Cursor       *bool
+	IssueId      *bool
+	Event        *bool
+	DateOccurred *bool
+	Comment      *bool
+	DateCreated  *bool
+	Rule         *bool
+	Source       *bool
+	Node         *bool
+	Key          *bool
+	Severity     *bool
+	Level        *bool
+	State        *bool
+	DateOpened   *bool
+	DateSeen     *bool
+	DateClosed   *bool
+	CloseReason  *bool
+	Count        *bool
+	Restarts     *bool
+	Attention    *bool
+	Acked        *bool
+	Suppressed   *bool
+	Shelved      *bool
+	OutOfService *bool
+}
+
+func (b0 IssueEventSelect_builder) Build() *IssueEventSelect {
+	m0 := &IssueEventSelect{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.All != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 25)
+		x.xxx_hidden_All = *b.All
+	}
+	if b.Cursor != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 25)
+		x.xxx_hidden_Cursor = *b.Cursor
+	}
+	if b.IssueId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 25)
+		x.xxx_hidden_IssueId = *b.IssueId
+	}
+	if b.Event != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 25)
+		x.xxx_hidden_Event = *b.Event
+	}
+	if b.DateOccurred != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 25)
+		x.xxx_hidden_DateOccurred = *b.DateOccurred
+	}
+	if b.Comment != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 25)
+		x.xxx_hidden_Comment = *b.Comment
+	}
+	if b.DateCreated != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 25)
+		x.xxx_hidden_DateCreated = *b.DateCreated
+	}
+	if b.Rule != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 25)
+		x.xxx_hidden_Rule = *b.Rule
+	}
+	if b.Source != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 25)
+		x.xxx_hidden_Source = *b.Source
+	}
+	if b.Node != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 25)
+		x.xxx_hidden_Node = *b.Node
+	}
+	if b.Key != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 25)
+		x.xxx_hidden_Key = *b.Key
+	}
+	if b.Severity != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 25)
+		x.xxx_hidden_Severity = *b.Severity
+	}
+	if b.Level != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 25)
+		x.xxx_hidden_Level = *b.Level
+	}
+	if b.State != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 13, 25)
+		x.xxx_hidden_State = *b.State
+	}
+	if b.DateOpened != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 14, 25)
+		x.xxx_hidden_DateOpened = *b.DateOpened
+	}
+	if b.DateSeen != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 15, 25)
+		x.xxx_hidden_DateSeen = *b.DateSeen
+	}
+	if b.DateClosed != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 25)
+		x.xxx_hidden_DateClosed = *b.DateClosed
+	}
+	if b.CloseReason != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 25)
+		x.xxx_hidden_CloseReason = *b.CloseReason
+	}
+	if b.Count != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 25)
+		x.xxx_hidden_Count = *b.Count
+	}
+	if b.Restarts != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 19, 25)
+		x.xxx_hidden_Restarts = *b.Restarts
+	}
+	if b.Attention != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 20, 25)
+		x.xxx_hidden_Attention = *b.Attention
+	}
+	if b.Acked != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 21, 25)
+		x.xxx_hidden_Acked = *b.Acked
+	}
+	if b.Suppressed != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 22, 25)
+		x.xxx_hidden_Suppressed = *b.Suppressed
+	}
+	if b.Shelved != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 23, 25)
+		x.xxx_hidden_Shelved = *b.Shelved
+	}
+	if b.OutOfService != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 24, 25)
+		x.xxx_hidden_OutOfService = *b.OutOfService
+	}
+	return m0
+}
+
+type IssueEventPatchRequest struct {
+	state                     protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Ref            *IssueEventRef         `protobuf:"bytes,1,opt,name=ref"`
+	xxx_hidden_Cursor         int64                  `protobuf:"varint,16,opt,name=cursor"`
+	xxx_hidden_IssueId        []byte                 `protobuf:"bytes,18,opt,name=issue_id,json=issueId"`
+	xxx_hidden_Event          *string                `protobuf:"bytes,20,opt,name=event"`
+	xxx_hidden_DateOccurred   *timestamppb.Timestamp `protobuf:"bytes,22,opt,name=date_occurred,json=dateOccurred"`
+	xxx_hidden_Comment        *string                `protobuf:"bytes,24,opt,name=comment"`
+	xxx_hidden_Rule           *string                `protobuf:"bytes,32,opt,name=rule"`
+	xxx_hidden_Source         *string                `protobuf:"bytes,34,opt,name=source"`
+	xxx_hidden_Node           *string                `protobuf:"bytes,36,opt,name=node"`
+	xxx_hidden_Key            *string                `protobuf:"bytes,38,opt,name=key"`
+	xxx_hidden_Severity       *string                `protobuf:"bytes,40,opt,name=severity"`
+	xxx_hidden_Level          *string                `protobuf:"bytes,42,opt,name=level"`
+	xxx_hidden_State          *string                `protobuf:"bytes,44,opt,name=state"`
+	xxx_hidden_DateOpened     *timestamppb.Timestamp `protobuf:"bytes,46,opt,name=date_opened,json=dateOpened"`
+	xxx_hidden_DateSeen       *timestamppb.Timestamp `protobuf:"bytes,48,opt,name=date_seen,json=dateSeen"`
+	xxx_hidden_DateClosed     *timestamppb.Timestamp `protobuf:"bytes,50,opt,name=date_closed,json=dateClosed"`
+	xxx_hidden_DateClosedNull bool                   `protobuf:"varint,51,opt,name=date_closed_null,json=dateClosedNull"`
+	xxx_hidden_CloseReason    *string                `protobuf:"bytes,52,opt,name=close_reason,json=closeReason"`
+	xxx_hidden_Count          int64                  `protobuf:"varint,54,opt,name=count"`
+	xxx_hidden_Restarts       int64                  `protobuf:"varint,56,opt,name=restarts"`
+	xxx_hidden_Attention      bool                   `protobuf:"varint,58,opt,name=attention"`
+	xxx_hidden_Acked          bool                   `protobuf:"varint,60,opt,name=acked"`
+	xxx_hidden_Suppressed     bool                   `protobuf:"varint,62,opt,name=suppressed"`
+	xxx_hidden_Shelved        bool                   `protobuf:"varint,64,opt,name=shelved"`
+	xxx_hidden_OutOfService   bool                   `protobuf:"varint,66,opt,name=out_of_service,json=outOfService"`
+	XXX_raceDetectHookData    protoimpl.RaceDetectHookData
+	XXX_presence              [1]uint32
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *IssueEventPatchRequest) Reset() {
+	*x = IssueEventPatchRequest{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueEventPatchRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueEventPatchRequest) ProtoMessage() {}
+
+func (x *IssueEventPatchRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueEventPatchRequest) GetRef() *IssueEventRef {
+	if x != nil {
+		return x.xxx_hidden_Ref
+	}
+	return nil
+}
+
+func (x *IssueEventPatchRequest) GetCursor() int64 {
+	if x != nil {
+		return x.xxx_hidden_Cursor
+	}
+	return 0
+}
+
+func (x *IssueEventPatchRequest) GetIssueId() []byte {
+	if x != nil {
+		return x.xxx_hidden_IssueId
+	}
+	return nil
+}
+
+func (x *IssueEventPatchRequest) GetEvent() string {
+	if x != nil {
+		if x.xxx_hidden_Event != nil {
+			return *x.xxx_hidden_Event
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IssueEventPatchRequest) GetDateOccurred() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateOccurred
+	}
+	return nil
+}
+
+func (x *IssueEventPatchRequest) GetComment() string {
+	if x != nil {
+		if x.xxx_hidden_Comment != nil {
+			return *x.xxx_hidden_Comment
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IssueEventPatchRequest) GetRule() string {
+	if x != nil {
+		if x.xxx_hidden_Rule != nil {
+			return *x.xxx_hidden_Rule
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IssueEventPatchRequest) GetSource() string {
+	if x != nil {
+		if x.xxx_hidden_Source != nil {
+			return *x.xxx_hidden_Source
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IssueEventPatchRequest) GetNode() string {
+	if x != nil {
+		if x.xxx_hidden_Node != nil {
+			return *x.xxx_hidden_Node
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IssueEventPatchRequest) GetKey() string {
+	if x != nil {
+		if x.xxx_hidden_Key != nil {
+			return *x.xxx_hidden_Key
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IssueEventPatchRequest) GetSeverity() string {
+	if x != nil {
+		if x.xxx_hidden_Severity != nil {
+			return *x.xxx_hidden_Severity
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IssueEventPatchRequest) GetLevel() string {
+	if x != nil {
+		if x.xxx_hidden_Level != nil {
+			return *x.xxx_hidden_Level
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IssueEventPatchRequest) GetState() string {
+	if x != nil {
+		if x.xxx_hidden_State != nil {
+			return *x.xxx_hidden_State
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IssueEventPatchRequest) GetDateOpened() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateOpened
+	}
+	return nil
+}
+
+func (x *IssueEventPatchRequest) GetDateSeen() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateSeen
+	}
+	return nil
+}
+
+func (x *IssueEventPatchRequest) GetDateClosed() *timestamppb.Timestamp {
+	if x != nil {
+		return x.xxx_hidden_DateClosed
+	}
+	return nil
+}
+
+func (x *IssueEventPatchRequest) GetDateClosedNull() bool {
+	if x != nil {
+		return x.xxx_hidden_DateClosedNull
+	}
+	return false
+}
+
+func (x *IssueEventPatchRequest) GetCloseReason() string {
+	if x != nil {
+		if x.xxx_hidden_CloseReason != nil {
+			return *x.xxx_hidden_CloseReason
+		}
+		return ""
+	}
+	return ""
+}
+
+func (x *IssueEventPatchRequest) GetCount() int64 {
+	if x != nil {
+		return x.xxx_hidden_Count
+	}
+	return 0
+}
+
+func (x *IssueEventPatchRequest) GetRestarts() int64 {
+	if x != nil {
+		return x.xxx_hidden_Restarts
+	}
+	return 0
+}
+
+func (x *IssueEventPatchRequest) GetAttention() bool {
+	if x != nil {
+		return x.xxx_hidden_Attention
+	}
+	return false
+}
+
+func (x *IssueEventPatchRequest) GetAcked() bool {
+	if x != nil {
+		return x.xxx_hidden_Acked
+	}
+	return false
+}
+
+func (x *IssueEventPatchRequest) GetSuppressed() bool {
+	if x != nil {
+		return x.xxx_hidden_Suppressed
+	}
+	return false
+}
+
+func (x *IssueEventPatchRequest) GetShelved() bool {
+	if x != nil {
+		return x.xxx_hidden_Shelved
+	}
+	return false
+}
+
+func (x *IssueEventPatchRequest) GetOutOfService() bool {
+	if x != nil {
+		return x.xxx_hidden_OutOfService
+	}
+	return false
+}
+
+func (x *IssueEventPatchRequest) SetRef(v *IssueEventRef) {
+	x.xxx_hidden_Ref = v
+}
+
+func (x *IssueEventPatchRequest) SetCursor(v int64) {
+	x.xxx_hidden_Cursor = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 25)
+}
+
+func (x *IssueEventPatchRequest) SetIssueId(v []byte) {
+	if v == nil {
+		v = []byte{}
+	}
+	x.xxx_hidden_IssueId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 25)
+}
+
+func (x *IssueEventPatchRequest) SetEvent(v string) {
+	x.xxx_hidden_Event = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 25)
+}
+
+func (x *IssueEventPatchRequest) SetDateOccurred(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateOccurred = v
+}
+
+func (x *IssueEventPatchRequest) SetComment(v string) {
+	x.xxx_hidden_Comment = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 5, 25)
+}
+
+func (x *IssueEventPatchRequest) SetRule(v string) {
+	x.xxx_hidden_Rule = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 6, 25)
+}
+
+func (x *IssueEventPatchRequest) SetSource(v string) {
+	x.xxx_hidden_Source = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 7, 25)
+}
+
+func (x *IssueEventPatchRequest) SetNode(v string) {
+	x.xxx_hidden_Node = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 8, 25)
+}
+
+func (x *IssueEventPatchRequest) SetKey(v string) {
+	x.xxx_hidden_Key = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 9, 25)
+}
+
+func (x *IssueEventPatchRequest) SetSeverity(v string) {
+	x.xxx_hidden_Severity = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 10, 25)
+}
+
+func (x *IssueEventPatchRequest) SetLevel(v string) {
+	x.xxx_hidden_Level = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 11, 25)
+}
+
+func (x *IssueEventPatchRequest) SetState(v string) {
+	x.xxx_hidden_State = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 12, 25)
+}
+
+func (x *IssueEventPatchRequest) SetDateOpened(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateOpened = v
+}
+
+func (x *IssueEventPatchRequest) SetDateSeen(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateSeen = v
+}
+
+func (x *IssueEventPatchRequest) SetDateClosed(v *timestamppb.Timestamp) {
+	x.xxx_hidden_DateClosed = v
+}
+
+func (x *IssueEventPatchRequest) SetDateClosedNull(v bool) {
+	x.xxx_hidden_DateClosedNull = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 16, 25)
+}
+
+func (x *IssueEventPatchRequest) SetCloseReason(v string) {
+	x.xxx_hidden_CloseReason = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 17, 25)
+}
+
+func (x *IssueEventPatchRequest) SetCount(v int64) {
+	x.xxx_hidden_Count = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 18, 25)
+}
+
+func (x *IssueEventPatchRequest) SetRestarts(v int64) {
+	x.xxx_hidden_Restarts = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 19, 25)
+}
+
+func (x *IssueEventPatchRequest) SetAttention(v bool) {
+	x.xxx_hidden_Attention = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 20, 25)
+}
+
+func (x *IssueEventPatchRequest) SetAcked(v bool) {
+	x.xxx_hidden_Acked = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 21, 25)
+}
+
+func (x *IssueEventPatchRequest) SetSuppressed(v bool) {
+	x.xxx_hidden_Suppressed = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 22, 25)
+}
+
+func (x *IssueEventPatchRequest) SetShelved(v bool) {
+	x.xxx_hidden_Shelved = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 23, 25)
+}
+
+func (x *IssueEventPatchRequest) SetOutOfService(v bool) {
+	x.xxx_hidden_OutOfService = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 24, 25)
+}
+
+func (x *IssueEventPatchRequest) HasRef() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Ref != nil
+}
+
+func (x *IssueEventPatchRequest) HasCursor() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *IssueEventPatchRequest) HasIssueId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
+}
+
+func (x *IssueEventPatchRequest) HasEvent() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
+}
+
+func (x *IssueEventPatchRequest) HasDateOccurred() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateOccurred != nil
+}
+
+func (x *IssueEventPatchRequest) HasComment() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 5)
+}
+
+func (x *IssueEventPatchRequest) HasRule() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 6)
+}
+
+func (x *IssueEventPatchRequest) HasSource() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 7)
+}
+
+func (x *IssueEventPatchRequest) HasNode() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 8)
+}
+
+func (x *IssueEventPatchRequest) HasKey() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 9)
+}
+
+func (x *IssueEventPatchRequest) HasSeverity() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 10)
+}
+
+func (x *IssueEventPatchRequest) HasLevel() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 11)
+}
+
+func (x *IssueEventPatchRequest) HasState() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 12)
+}
+
+func (x *IssueEventPatchRequest) HasDateOpened() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateOpened != nil
+}
+
+func (x *IssueEventPatchRequest) HasDateSeen() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateSeen != nil
+}
+
+func (x *IssueEventPatchRequest) HasDateClosed() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_DateClosed != nil
+}
+
+func (x *IssueEventPatchRequest) HasDateClosedNull() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 16)
+}
+
+func (x *IssueEventPatchRequest) HasCloseReason() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 17)
+}
+
+func (x *IssueEventPatchRequest) HasCount() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 18)
+}
+
+func (x *IssueEventPatchRequest) HasRestarts() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 19)
+}
+
+func (x *IssueEventPatchRequest) HasAttention() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 20)
+}
+
+func (x *IssueEventPatchRequest) HasAcked() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 21)
+}
+
+func (x *IssueEventPatchRequest) HasSuppressed() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 22)
+}
+
+func (x *IssueEventPatchRequest) HasShelved() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 23)
+}
+
+func (x *IssueEventPatchRequest) HasOutOfService() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 24)
+}
+
+func (x *IssueEventPatchRequest) ClearRef() {
+	x.xxx_hidden_Ref = nil
+}
+
+func (x *IssueEventPatchRequest) ClearCursor() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Cursor = 0
+}
+
+func (x *IssueEventPatchRequest) ClearIssueId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_IssueId = nil
+}
+
+func (x *IssueEventPatchRequest) ClearEvent() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Event = nil
+}
+
+func (x *IssueEventPatchRequest) ClearDateOccurred() {
+	x.xxx_hidden_DateOccurred = nil
+}
+
+func (x *IssueEventPatchRequest) ClearComment() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 5)
+	x.xxx_hidden_Comment = nil
+}
+
+func (x *IssueEventPatchRequest) ClearRule() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 6)
+	x.xxx_hidden_Rule = nil
+}
+
+func (x *IssueEventPatchRequest) ClearSource() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 7)
+	x.xxx_hidden_Source = nil
+}
+
+func (x *IssueEventPatchRequest) ClearNode() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 8)
+	x.xxx_hidden_Node = nil
+}
+
+func (x *IssueEventPatchRequest) ClearKey() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 9)
+	x.xxx_hidden_Key = nil
+}
+
+func (x *IssueEventPatchRequest) ClearSeverity() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 10)
+	x.xxx_hidden_Severity = nil
+}
+
+func (x *IssueEventPatchRequest) ClearLevel() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 11)
+	x.xxx_hidden_Level = nil
+}
+
+func (x *IssueEventPatchRequest) ClearState() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 12)
+	x.xxx_hidden_State = nil
+}
+
+func (x *IssueEventPatchRequest) ClearDateOpened() {
+	x.xxx_hidden_DateOpened = nil
+}
+
+func (x *IssueEventPatchRequest) ClearDateSeen() {
+	x.xxx_hidden_DateSeen = nil
+}
+
+func (x *IssueEventPatchRequest) ClearDateClosed() {
+	x.xxx_hidden_DateClosed = nil
+}
+
+func (x *IssueEventPatchRequest) ClearDateClosedNull() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 16)
+	x.xxx_hidden_DateClosedNull = false
+}
+
+func (x *IssueEventPatchRequest) ClearCloseReason() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 17)
+	x.xxx_hidden_CloseReason = nil
+}
+
+func (x *IssueEventPatchRequest) ClearCount() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 18)
+	x.xxx_hidden_Count = 0
+}
+
+func (x *IssueEventPatchRequest) ClearRestarts() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 19)
+	x.xxx_hidden_Restarts = 0
+}
+
+func (x *IssueEventPatchRequest) ClearAttention() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 20)
+	x.xxx_hidden_Attention = false
+}
+
+func (x *IssueEventPatchRequest) ClearAcked() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 21)
+	x.xxx_hidden_Acked = false
+}
+
+func (x *IssueEventPatchRequest) ClearSuppressed() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 22)
+	x.xxx_hidden_Suppressed = false
+}
+
+func (x *IssueEventPatchRequest) ClearShelved() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 23)
+	x.xxx_hidden_Shelved = false
+}
+
+func (x *IssueEventPatchRequest) ClearOutOfService() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 24)
+	x.xxx_hidden_OutOfService = false
+}
+
+type IssueEventPatchRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Ref          *IssueEventRef
+	Cursor       *int64
+	IssueId      []byte
+	Event        *string
+	DateOccurred *timestamppb.Timestamp
+	Comment      *string
+	Rule         *string
+	Source       *string
+	Node         *string
+	Key          *string
+	Severity     *string
+	Level        *string
+	State        *string
+	DateOpened   *timestamppb.Timestamp
+	DateSeen     *timestamppb.Timestamp
+	DateClosed   *timestamppb.Timestamp
+	// Clear date_closed instead of writing it.
+	// It takes a field of its own because an unset value already means
+	// "leave it alone", so no value could have meant NULL. It wins
+	// outright: setting both this and date_closed clears.
+	DateClosedNull *bool
+	CloseReason    *string
+	Count          *int64
+	Restarts       *int64
+	Attention      *bool
+	Acked          *bool
+	Suppressed     *bool
+	Shelved        *bool
+	OutOfService   *bool
+}
+
+func (b0 IssueEventPatchRequest_builder) Build() *IssueEventPatchRequest {
+	m0 := &IssueEventPatchRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Ref = b.Ref
+	if b.Cursor != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 25)
+		x.xxx_hidden_Cursor = *b.Cursor
+	}
+	if b.IssueId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 25)
+		x.xxx_hidden_IssueId = b.IssueId
+	}
+	if b.Event != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 25)
+		x.xxx_hidden_Event = b.Event
+	}
+	x.xxx_hidden_DateOccurred = b.DateOccurred
+	if b.Comment != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 5, 25)
+		x.xxx_hidden_Comment = b.Comment
+	}
+	if b.Rule != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 6, 25)
+		x.xxx_hidden_Rule = b.Rule
+	}
+	if b.Source != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 7, 25)
+		x.xxx_hidden_Source = b.Source
+	}
+	if b.Node != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 8, 25)
+		x.xxx_hidden_Node = b.Node
+	}
+	if b.Key != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 9, 25)
+		x.xxx_hidden_Key = b.Key
+	}
+	if b.Severity != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 10, 25)
+		x.xxx_hidden_Severity = b.Severity
+	}
+	if b.Level != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 11, 25)
+		x.xxx_hidden_Level = b.Level
+	}
+	if b.State != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 12, 25)
+		x.xxx_hidden_State = b.State
+	}
+	x.xxx_hidden_DateOpened = b.DateOpened
+	x.xxx_hidden_DateSeen = b.DateSeen
+	x.xxx_hidden_DateClosed = b.DateClosed
+	if b.DateClosedNull != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 16, 25)
+		x.xxx_hidden_DateClosedNull = *b.DateClosedNull
+	}
+	if b.CloseReason != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 17, 25)
+		x.xxx_hidden_CloseReason = b.CloseReason
+	}
+	if b.Count != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 18, 25)
+		x.xxx_hidden_Count = *b.Count
+	}
+	if b.Restarts != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 19, 25)
+		x.xxx_hidden_Restarts = *b.Restarts
+	}
+	if b.Attention != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 20, 25)
+		x.xxx_hidden_Attention = *b.Attention
+	}
+	if b.Acked != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 21, 25)
+		x.xxx_hidden_Acked = *b.Acked
+	}
+	if b.Suppressed != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 22, 25)
+		x.xxx_hidden_Suppressed = *b.Suppressed
+	}
+	if b.Shelved != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 23, 25)
+		x.xxx_hidden_Shelved = *b.Shelved
+	}
+	if b.OutOfService != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 24, 25)
+		x.xxx_hidden_OutOfService = *b.OutOfService
+	}
+	return m0
+}
+
+type IssueEventApplyRequest struct {
+	state            protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Ref   *IssueEventRef         `protobuf:"bytes,1,opt,name=ref"`
+	xxx_hidden_Patch *patchpb.Patch         `protobuf:"bytes,2,opt,name=patch"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *IssueEventApplyRequest) Reset() {
+	*x = IssueEventApplyRequest{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueEventApplyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueEventApplyRequest) ProtoMessage() {}
+
+func (x *IssueEventApplyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueEventApplyRequest) GetRef() *IssueEventRef {
+	if x != nil {
+		return x.xxx_hidden_Ref
+	}
+	return nil
+}
+
+func (x *IssueEventApplyRequest) GetPatch() *patchpb.Patch {
+	if x != nil {
+		return x.xxx_hidden_Patch
+	}
+	return nil
+}
+
+func (x *IssueEventApplyRequest) SetRef(v *IssueEventRef) {
+	x.xxx_hidden_Ref = v
+}
+
+func (x *IssueEventApplyRequest) SetPatch(v *patchpb.Patch) {
+	x.xxx_hidden_Patch = v
+}
+
+func (x *IssueEventApplyRequest) HasRef() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Ref != nil
+}
+
+func (x *IssueEventApplyRequest) HasPatch() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Patch != nil
+}
+
+func (x *IssueEventApplyRequest) ClearRef() {
+	x.xxx_hidden_Ref = nil
+}
+
+func (x *IssueEventApplyRequest) ClearPatch() {
+	x.xxx_hidden_Patch = nil
+}
+
+type IssueEventApplyRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Ref   *IssueEventRef
+	Patch *patchpb.Patch
+}
+
+func (b0 IssueEventApplyRequest_builder) Build() *IssueEventApplyRequest {
+	m0 := &IssueEventApplyRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Ref = b.Ref
+	x.xxx_hidden_Patch = b.Patch
+	return m0
+}
+
+type IssueEventEraseResponse struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Erased      bool                   `protobuf:"varint,1,opt,name=erased"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *IssueEventEraseResponse) Reset() {
+	*x = IssueEventEraseResponse{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueEventEraseResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueEventEraseResponse) ProtoMessage() {}
+
+func (x *IssueEventEraseResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueEventEraseResponse) GetErased() bool {
+	if x != nil {
+		return x.xxx_hidden_Erased
+	}
+	return false
+}
+
+func (x *IssueEventEraseResponse) SetErased(v bool) {
+	x.xxx_hidden_Erased = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
+}
+
+func (x *IssueEventEraseResponse) HasErased() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
+}
+
+func (x *IssueEventEraseResponse) ClearErased() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Erased = false
+}
+
+type IssueEventEraseResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// Erased is whether this call is the one that erased the row.
+	//
+	// False for a row that was already gone, was never there, or is out
+	// of this caller's reach -- which are one answer on purpose, and the
+	// reason the RPC does not fail instead.
+	Erased *bool
+}
+
+func (b0 IssueEventEraseResponse_builder) Build() *IssueEventEraseResponse {
+	m0 := &IssueEventEraseResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	if b.Erased != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Erased = *b.Erased
+	}
+	return m0
+}
+
+type IssueEventListRequest struct {
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Filters *[]*IssueEventFilter   `protobuf:"bytes,1,rep,name=filters"`
+	xxx_hidden_Size    int32                  `protobuf:"varint,2,opt,name=size"`
+	xxx_hidden_After   string                 `protobuf:"bytes,3,opt,name=after"`
+	xxx_hidden_Reverse bool                   `protobuf:"varint,4,opt,name=reverse"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *IssueEventListRequest) Reset() {
+	*x = IssueEventListRequest{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueEventListRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueEventListRequest) ProtoMessage() {}
+
+func (x *IssueEventListRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueEventListRequest) GetFilters() []*IssueEventFilter {
+	if x != nil {
+		if x.xxx_hidden_Filters != nil {
+			return *x.xxx_hidden_Filters
+		}
+	}
+	return nil
+}
+
+func (x *IssueEventListRequest) GetSize() int32 {
+	if x != nil {
+		return x.xxx_hidden_Size
+	}
+	return 0
+}
+
+func (x *IssueEventListRequest) GetAfter() string {
+	if x != nil {
+		return x.xxx_hidden_After
+	}
+	return ""
+}
+
+func (x *IssueEventListRequest) GetReverse() bool {
+	if x != nil {
+		return x.xxx_hidden_Reverse
+	}
+	return false
+}
+
+func (x *IssueEventListRequest) SetFilters(v []*IssueEventFilter) {
+	x.xxx_hidden_Filters = &v
+}
+
+func (x *IssueEventListRequest) SetSize(v int32) {
+	x.xxx_hidden_Size = v
+}
+
+func (x *IssueEventListRequest) SetAfter(v string) {
+	x.xxx_hidden_After = v
+}
+
+func (x *IssueEventListRequest) SetReverse(v bool) {
+	x.xxx_hidden_Reverse = v
+}
+
+type IssueEventListRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// Bounded because the work is: each filter is a predicate in the same query,
+	// so this is what says how much of the database one request may read.
+	Filters []*IssueEventFilter
+	// How many to answer with. Nothing said is what the schema declared, and more
+	// than the cap is the cap -- a caller asking for more than there is meant no
+	// harm, so it is not an error and it is not the whole table either.
+	Size int32
+	// Where to carry on from: the "next" of the answer before. It names the last
+	// row of that page rather than counting rows from the start, so a row added
+	// ahead of the page does not shift it and a caller reading through never sees
+	// one twice or misses one.
+	After string
+	// Read the order the other way round, every column of it at once -- newest
+	// first where it is oldest first -- which the index the order walks walks
+	// from the other end. A cursor is of the way it was read, so the next page
+	// carries on that way, and one of the other way is refused.
+	Reverse bool
+}
+
+func (b0 IssueEventListRequest_builder) Build() *IssueEventListRequest {
+	m0 := &IssueEventListRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Filters = &b.Filters
+	x.xxx_hidden_Size = b.Size
+	x.xxx_hidden_After = b.After
+	x.xxx_hidden_Reverse = b.Reverse
+	return m0
+}
+
+type IssueEventListResponse struct {
+	state            protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Items *[]*IssueEvent         `protobuf:"bytes,1,rep,name=items"`
+	xxx_hidden_Next  string                 `protobuf:"bytes,2,opt,name=next"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *IssueEventListResponse) Reset() {
+	*x = IssueEventListResponse{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueEventListResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueEventListResponse) ProtoMessage() {}
+
+func (x *IssueEventListResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueEventListResponse) GetItems() []*IssueEvent {
+	if x != nil {
+		if x.xxx_hidden_Items != nil {
+			return *x.xxx_hidden_Items
+		}
+	}
+	return nil
+}
+
+func (x *IssueEventListResponse) GetNext() string {
+	if x != nil {
+		return x.xxx_hidden_Next
+	}
+	return ""
+}
+
+func (x *IssueEventListResponse) SetItems(v []*IssueEvent) {
+	x.xxx_hidden_Items = &v
+}
+
+func (x *IssueEventListResponse) SetNext(v string) {
+	x.xxx_hidden_Next = v
+}
+
+type IssueEventListResponse_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Items []*IssueEvent
+	// What to ask for next, and empty when this was the last of them.
+	//
+	// Empty means there is no more *for now*: a list is read as it is, and one
+	// that has grown since answers a fresh call. It is not empty merely because
+	// the page came back short -- a page is short when the last row of it was the
+	// last row there was, which is a thing the server can only know by having
+	// looked.
+	Next string
+}
+
+func (b0 IssueEventListResponse_builder) Build() *IssueEventListResponse {
+	m0 := &IssueEventListResponse{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Items = &b.Items
+	x.xxx_hidden_Next = b.Next
+	return m0
+}
+
+type IssueEventFilter struct {
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Ref         *IssueEventRef         `protobuf:"bytes,1,opt,name=ref"`
+	xxx_hidden_IssueId     []byte                 `protobuf:"bytes,2,opt,name=issue_id,json=issueId"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *IssueEventFilter) Reset() {
+	*x = IssueEventFilter{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueEventFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueEventFilter) ProtoMessage() {}
+
+func (x *IssueEventFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueEventFilter) GetRef() *IssueEventRef {
+	if x != nil {
+		return x.xxx_hidden_Ref
+	}
+	return nil
+}
+
+func (x *IssueEventFilter) GetIssueId() []byte {
+	if x != nil {
+		return x.xxx_hidden_IssueId
+	}
+	return nil
+}
+
+func (x *IssueEventFilter) SetRef(v *IssueEventRef) {
+	x.xxx_hidden_Ref = v
+}
+
+func (x *IssueEventFilter) SetIssueId(v []byte) {
+	if v == nil {
+		v = []byte{}
+	}
+	x.xxx_hidden_IssueId = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 2)
+}
+
+func (x *IssueEventFilter) HasRef() bool {
+	if x == nil {
+		return false
+	}
+	return x.xxx_hidden_Ref != nil
+}
+
+func (x *IssueEventFilter) HasIssueId() bool {
+	if x == nil {
+		return false
+	}
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
+}
+
+func (x *IssueEventFilter) ClearRef() {
+	x.xxx_hidden_Ref = nil
+}
+
+func (x *IssueEventFilter) ClearIssueId() {
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_IssueId = nil
+}
+
+type IssueEventFilter_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	Ref     *IssueEventRef
+	IssueId []byte
+}
+
+func (b0 IssueEventFilter_builder) Build() *IssueEventFilter {
+	m0 := &IssueEventFilter{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_Ref = b.Ref
+	if b.IssueId != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 2)
+		x.xxx_hidden_IssueId = b.IssueId
+	}
+	return m0
+}
+
+type IssueEventFollowRequest struct {
+	state            protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_After int64                  `protobuf:"varint,1,opt,name=after"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *IssueEventFollowRequest) Reset() {
+	*x = IssueEventFollowRequest{}
+	mi := &file_ward_issue_svc_g_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IssueEventFollowRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IssueEventFollowRequest) ProtoMessage() {}
+
+func (x *IssueEventFollowRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ward_issue_svc_g_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (x *IssueEventFollowRequest) GetAfter() int64 {
+	if x != nil {
+		return x.xxx_hidden_After
+	}
+	return 0
+}
+
+func (x *IssueEventFollowRequest) SetAfter(v int64) {
+	x.xxx_hidden_After = v
+}
+
+type IssueEventFollowRequest_builder struct {
+	_ [0]func() // Prevents comparability and use of unkeyed literals for the builder.
+
+	// The last cursor seen; 0 for the oldest transition still kept.
+	After int64
+}
+
+func (b0 IssueEventFollowRequest_builder) Build() *IssueEventFollowRequest {
+	m0 := &IssueEventFollowRequest{}
+	b, x := &b0, m0
+	_, _ = b, x
+	x.xxx_hidden_After = b.After
+	return m0
+}
+
 var File_ward_issue_svc_g_proto protoreflect.FileDescriptor
 
 const file_ward_issue_svc_g_proto_rawDesc = "" +
@@ -3059,71 +6352,279 @@ const file_ward_issue_svc_g_proto_rawDesc = "" +
 	"\x05state\x18\x02 \x01(\tR\x05state\x12\x12\n" +
 	"\x04rule\x18\x03 \x01(\tR\x04rule\x12\x12\n" +
 	"\x04node\x18\x04 \x01(\tR\x04node\x12\x1c\n" +
-	"\tattention\x18\x05 \x01(\bR\tattention2\xae\x02\n" +
+	"\tattention\x18\x05 \x01(\bR\tattention\"\xf9\x02\n" +
+	"\x12IssueSearchRequest\x12D\n" +
+	"\x10date_opened_from\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x0edateOpenedFrom\x12@\n" +
+	"\x0edate_opened_to\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\fdateOpenedTo\x12D\n" +
+	"\x10date_closed_from\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x0edateClosedFrom\x12@\n" +
+	"\x0edate_closed_to\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\fdateClosedTo\x12\x1b\n" +
+	"\x05state\x18\x05 \x01(\tB\x05\xaa\x01\x02\b\x02R\x05state\x12\x19\n" +
+	"\x04size\x18\x06 \x01(\x05B\x05\xaa\x01\x02\b\x02R\x04size\x12\x1b\n" +
+	"\x05after\x18\a \x01(\tB\x05\xaa\x01\x02\b\x02R\x05after\"\\\n" +
+	"\x17IssueAcknowledgeRequest\x12 \n" +
+	"\x03ref\x18\x01 \x01(\v2\x0e.ward.IssueRefR\x03ref\x12\x1f\n" +
+	"\acomment\x18\x02 \x01(\tB\x05\xaa\x01\x02\b\x02R\acomment\"X\n" +
+	"\x13IssueCommentRequest\x12 \n" +
+	"\x03ref\x18\x01 \x01(\v2\x0e.ward.IssueRefR\x03ref\x12\x1f\n" +
+	"\acomment\x18\x02 \x01(\tB\x05\xaa\x01\x02\b\x02R\acomment\"V\n" +
+	"\x11IssueResetRequest\x12 \n" +
+	"\x03ref\x18\x01 \x01(\v2\x0e.ward.IssueRefR\x03ref\x12\x1f\n" +
+	"\acomment\x18\x02 \x01(\tB\x05\xaa\x01\x02\b\x02R\acomment\"\xc4\a\n" +
+	"\x14IssueEventAddRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\fR\x02id\x12\x1d\n" +
+	"\x06cursor\x18\b \x01(\x03B\x05\xaa\x01\x02\b\x02R\x06cursor\x12 \n" +
+	"\bissue_id\x18\t \x01(\fB\x05\xaa\x01\x02\b\x02R\aissueId\x12\x1b\n" +
+	"\x05event\x18\n" +
+	" \x01(\tB\x05\xaa\x01\x02\b\x02R\x05event\x12?\n" +
+	"\rdate_occurred\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\fdateOccurred\x12\x1f\n" +
+	"\acomment\x18\f \x01(\tB\x05\xaa\x01\x02\b\x02R\acomment\x12=\n" +
+	"\fdate_created\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\vdateCreated\x12\x19\n" +
+	"\x04rule\x18\x10 \x01(\tB\x05\xaa\x01\x02\b\x02R\x04rule\x12\x1d\n" +
+	"\x06source\x18\x11 \x01(\tB\x05\xaa\x01\x02\b\x02R\x06source\x12\x19\n" +
+	"\x04node\x18\x12 \x01(\tB\x05\xaa\x01\x02\b\x02R\x04node\x12\x17\n" +
+	"\x03key\x18\x13 \x01(\tB\x05\xaa\x01\x02\b\x02R\x03key\x12!\n" +
+	"\bseverity\x18\x14 \x01(\tB\x05\xaa\x01\x02\b\x02R\bseverity\x12\x1b\n" +
+	"\x05level\x18\x15 \x01(\tB\x05\xaa\x01\x02\b\x02R\x05level\x12\x1b\n" +
+	"\x05state\x18\x16 \x01(\tB\x05\xaa\x01\x02\b\x02R\x05state\x12;\n" +
+	"\vdate_opened\x18\x17 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"dateOpened\x127\n" +
+	"\tdate_seen\x18\x18 \x01(\v2\x1a.google.protobuf.TimestampR\bdateSeen\x12;\n" +
+	"\vdate_closed\x18\x19 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"dateClosed\x12(\n" +
+	"\fclose_reason\x18\x1a \x01(\tB\x05\xaa\x01\x02\b\x02R\vcloseReason\x12\x1b\n" +
+	"\x05count\x18\x1b \x01(\x03B\x05\xaa\x01\x02\b\x02R\x05count\x12!\n" +
+	"\brestarts\x18\x1c \x01(\x03B\x05\xaa\x01\x02\b\x02R\brestarts\x12#\n" +
+	"\tattention\x18\x1d \x01(\bB\x05\xaa\x01\x02\b\x02R\tattention\x12\x1b\n" +
+	"\x05acked\x18\x1e \x01(\bB\x05\xaa\x01\x02\b\x02R\x05acked\x12%\n" +
+	"\n" +
+	"suppressed\x18\x1f \x01(\bB\x05\xaa\x01\x02\b\x02R\n" +
+	"suppressed\x12\x1f\n" +
+	"\ashelved\x18  \x01(\bB\x05\xaa\x01\x02\b\x02R\ashelved\x12+\n" +
+	"\x0eout_of_service\x18! \x01(\bB\x05\xaa\x01\x02\b\x02R\foutOfService\"m\n" +
+	"\x14IssueEventGetRequest\x12%\n" +
+	"\x03ref\x18\x01 \x01(\v2\x13.ward.IssueEventRefR\x03ref\x12.\n" +
+	"\x06select\x18\x02 \x01(\v2\x16.ward.IssueEventSelectR\x06select\"B\n" +
+	"\rIssueEventRef\x12\x10\n" +
+	"\x02id\x18\x01 \x01(\fH\x00R\x02id\x12\x18\n" +
+	"\x06cursor\x18\b \x01(\x03H\x00R\x06cursorB\x05\n" +
+	"\x03key\"\xb1\x05\n" +
+	"\x10IssueEventSelect\x12\x10\n" +
+	"\x03all\x18\x01 \x01(\bR\x03all\x12\x16\n" +
+	"\x06cursor\x18\b \x01(\bR\x06cursor\x12\x19\n" +
+	"\bissue_id\x18\t \x01(\bR\aissueId\x12\x14\n" +
+	"\x05event\x18\n" +
+	" \x01(\bR\x05event\x12#\n" +
+	"\rdate_occurred\x18\v \x01(\bR\fdateOccurred\x12\x18\n" +
+	"\acomment\x18\f \x01(\bR\acomment\x12!\n" +
+	"\fdate_created\x18\x0f \x01(\bR\vdateCreated\x12\x12\n" +
+	"\x04rule\x18\x10 \x01(\bR\x04rule\x12\x16\n" +
+	"\x06source\x18\x11 \x01(\bR\x06source\x12\x12\n" +
+	"\x04node\x18\x12 \x01(\bR\x04node\x12\x10\n" +
+	"\x03key\x18\x13 \x01(\bR\x03key\x12\x1a\n" +
+	"\bseverity\x18\x14 \x01(\bR\bseverity\x12\x14\n" +
+	"\x05level\x18\x15 \x01(\bR\x05level\x12\x14\n" +
+	"\x05state\x18\x16 \x01(\bR\x05state\x12\x1f\n" +
+	"\vdate_opened\x18\x17 \x01(\bR\n" +
+	"dateOpened\x12\x1b\n" +
+	"\tdate_seen\x18\x18 \x01(\bR\bdateSeen\x12\x1f\n" +
+	"\vdate_closed\x18\x19 \x01(\bR\n" +
+	"dateClosed\x12!\n" +
+	"\fclose_reason\x18\x1a \x01(\bR\vcloseReason\x12\x14\n" +
+	"\x05count\x18\x1b \x01(\bR\x05count\x12\x1a\n" +
+	"\brestarts\x18\x1c \x01(\bR\brestarts\x12\x1c\n" +
+	"\tattention\x18\x1d \x01(\bR\tattention\x12\x14\n" +
+	"\x05acked\x18\x1e \x01(\bR\x05acked\x12\x1e\n" +
+	"\n" +
+	"suppressed\x18\x1f \x01(\bR\n" +
+	"suppressed\x12\x18\n" +
+	"\ashelved\x18  \x01(\bR\ashelved\x12$\n" +
+	"\x0eout_of_service\x18! \x01(\bR\foutOfService\"\xc3\x06\n" +
+	"\x16IssueEventPatchRequest\x12%\n" +
+	"\x03ref\x18\x01 \x01(\v2\x13.ward.IssueEventRefR\x03ref\x12\x16\n" +
+	"\x06cursor\x18\x10 \x01(\x03R\x06cursor\x12\x19\n" +
+	"\bissue_id\x18\x12 \x01(\fR\aissueId\x12\x14\n" +
+	"\x05event\x18\x14 \x01(\tR\x05event\x12?\n" +
+	"\rdate_occurred\x18\x16 \x01(\v2\x1a.google.protobuf.TimestampR\fdateOccurred\x12\x18\n" +
+	"\acomment\x18\x18 \x01(\tR\acomment\x12\x12\n" +
+	"\x04rule\x18  \x01(\tR\x04rule\x12\x16\n" +
+	"\x06source\x18\" \x01(\tR\x06source\x12\x12\n" +
+	"\x04node\x18$ \x01(\tR\x04node\x12\x10\n" +
+	"\x03key\x18& \x01(\tR\x03key\x12\x1a\n" +
+	"\bseverity\x18( \x01(\tR\bseverity\x12\x14\n" +
+	"\x05level\x18* \x01(\tR\x05level\x12\x14\n" +
+	"\x05state\x18, \x01(\tR\x05state\x12;\n" +
+	"\vdate_opened\x18. \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"dateOpened\x127\n" +
+	"\tdate_seen\x180 \x01(\v2\x1a.google.protobuf.TimestampR\bdateSeen\x12;\n" +
+	"\vdate_closed\x182 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"dateClosed\x12(\n" +
+	"\x10date_closed_null\x183 \x01(\bR\x0edateClosedNull\x12!\n" +
+	"\fclose_reason\x184 \x01(\tR\vcloseReason\x12\x14\n" +
+	"\x05count\x186 \x01(\x03R\x05count\x12\x1a\n" +
+	"\brestarts\x188 \x01(\x03R\brestarts\x12\x1c\n" +
+	"\tattention\x18: \x01(\bR\tattention\x12\x14\n" +
+	"\x05acked\x18< \x01(\bR\x05acked\x12\x1e\n" +
+	"\n" +
+	"suppressed\x18> \x01(\bR\n" +
+	"suppressed\x12\x18\n" +
+	"\ashelved\x18@ \x01(\bR\ashelved\x12$\n" +
+	"\x0eout_of_service\x18B \x01(\bR\foutOfService\"c\n" +
+	"\x16IssueEventApplyRequest\x12%\n" +
+	"\x03ref\x18\x01 \x01(\v2\x13.ward.IssueEventRefR\x03ref\x12\"\n" +
+	"\x05patch\x18\x02 \x01(\v2\f.patch.PatchR\x05patch\"1\n" +
+	"\x17IssueEventEraseResponse\x12\x16\n" +
+	"\x06erased\x18\x01 \x01(\bR\x06erased\"\xa2\x01\n" +
+	"\x15IssueEventListRequest\x120\n" +
+	"\afilters\x18\x01 \x03(\v2\x16.ward.IssueEventFilterR\afilters\x12\x19\n" +
+	"\x04size\x18\x02 \x01(\x05B\x05\xaa\x01\x02\b\x02R\x04size\x12\x1b\n" +
+	"\x05after\x18\x03 \x01(\tB\x05\xaa\x01\x02\b\x02R\x05after\x12\x1f\n" +
+	"\areverse\x18\x04 \x01(\bB\x05\xaa\x01\x02\b\x02R\areverse\"[\n" +
+	"\x16IssueEventListResponse\x12&\n" +
+	"\x05items\x18\x01 \x03(\v2\x10.ward.IssueEventR\x05items\x12\x19\n" +
+	"\x04next\x18\x02 \x01(\tB\x05\xaa\x01\x02\b\x02R\x04next\"T\n" +
+	"\x10IssueEventFilter\x12%\n" +
+	"\x03ref\x18\x01 \x01(\v2\x13.ward.IssueEventRefR\x03ref\x12\x19\n" +
+	"\bissue_id\x18\x02 \x01(\fR\aissueId\"6\n" +
+	"\x17IssueEventFollowRequest\x12\x1b\n" +
+	"\x05after\x18\x01 \x01(\x03B\x05\xaa\x01\x02\b\x02R\x05after2\x8d\x04\n" +
 	"\fIssueService\x12)\n" +
 	"\x03Add\x12\x15.ward.IssueAddRequest\x1a\v.ward.Issue\x12)\n" +
 	"\x03Get\x12\x15.ward.IssueGetRequest\x1a\v.ward.Issue\x12-\n" +
 	"\x05Patch\x12\x17.ward.IssuePatchRequest\x1a\v.ward.Issue\x12-\n" +
 	"\x05Apply\x12\x17.ward.IssueApplyRequest\x1a\v.ward.Issue\x121\n" +
 	"\x05Erase\x12\x0e.ward.IssueRef\x1a\x18.ward.IssueEraseResponse\x127\n" +
-	"\x04List\x12\x16.ward.IssueListRequest\x1a\x17.ward.IssueListResponseB\x1aZ\x18github.com/lesomnus/wardb\beditionsp\xe8\a"
+	"\x04List\x12\x16.ward.IssueListRequest\x1a\x17.ward.IssueListResponse\x12;\n" +
+	"\x06Search\x12\x18.ward.IssueSearchRequest\x1a\x17.ward.IssueListResponse\x129\n" +
+	"\vAcknowledge\x12\x1d.ward.IssueAcknowledgeRequest\x1a\v.ward.Issue\x126\n" +
+	"\aComment\x12\x19.ward.IssueCommentRequest\x1a\x10.ward.IssueEvent\x12-\n" +
+	"\x05Reset\x12\x17.ward.IssueResetRequest\x1a\v.ward.Issue2\xac\x03\n" +
+	"\x11IssueEventService\x123\n" +
+	"\x03Add\x12\x1a.ward.IssueEventAddRequest\x1a\x10.ward.IssueEvent\x123\n" +
+	"\x03Get\x12\x1a.ward.IssueEventGetRequest\x1a\x10.ward.IssueEvent\x127\n" +
+	"\x05Patch\x12\x1c.ward.IssueEventPatchRequest\x1a\x10.ward.IssueEvent\x127\n" +
+	"\x05Apply\x12\x1c.ward.IssueEventApplyRequest\x1a\x10.ward.IssueEvent\x12;\n" +
+	"\x05Erase\x12\x13.ward.IssueEventRef\x1a\x1d.ward.IssueEventEraseResponse\x12A\n" +
+	"\x04List\x12\x1b.ward.IssueEventListRequest\x1a\x1c.ward.IssueEventListResponse\x12;\n" +
+	"\x06Follow\x12\x1d.ward.IssueEventFollowRequest\x1a\x10.ward.IssueEvent0\x01B\x1aZ\x18github.com/lesomnus/wardb\beditionsp\xe8\a"
 
-var file_ward_issue_svc_g_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_ward_issue_svc_g_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_ward_issue_svc_g_proto_goTypes = []any{
-	(*IssueAddRequest)(nil),       // 0: ward.IssueAddRequest
-	(*IssueGetRequest)(nil),       // 1: ward.IssueGetRequest
-	(*IssueRef)(nil),              // 2: ward.IssueRef
-	(*IssueSelect)(nil),           // 3: ward.IssueSelect
-	(*IssuePatchRequest)(nil),     // 4: ward.IssuePatchRequest
-	(*IssueApplyRequest)(nil),     // 5: ward.IssueApplyRequest
-	(*IssueEraseResponse)(nil),    // 6: ward.IssueEraseResponse
-	(*IssueListRequest)(nil),      // 7: ward.IssueListRequest
-	(*IssueListResponse)(nil),     // 8: ward.IssueListResponse
-	(*IssueFilter)(nil),           // 9: ward.IssueFilter
-	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
-	(*patchpb.Patch)(nil),         // 11: patch.Patch
-	(*Issue)(nil),                 // 12: ward.Issue
+	(*IssueAddRequest)(nil),         // 0: ward.IssueAddRequest
+	(*IssueGetRequest)(nil),         // 1: ward.IssueGetRequest
+	(*IssueRef)(nil),                // 2: ward.IssueRef
+	(*IssueSelect)(nil),             // 3: ward.IssueSelect
+	(*IssuePatchRequest)(nil),       // 4: ward.IssuePatchRequest
+	(*IssueApplyRequest)(nil),       // 5: ward.IssueApplyRequest
+	(*IssueEraseResponse)(nil),      // 6: ward.IssueEraseResponse
+	(*IssueListRequest)(nil),        // 7: ward.IssueListRequest
+	(*IssueListResponse)(nil),       // 8: ward.IssueListResponse
+	(*IssueFilter)(nil),             // 9: ward.IssueFilter
+	(*IssueSearchRequest)(nil),      // 10: ward.IssueSearchRequest
+	(*IssueAcknowledgeRequest)(nil), // 11: ward.IssueAcknowledgeRequest
+	(*IssueCommentRequest)(nil),     // 12: ward.IssueCommentRequest
+	(*IssueResetRequest)(nil),       // 13: ward.IssueResetRequest
+	(*IssueEventAddRequest)(nil),    // 14: ward.IssueEventAddRequest
+	(*IssueEventGetRequest)(nil),    // 15: ward.IssueEventGetRequest
+	(*IssueEventRef)(nil),           // 16: ward.IssueEventRef
+	(*IssueEventSelect)(nil),        // 17: ward.IssueEventSelect
+	(*IssueEventPatchRequest)(nil),  // 18: ward.IssueEventPatchRequest
+	(*IssueEventApplyRequest)(nil),  // 19: ward.IssueEventApplyRequest
+	(*IssueEventEraseResponse)(nil), // 20: ward.IssueEventEraseResponse
+	(*IssueEventListRequest)(nil),   // 21: ward.IssueEventListRequest
+	(*IssueEventListResponse)(nil),  // 22: ward.IssueEventListResponse
+	(*IssueEventFilter)(nil),        // 23: ward.IssueEventFilter
+	(*IssueEventFollowRequest)(nil), // 24: ward.IssueEventFollowRequest
+	(*timestamppb.Timestamp)(nil),   // 25: google.protobuf.Timestamp
+	(*patchpb.Patch)(nil),           // 26: patch.Patch
+	(*Issue)(nil),                   // 27: ward.Issue
+	(*IssueEvent)(nil),              // 28: ward.IssueEvent
 }
 var file_ward_issue_svc_g_proto_depIdxs = []int32{
-	10, // 0: ward.IssueAddRequest.date_created:type_name -> google.protobuf.Timestamp
-	10, // 1: ward.IssueAddRequest.date_opened:type_name -> google.protobuf.Timestamp
-	10, // 2: ward.IssueAddRequest.date_seen:type_name -> google.protobuf.Timestamp
-	10, // 3: ward.IssueAddRequest.date_cleared:type_name -> google.protobuf.Timestamp
-	10, // 4: ward.IssueAddRequest.date_closed:type_name -> google.protobuf.Timestamp
-	10, // 5: ward.IssueAddRequest.date_acked:type_name -> google.protobuf.Timestamp
-	10, // 6: ward.IssueAddRequest.date_reset:type_name -> google.protobuf.Timestamp
+	25, // 0: ward.IssueAddRequest.date_created:type_name -> google.protobuf.Timestamp
+	25, // 1: ward.IssueAddRequest.date_opened:type_name -> google.protobuf.Timestamp
+	25, // 2: ward.IssueAddRequest.date_seen:type_name -> google.protobuf.Timestamp
+	25, // 3: ward.IssueAddRequest.date_cleared:type_name -> google.protobuf.Timestamp
+	25, // 4: ward.IssueAddRequest.date_closed:type_name -> google.protobuf.Timestamp
+	25, // 5: ward.IssueAddRequest.date_acked:type_name -> google.protobuf.Timestamp
+	25, // 6: ward.IssueAddRequest.date_reset:type_name -> google.protobuf.Timestamp
 	2,  // 7: ward.IssueGetRequest.ref:type_name -> ward.IssueRef
 	3,  // 8: ward.IssueGetRequest.select:type_name -> ward.IssueSelect
 	2,  // 9: ward.IssuePatchRequest.ref:type_name -> ward.IssueRef
-	10, // 10: ward.IssuePatchRequest.date_updated:type_name -> google.protobuf.Timestamp
-	10, // 11: ward.IssuePatchRequest.date_opened:type_name -> google.protobuf.Timestamp
-	10, // 12: ward.IssuePatchRequest.date_seen:type_name -> google.protobuf.Timestamp
-	10, // 13: ward.IssuePatchRequest.date_cleared:type_name -> google.protobuf.Timestamp
-	10, // 14: ward.IssuePatchRequest.date_closed:type_name -> google.protobuf.Timestamp
-	10, // 15: ward.IssuePatchRequest.date_acked:type_name -> google.protobuf.Timestamp
-	10, // 16: ward.IssuePatchRequest.date_reset:type_name -> google.protobuf.Timestamp
+	25, // 10: ward.IssuePatchRequest.date_updated:type_name -> google.protobuf.Timestamp
+	25, // 11: ward.IssuePatchRequest.date_opened:type_name -> google.protobuf.Timestamp
+	25, // 12: ward.IssuePatchRequest.date_seen:type_name -> google.protobuf.Timestamp
+	25, // 13: ward.IssuePatchRequest.date_cleared:type_name -> google.protobuf.Timestamp
+	25, // 14: ward.IssuePatchRequest.date_closed:type_name -> google.protobuf.Timestamp
+	25, // 15: ward.IssuePatchRequest.date_acked:type_name -> google.protobuf.Timestamp
+	25, // 16: ward.IssuePatchRequest.date_reset:type_name -> google.protobuf.Timestamp
 	2,  // 17: ward.IssueApplyRequest.ref:type_name -> ward.IssueRef
-	11, // 18: ward.IssueApplyRequest.patch:type_name -> patch.Patch
+	26, // 18: ward.IssueApplyRequest.patch:type_name -> patch.Patch
 	9,  // 19: ward.IssueListRequest.filters:type_name -> ward.IssueFilter
-	12, // 20: ward.IssueListResponse.items:type_name -> ward.Issue
+	27, // 20: ward.IssueListResponse.items:type_name -> ward.Issue
 	2,  // 21: ward.IssueFilter.ref:type_name -> ward.IssueRef
-	0,  // 22: ward.IssueService.Add:input_type -> ward.IssueAddRequest
-	1,  // 23: ward.IssueService.Get:input_type -> ward.IssueGetRequest
-	4,  // 24: ward.IssueService.Patch:input_type -> ward.IssuePatchRequest
-	5,  // 25: ward.IssueService.Apply:input_type -> ward.IssueApplyRequest
-	2,  // 26: ward.IssueService.Erase:input_type -> ward.IssueRef
-	7,  // 27: ward.IssueService.List:input_type -> ward.IssueListRequest
-	12, // 28: ward.IssueService.Add:output_type -> ward.Issue
-	12, // 29: ward.IssueService.Get:output_type -> ward.Issue
-	12, // 30: ward.IssueService.Patch:output_type -> ward.Issue
-	12, // 31: ward.IssueService.Apply:output_type -> ward.Issue
-	6,  // 32: ward.IssueService.Erase:output_type -> ward.IssueEraseResponse
-	8,  // 33: ward.IssueService.List:output_type -> ward.IssueListResponse
-	28, // [28:34] is the sub-list for method output_type
-	22, // [22:28] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	25, // 22: ward.IssueSearchRequest.date_opened_from:type_name -> google.protobuf.Timestamp
+	25, // 23: ward.IssueSearchRequest.date_opened_to:type_name -> google.protobuf.Timestamp
+	25, // 24: ward.IssueSearchRequest.date_closed_from:type_name -> google.protobuf.Timestamp
+	25, // 25: ward.IssueSearchRequest.date_closed_to:type_name -> google.protobuf.Timestamp
+	2,  // 26: ward.IssueAcknowledgeRequest.ref:type_name -> ward.IssueRef
+	2,  // 27: ward.IssueCommentRequest.ref:type_name -> ward.IssueRef
+	2,  // 28: ward.IssueResetRequest.ref:type_name -> ward.IssueRef
+	25, // 29: ward.IssueEventAddRequest.date_occurred:type_name -> google.protobuf.Timestamp
+	25, // 30: ward.IssueEventAddRequest.date_created:type_name -> google.protobuf.Timestamp
+	25, // 31: ward.IssueEventAddRequest.date_opened:type_name -> google.protobuf.Timestamp
+	25, // 32: ward.IssueEventAddRequest.date_seen:type_name -> google.protobuf.Timestamp
+	25, // 33: ward.IssueEventAddRequest.date_closed:type_name -> google.protobuf.Timestamp
+	16, // 34: ward.IssueEventGetRequest.ref:type_name -> ward.IssueEventRef
+	17, // 35: ward.IssueEventGetRequest.select:type_name -> ward.IssueEventSelect
+	16, // 36: ward.IssueEventPatchRequest.ref:type_name -> ward.IssueEventRef
+	25, // 37: ward.IssueEventPatchRequest.date_occurred:type_name -> google.protobuf.Timestamp
+	25, // 38: ward.IssueEventPatchRequest.date_opened:type_name -> google.protobuf.Timestamp
+	25, // 39: ward.IssueEventPatchRequest.date_seen:type_name -> google.protobuf.Timestamp
+	25, // 40: ward.IssueEventPatchRequest.date_closed:type_name -> google.protobuf.Timestamp
+	16, // 41: ward.IssueEventApplyRequest.ref:type_name -> ward.IssueEventRef
+	26, // 42: ward.IssueEventApplyRequest.patch:type_name -> patch.Patch
+	23, // 43: ward.IssueEventListRequest.filters:type_name -> ward.IssueEventFilter
+	28, // 44: ward.IssueEventListResponse.items:type_name -> ward.IssueEvent
+	16, // 45: ward.IssueEventFilter.ref:type_name -> ward.IssueEventRef
+	0,  // 46: ward.IssueService.Add:input_type -> ward.IssueAddRequest
+	1,  // 47: ward.IssueService.Get:input_type -> ward.IssueGetRequest
+	4,  // 48: ward.IssueService.Patch:input_type -> ward.IssuePatchRequest
+	5,  // 49: ward.IssueService.Apply:input_type -> ward.IssueApplyRequest
+	2,  // 50: ward.IssueService.Erase:input_type -> ward.IssueRef
+	7,  // 51: ward.IssueService.List:input_type -> ward.IssueListRequest
+	10, // 52: ward.IssueService.Search:input_type -> ward.IssueSearchRequest
+	11, // 53: ward.IssueService.Acknowledge:input_type -> ward.IssueAcknowledgeRequest
+	12, // 54: ward.IssueService.Comment:input_type -> ward.IssueCommentRequest
+	13, // 55: ward.IssueService.Reset:input_type -> ward.IssueResetRequest
+	14, // 56: ward.IssueEventService.Add:input_type -> ward.IssueEventAddRequest
+	15, // 57: ward.IssueEventService.Get:input_type -> ward.IssueEventGetRequest
+	18, // 58: ward.IssueEventService.Patch:input_type -> ward.IssueEventPatchRequest
+	19, // 59: ward.IssueEventService.Apply:input_type -> ward.IssueEventApplyRequest
+	16, // 60: ward.IssueEventService.Erase:input_type -> ward.IssueEventRef
+	21, // 61: ward.IssueEventService.List:input_type -> ward.IssueEventListRequest
+	24, // 62: ward.IssueEventService.Follow:input_type -> ward.IssueEventFollowRequest
+	27, // 63: ward.IssueService.Add:output_type -> ward.Issue
+	27, // 64: ward.IssueService.Get:output_type -> ward.Issue
+	27, // 65: ward.IssueService.Patch:output_type -> ward.Issue
+	27, // 66: ward.IssueService.Apply:output_type -> ward.Issue
+	6,  // 67: ward.IssueService.Erase:output_type -> ward.IssueEraseResponse
+	8,  // 68: ward.IssueService.List:output_type -> ward.IssueListResponse
+	8,  // 69: ward.IssueService.Search:output_type -> ward.IssueListResponse
+	27, // 70: ward.IssueService.Acknowledge:output_type -> ward.Issue
+	28, // 71: ward.IssueService.Comment:output_type -> ward.IssueEvent
+	27, // 72: ward.IssueService.Reset:output_type -> ward.Issue
+	28, // 73: ward.IssueEventService.Add:output_type -> ward.IssueEvent
+	28, // 74: ward.IssueEventService.Get:output_type -> ward.IssueEvent
+	28, // 75: ward.IssueEventService.Patch:output_type -> ward.IssueEvent
+	28, // 76: ward.IssueEventService.Apply:output_type -> ward.IssueEvent
+	20, // 77: ward.IssueEventService.Erase:output_type -> ward.IssueEventEraseResponse
+	22, // 78: ward.IssueEventService.List:output_type -> ward.IssueEventListResponse
+	28, // 79: ward.IssueEventService.Follow:output_type -> ward.IssueEvent
+	63, // [63:80] is the sub-list for method output_type
+	46, // [46:63] is the sub-list for method input_type
+	46, // [46:46] is the sub-list for extension type_name
+	46, // [46:46] is the sub-list for extension extendee
+	0,  // [0:46] is the sub-list for field type_name
 }
 
 func init() { file_ward_issue_svc_g_proto_init() }
@@ -3135,15 +6636,19 @@ func file_ward_issue_svc_g_proto_init() {
 	file_ward_issue_svc_g_proto_msgTypes[2].OneofWrappers = []any{
 		(*issueRef_Id)(nil),
 	}
+	file_ward_issue_svc_g_proto_msgTypes[16].OneofWrappers = []any{
+		(*issueEventRef_Id)(nil),
+		(*issueEventRef_Cursor)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ward_issue_svc_g_proto_rawDesc), len(file_ward_issue_svc_g_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   25,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_ward_issue_svc_g_proto_goTypes,
 		DependencyIndexes: file_ward_issue_svc_g_proto_depIdxs,

@@ -1,0 +1,61 @@
+edition = "2023";
+
+package ward;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/lesomnus/ward";
+
+service IssueService {
+  // Issues by when they opened and closed.
+  rpc Search(IssueSearchRequest) returns (IssueListResponse);
+
+  // An operator has seen it. Refused for an Issue already acknowledged.
+  rpc Acknowledge(IssueAcknowledgeRequest) returns (Issue);
+
+  // An operator's note, kept as an IssueEvent.
+  rpc Comment(IssueCommentRequest) returns (IssueEvent);
+
+  // Closes an Issue a latching rule left cleared. Refused while it is active.
+  rpc Reset(IssueResetRequest) returns (Issue);
+}
+
+service IssueEventService {
+  // The transitions after a cursor, then each new one as it is committed.
+  // At-least-once: a follower that reconnects with the last cursor it saw may
+  // see a transition again. A cursor older than store.retention is refused.
+  rpc Follow(IssueEventFollowRequest) returns (stream IssueEvent);
+}
+
+message IssueSearchRequest {
+  google.protobuf.Timestamp date_opened_from = 1;
+  google.protobuf.Timestamp date_opened_to = 2;
+  google.protobuf.Timestamp date_closed_from = 3;
+  google.protobuf.Timestamp date_closed_to = 4;
+
+  // open or closed; empty for both.
+  string state = 5 [features.field_presence = IMPLICIT];
+
+  int32 size = 6 [features.field_presence = IMPLICIT];
+  string after = 7 [features.field_presence = IMPLICIT];
+}
+
+message IssueAcknowledgeRequest {
+  IssueRef ref = 1;
+  string comment = 2 [features.field_presence = IMPLICIT];
+}
+
+message IssueCommentRequest {
+  IssueRef ref = 1;
+  string comment = 2 [features.field_presence = IMPLICIT];
+}
+
+message IssueResetRequest {
+  IssueRef ref = 1;
+  string comment = 2 [features.field_presence = IMPLICIT];
+}
+
+message IssueEventFollowRequest {
+  // The last cursor seen; 0 for the oldest transition still kept.
+  int64 after = 1 [features.field_presence = IMPLICIT];
+}

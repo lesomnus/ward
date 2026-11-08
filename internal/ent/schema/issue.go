@@ -72,3 +72,62 @@ func (Issue) Annotations() []schema.Annotation {
 		entsql.Annotation{Table: "issue"},
 	}
 }
+
+type IssueEvent struct {
+	ent.Schema
+}
+
+func (IssueEvent) Fields() []ent.Field {
+	return []ent.Field{
+		field.Uuid("id").
+			Unique().
+			Immutable(),
+		field.Int64("cursor").
+			Unique(),
+		field.Bytes("issue_id"),
+		field.String("event"),
+		field.Time("date_occurred").
+			Optional(),
+		field.String("comment"),
+		field.Time("date_created").
+			Immutable().
+			Optional(),
+		field.String("rule"),
+		field.String("source"),
+		field.String("node"),
+		field.String("key"),
+		field.String("severity"),
+		field.String("level"),
+		field.String("state"),
+		field.Time("date_opened").
+			Optional(),
+		field.Time("date_seen").
+			Optional(),
+		field.Time("date_closed").
+			Nillable().
+			Optional(),
+		field.String("close_reason"),
+		field.Int64("count"),
+		field.Int64("restarts"),
+		field.Bool("attention"),
+		field.Bool("acked"),
+		field.Bool("suppressed"),
+		field.Bool("shelved"),
+		field.Bool("out_of_service"),
+	}
+}
+
+func (IssueEvent) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("cursor", "id").
+			StorageKey("issueevent_page"),
+		index.Fields("issue_id", "cursor").
+			StorageKey("issueevent_issue"),
+	}
+}
+
+func (IssueEvent) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entsql.Annotation{Table: "issueevent"},
+	}
+}

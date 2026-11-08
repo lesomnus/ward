@@ -26,7 +26,10 @@ import (
 )
 
 type Server interface {
+	Checkpoint() CheckpointServiceServer
 	Issue() IssueServiceServer
+	IssueEvent() IssueEventServiceServer
+	Override() OverrideServiceServer
 	Access() AccessServiceServer
 	Archived() ArchivedServiceServer
 	Audit() AuditServiceServer
@@ -42,7 +45,10 @@ type Server interface {
 // It takes a [grpc.ServiceRegistrar] rather than a *grpc.Server so that a
 // server which is not gRPC's own can be handed the same set of services.
 func RegisterServer(g grpc.ServiceRegistrar, s Server) {
+	RegisterCheckpointServiceServer(g, s.Checkpoint())
 	RegisterIssueServiceServer(g, s.Issue())
+	RegisterIssueEventServiceServer(g, s.IssueEvent())
+	RegisterOverrideServiceServer(g, s.Override())
 	RegisterAccessServiceServer(g, s.Access())
 	RegisterArchivedServiceServer(g, s.Archived())
 	RegisterAuditServiceServer(g, s.Audit())
@@ -54,18 +60,30 @@ func RegisterServer(g grpc.ServiceRegistrar, s Server) {
 }
 
 type UnimplementedServer struct {
-	IssueServer    IssueServiceServer
-	AccessServer   AccessServiceServer
-	ArchivedServer ArchivedServiceServer
-	AuditServer    AuditServiceServer
-	TenantServer   TenantServiceServer
-	HolderServer   HolderServiceServer
-	OutboxServer   OutboxServiceServer
-	OwedServer     OwedServiceServer
-	RowSealServer  RowSealServiceServer
+	CheckpointServer CheckpointServiceServer
+	IssueServer      IssueServiceServer
+	IssueEventServer IssueEventServiceServer
+	OverrideServer   OverrideServiceServer
+	AccessServer     AccessServiceServer
+	ArchivedServer   ArchivedServiceServer
+	AuditServer      AuditServiceServer
+	TenantServer     TenantServiceServer
+	HolderServer     HolderServiceServer
+	OutboxServer     OutboxServiceServer
+	OwedServer       OwedServiceServer
+	RowSealServer    RowSealServiceServer
 }
 
-func (UnimplementedServer) Issue() IssueServiceServer   { return UnimplementedIssueServiceServer{} }
+func (UnimplementedServer) Checkpoint() CheckpointServiceServer {
+	return UnimplementedCheckpointServiceServer{}
+}
+func (UnimplementedServer) Issue() IssueServiceServer { return UnimplementedIssueServiceServer{} }
+func (UnimplementedServer) IssueEvent() IssueEventServiceServer {
+	return UnimplementedIssueEventServiceServer{}
+}
+func (UnimplementedServer) Override() OverrideServiceServer {
+	return UnimplementedOverrideServiceServer{}
+}
 func (UnimplementedServer) Access() AccessServiceServer { return UnimplementedAccessServiceServer{} }
 func (UnimplementedServer) Archived() ArchivedServiceServer {
 	return UnimplementedArchivedServiceServer{}
@@ -78,29 +96,38 @@ func (UnimplementedServer) Owed() OwedServiceServer       { return Unimplemented
 func (UnimplementedServer) RowSeal() RowSealServiceServer { return UnimplementedRowSealServiceServer{} }
 
 type StaticServer struct {
-	IssueServer    IssueServiceServer
-	AccessServer   AccessServiceServer
-	ArchivedServer ArchivedServiceServer
-	AuditServer    AuditServiceServer
-	TenantServer   TenantServiceServer
-	HolderServer   HolderServiceServer
-	OutboxServer   OutboxServiceServer
-	OwedServer     OwedServiceServer
-	RowSealServer  RowSealServiceServer
+	CheckpointServer CheckpointServiceServer
+	IssueServer      IssueServiceServer
+	IssueEventServer IssueEventServiceServer
+	OverrideServer   OverrideServiceServer
+	AccessServer     AccessServiceServer
+	ArchivedServer   ArchivedServiceServer
+	AuditServer      AuditServiceServer
+	TenantServer     TenantServiceServer
+	HolderServer     HolderServiceServer
+	OutboxServer     OutboxServiceServer
+	OwedServer       OwedServiceServer
+	RowSealServer    RowSealServiceServer
 }
 
-func (s StaticServer) Issue() IssueServiceServer       { return s.IssueServer }
-func (s StaticServer) Access() AccessServiceServer     { return s.AccessServer }
-func (s StaticServer) Archived() ArchivedServiceServer { return s.ArchivedServer }
-func (s StaticServer) Audit() AuditServiceServer       { return s.AuditServer }
-func (s StaticServer) Tenant() TenantServiceServer     { return s.TenantServer }
-func (s StaticServer) Holder() HolderServiceServer     { return s.HolderServer }
-func (s StaticServer) Outbox() OutboxServiceServer     { return s.OutboxServer }
-func (s StaticServer) Owed() OwedServiceServer         { return s.OwedServer }
-func (s StaticServer) RowSeal() RowSealServiceServer   { return s.RowSealServer }
+func (s StaticServer) Checkpoint() CheckpointServiceServer { return s.CheckpointServer }
+func (s StaticServer) Issue() IssueServiceServer           { return s.IssueServer }
+func (s StaticServer) IssueEvent() IssueEventServiceServer { return s.IssueEventServer }
+func (s StaticServer) Override() OverrideServiceServer     { return s.OverrideServer }
+func (s StaticServer) Access() AccessServiceServer         { return s.AccessServer }
+func (s StaticServer) Archived() ArchivedServiceServer     { return s.ArchivedServer }
+func (s StaticServer) Audit() AuditServiceServer           { return s.AuditServer }
+func (s StaticServer) Tenant() TenantServiceServer         { return s.TenantServer }
+func (s StaticServer) Holder() HolderServiceServer         { return s.HolderServer }
+func (s StaticServer) Outbox() OutboxServiceServer         { return s.OutboxServer }
+func (s StaticServer) Owed() OwedServiceServer             { return s.OwedServer }
+func (s StaticServer) RowSeal() RowSealServiceServer       { return s.RowSealServer }
 
 type Client interface {
+	Checkpoint() CheckpointServiceClient
 	Issue() IssueServiceClient
+	IssueEvent() IssueEventServiceClient
+	Override() OverrideServiceClient
 	Access() AccessServiceClient
 	Archived() ArchivedServiceClient
 	Audit() AuditServiceClient
@@ -113,39 +140,48 @@ type Client interface {
 
 func NewClient(c *grpc.ClientConn) Client {
 	return &client{
-		_Issue:    NewIssueServiceClient(c),
-		_Access:   NewAccessServiceClient(c),
-		_Archived: NewArchivedServiceClient(c),
-		_Audit:    NewAuditServiceClient(c),
-		_Tenant:   NewTenantServiceClient(c),
-		_Holder:   NewHolderServiceClient(c),
-		_Outbox:   NewOutboxServiceClient(c),
-		_Owed:     NewOwedServiceClient(c),
-		_RowSeal:  NewRowSealServiceClient(c),
+		_Checkpoint: NewCheckpointServiceClient(c),
+		_Issue:      NewIssueServiceClient(c),
+		_IssueEvent: NewIssueEventServiceClient(c),
+		_Override:   NewOverrideServiceClient(c),
+		_Access:     NewAccessServiceClient(c),
+		_Archived:   NewArchivedServiceClient(c),
+		_Audit:      NewAuditServiceClient(c),
+		_Tenant:     NewTenantServiceClient(c),
+		_Holder:     NewHolderServiceClient(c),
+		_Outbox:     NewOutboxServiceClient(c),
+		_Owed:       NewOwedServiceClient(c),
+		_RowSeal:    NewRowSealServiceClient(c),
 	}
 }
 
 type client struct {
-	_Issue    IssueServiceClient
-	_Access   AccessServiceClient
-	_Archived ArchivedServiceClient
-	_Audit    AuditServiceClient
-	_Tenant   TenantServiceClient
-	_Holder   HolderServiceClient
-	_Outbox   OutboxServiceClient
-	_Owed     OwedServiceClient
-	_RowSeal  RowSealServiceClient
+	_Checkpoint CheckpointServiceClient
+	_Issue      IssueServiceClient
+	_IssueEvent IssueEventServiceClient
+	_Override   OverrideServiceClient
+	_Access     AccessServiceClient
+	_Archived   ArchivedServiceClient
+	_Audit      AuditServiceClient
+	_Tenant     TenantServiceClient
+	_Holder     HolderServiceClient
+	_Outbox     OutboxServiceClient
+	_Owed       OwedServiceClient
+	_RowSeal    RowSealServiceClient
 }
 
-func (c *client) Issue() IssueServiceClient       { return c._Issue }
-func (c *client) Access() AccessServiceClient     { return c._Access }
-func (c *client) Archived() ArchivedServiceClient { return c._Archived }
-func (c *client) Audit() AuditServiceClient       { return c._Audit }
-func (c *client) Tenant() TenantServiceClient     { return c._Tenant }
-func (c *client) Holder() HolderServiceClient     { return c._Holder }
-func (c *client) Outbox() OutboxServiceClient     { return c._Outbox }
-func (c *client) Owed() OwedServiceClient         { return c._Owed }
-func (c *client) RowSeal() RowSealServiceClient   { return c._RowSeal }
+func (c *client) Checkpoint() CheckpointServiceClient { return c._Checkpoint }
+func (c *client) Issue() IssueServiceClient           { return c._Issue }
+func (c *client) IssueEvent() IssueEventServiceClient { return c._IssueEvent }
+func (c *client) Override() OverrideServiceClient     { return c._Override }
+func (c *client) Access() AccessServiceClient         { return c._Access }
+func (c *client) Archived() ArchivedServiceClient     { return c._Archived }
+func (c *client) Audit() AuditServiceClient           { return c._Audit }
+func (c *client) Tenant() TenantServiceClient         { return c._Tenant }
+func (c *client) Holder() HolderServiceClient         { return c._Holder }
+func (c *client) Outbox() OutboxServiceClient         { return c._Outbox }
+func (c *client) Owed() OwedServiceClient             { return c._Owed }
+func (c *client) RowSeal() RowSealServiceClient       { return c._RowSeal }
 
 // Middleware is a server that delegates to another server.
 type Middleware interface {
@@ -217,7 +253,7 @@ func SinkOf(s Server) Server {
 //		Overlay
 //	}
 //
-//	func (s Server) Issue() IssueServiceServer { ... }
+//	func (s Server) Checkpoint() CheckpointServiceServer { ... }
 type Overlay struct {
 	Server
 }

@@ -45,6 +45,18 @@ func (f AuditFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AuditMutation", m)
 }
 
+// The CheckpointFunc type is an adapter to allow the use of ordinary
+// function as Checkpoint mutator.
+type CheckpointFunc func(context.Context, *ent.CheckpointMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CheckpointFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CheckpointMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CheckpointMutation", m)
+}
+
 // The HolderFunc type is an adapter to allow the use of ordinary
 // function as Holder mutator.
 type HolderFunc func(context.Context, *ent.HolderMutation) (ent.Value, error)
@@ -69,6 +81,18 @@ func (f IssueFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.IssueMutation", m)
 }
 
+// The IssueEventFunc type is an adapter to allow the use of ordinary
+// function as IssueEvent mutator.
+type IssueEventFunc func(context.Context, *ent.IssueEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f IssueEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.IssueEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.IssueEventMutation", m)
+}
+
 // The OutboxFunc type is an adapter to allow the use of ordinary
 // function as Outbox mutator.
 type OutboxFunc func(context.Context, *ent.OutboxMutation) (ent.Value, error)
@@ -79,6 +103,18 @@ func (f OutboxFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OutboxMutation", m)
+}
+
+// The OverrideFunc type is an adapter to allow the use of ordinary
+// function as Override mutator.
+type OverrideFunc func(context.Context, *ent.OverrideMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f OverrideFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.OverrideMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OverrideMutation", m)
 }
 
 // The OwedFunc type is an adapter to allow the use of ordinary

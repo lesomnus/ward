@@ -55,6 +55,55 @@ func (sealIssue) Erase(context.Context, *app.IssueRef) (*app.IssueEraseResponse,
 	return nil, errWrittenByWard
 }
 
+type sealIssueEvent struct {
+	Seal
+	app.IssueEventServiceServer
+}
+
+func (s Seal) IssueEvent() app.IssueEventServiceServer {
+	return sealIssueEvent{s, s.Next().IssueEvent()}
+}
+
+func (sealIssueEvent) Add(context.Context, *app.IssueEventAddRequest) (*app.IssueEvent, error) {
+	return nil, errWrittenByWard
+}
+
+func (sealIssueEvent) Erase(context.Context, *app.IssueEventRef) (*app.IssueEventEraseResponse, error) {
+	return nil, errWrittenByWard
+}
+
+type sealOverride struct {
+	Seal
+	app.OverrideServiceServer
+}
+
+func (s Seal) Override() app.OverrideServiceServer { return sealOverride{s, s.Next().Override()} }
+
+func (sealOverride) Add(context.Context, *app.OverrideAddRequest) (*app.Override, error) {
+	return nil, errWrittenByWard
+}
+
+func (sealOverride) Erase(context.Context, *app.OverrideRef) (*app.OverrideEraseResponse, error) {
+	return nil, errWrittenByWard
+}
+
+type sealCheckpoint struct {
+	Seal
+	app.CheckpointServiceServer
+}
+
+func (s Seal) Checkpoint() app.CheckpointServiceServer {
+	return sealCheckpoint{s, s.Next().Checkpoint()}
+}
+
+func (sealCheckpoint) Add(context.Context, *app.CheckpointAddRequest) (*app.Checkpoint, error) {
+	return nil, errWrittenByWard
+}
+
+func (sealCheckpoint) Erase(context.Context, *app.CheckpointRef) (*app.CheckpointEraseResponse, error) {
+	return nil, errWrittenByWard
+}
+
 // Ops is where Ward's own RPCs are implemented: those declared in
 // proto/ext/ward/*_svc.ext.proto. It has none yet.
 type Ops struct{ app.Overlay }

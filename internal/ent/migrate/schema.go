@@ -152,6 +152,20 @@ var (
 			},
 		},
 	}
+	// CheckpointColumns holds the columns for the "checkpoint" table.
+	CheckpointColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUuid, Unique: true},
+		{Name: "date_alive", Type: field.TypeTime, Nullable: true},
+		{Name: "run", Type: field.TypeString},
+		{Name: "date_updated", Type: field.TypeTime},
+		{Name: "date_created", Type: field.TypeTime, Nullable: true},
+	}
+	// CheckpointTable holds the schema information for the "checkpoint" table.
+	CheckpointTable = &schema.Table{
+		Name:       "checkpoint",
+		Columns:    CheckpointColumns,
+		PrimaryKey: []*schema.Column{CheckpointColumns[0]},
+	}
 	// HolderColumns holds the columns for the "holder" table.
 	HolderColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUuid, Unique: true},
@@ -238,6 +252,52 @@ var (
 			},
 		},
 	}
+	// IssueeventColumns holds the columns for the "issueevent" table.
+	IssueeventColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUuid, Unique: true},
+		{Name: "cursor", Type: field.TypeInt64, Unique: true},
+		{Name: "issue_id", Type: field.TypeBytes},
+		{Name: "event", Type: field.TypeString},
+		{Name: "date_occurred", Type: field.TypeTime, Nullable: true},
+		{Name: "comment", Type: field.TypeString},
+		{Name: "date_created", Type: field.TypeTime, Nullable: true},
+		{Name: "rule", Type: field.TypeString},
+		{Name: "source", Type: field.TypeString},
+		{Name: "node", Type: field.TypeString},
+		{Name: "key", Type: field.TypeString},
+		{Name: "severity", Type: field.TypeString},
+		{Name: "level", Type: field.TypeString},
+		{Name: "state", Type: field.TypeString},
+		{Name: "date_opened", Type: field.TypeTime, Nullable: true},
+		{Name: "date_seen", Type: field.TypeTime, Nullable: true},
+		{Name: "date_closed", Type: field.TypeTime, Nullable: true},
+		{Name: "close_reason", Type: field.TypeString},
+		{Name: "count", Type: field.TypeInt64},
+		{Name: "restarts", Type: field.TypeInt64},
+		{Name: "attention", Type: field.TypeBool},
+		{Name: "acked", Type: field.TypeBool},
+		{Name: "suppressed", Type: field.TypeBool},
+		{Name: "shelved", Type: field.TypeBool},
+		{Name: "out_of_service", Type: field.TypeBool},
+	}
+	// IssueeventTable holds the schema information for the "issueevent" table.
+	IssueeventTable = &schema.Table{
+		Name:       "issueevent",
+		Columns:    IssueeventColumns,
+		PrimaryKey: []*schema.Column{IssueeventColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "issueevent_page",
+				Unique:  false,
+				Columns: []*schema.Column{IssueeventColumns[1], IssueeventColumns[0]},
+			},
+			{
+				Name:    "issueevent_issue",
+				Unique:  false,
+				Columns: []*schema.Column{IssueeventColumns[2], IssueeventColumns[1]},
+			},
+		},
+	}
 	// OutboxColumns holds the columns for the "outbox" table.
 	OutboxColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUuid, Unique: true},
@@ -260,6 +320,31 @@ var (
 				Name:    "outbox_queue",
 				Unique:  false,
 				Columns: []*schema.Column{OutboxColumns[0]},
+			},
+		},
+	}
+	// OverrideColumns holds the columns for the "override" table.
+	OverrideColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUuid, Unique: true},
+		{Name: "rule", Type: field.TypeString},
+		{Name: "node", Type: field.TypeString},
+		{Name: "key", Type: field.TypeString},
+		{Name: "kind", Type: field.TypeString},
+		{Name: "date_unshelve", Type: field.TypeTime, Nullable: true},
+		{Name: "date_updated", Type: field.TypeTime},
+		{Name: "date_created", Type: field.TypeTime, Nullable: true},
+		{Name: "comment", Type: field.TypeString},
+	}
+	// OverrideTable holds the schema information for the "override" table.
+	OverrideTable = &schema.Table{
+		Name:       "override",
+		Columns:    OverrideColumns,
+		PrimaryKey: []*schema.Column{OverrideColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "override_page",
+				Unique:  false,
+				Columns: []*schema.Column{OverrideColumns[7], OverrideColumns[0]},
 			},
 		},
 	}
@@ -324,9 +409,12 @@ var (
 		AccessTable,
 		ArchivedTable,
 		AuditTable,
+		CheckpointTable,
 		HolderTable,
 		IssueTable,
+		IssueeventTable,
 		OutboxTable,
+		OverrideTable,
 		OwedTable,
 		RowsealTable,
 		TenantTable,
@@ -343,6 +431,9 @@ func init() {
 	AuditTable.Annotation = &entsql.Annotation{
 		Table: "audit",
 	}
+	CheckpointTable.Annotation = &entsql.Annotation{
+		Table: "checkpoint",
+	}
 	HolderTable.ForeignKeys[0].RefTable = TenantTable
 	HolderTable.Annotation = &entsql.Annotation{
 		Table: "holder",
@@ -350,8 +441,14 @@ func init() {
 	IssueTable.Annotation = &entsql.Annotation{
 		Table: "issue",
 	}
+	IssueeventTable.Annotation = &entsql.Annotation{
+		Table: "issueevent",
+	}
 	OutboxTable.Annotation = &entsql.Annotation{
 		Table: "outbox",
+	}
+	OverrideTable.Annotation = &entsql.Annotation{
+		Table: "override",
 	}
 	OwedTable.Annotation = &entsql.Annotation{
 		Table: "owed",

@@ -1,0 +1,437 @@
+edition = "2023";
+
+package ward;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+option features.field_presence = IMPLICIT;
+option go_package = "github.com/lesomnus/ward";
+
+// What Ward holds in memory and answers from: the Conditions it evaluates, the
+// definitions it evaluates them with, the nodes it observes, and itself. These
+// are not stored; they are what the evaluation loop knows now. Their services
+// take payday's shapes -- {Resource}Ref, Get, and a List of
+// {filters, size, after} answered with {items, next} -- so that a client of
+// Ward reads them the way it reads Issue.
+
+// --- Condition --------------------------------------------------------------
+
+// Condition is one (rule, node, key): what a rule says about one target on one
+// node, now.
+message Condition {
+  string rule = 1;
+  string node = 2;
+  string key = 3;
+
+  // inactive, pending, active, stale or cleared.
+  string state = 4;
+
+  // A metric rule's current level; empty without levels.
+  string level = 5;
+  string severity = 6;
+
+  // Whether a verdict that rests on silence is being held back, and why: the
+  // node's collection path is not known to be working, its boot is not known
+  // yet, or the Condition's inputs are unknown.
+  bool held = 7;
+  string hold_reason = 8;
+
+  bool suppressed = 9;
+  bool shelved = 10;
+  bool out_of_service = 11;
+  google.protobuf.Timestamp date_unshelve = 12;
+
+  // The open Issue, if any.
+  bytes issue_id = 13;
+
+  google.protobuf.Timestamp date_changed = 14;
+}
+
+message ConditionRef {
+  string rule = 1;
+  string node = 2;
+  string key = 3;
+}
+
+message ConditionGetRequest {
+  ConditionRef ref = 1;
+}
+
+message ConditionFilter {
+  string rule = 1;
+  string node = 2;
+  string state = 3;
+}
+
+message ConditionListRequest {
+  repeated ConditionFilter filters = 1;
+  int32 size = 2;
+  string after = 3;
+}
+
+message ConditionListResponse {
+  repeated Condition items = 1;
+  string next = 2;
+}
+
+message ConditionShelveRequest {
+  ConditionRef ref = 1;
+
+  // timed or one_shot.
+  string mode = 2;
+
+  // How long a timed shelve lasts; at most operator.max_shelve.
+  google.protobuf.Duration duration = 3;
+
+  string comment = 4;
+}
+
+message ConditionUnshelveRequest {
+  ConditionRef ref = 1;
+  string comment = 2;
+}
+
+message ConditionRemoveFromServiceRequest {
+  ConditionRef ref = 1;
+  string comment = 2;
+}
+
+message ConditionPlaceInServiceRequest {
+  ConditionRef ref = 1;
+  string comment = 2;
+}
+
+service ConditionService {
+  rpc Get(ConditionGetRequest) returns (Condition);
+  rpc List(ConditionListRequest) returns (ConditionListResponse);
+  rpc Shelve(ConditionShelveRequest) returns (Condition);
+  rpc Unshelve(ConditionUnshelveRequest) returns (Condition);
+  rpc RemoveFromService(ConditionRemoveFromServiceRequest) returns (Condition);
+  rpc PlaceInService(ConditionPlaceInServiceRequest) returns (Condition);
+}
+
+// --- Source -----------------------------------------------------------------
+
+// Source is a service that sends signals, by its OTel service.name.
+message Source {
+  string name = 1;
+
+  // The provider that defined it, and the revision it was defined in.
+  string provider = 2;
+  string revision = 3;
+
+  // The cumulative counter whose data points say the source is alive, and how
+  // long they may stop before it is not; empty for a source declared with
+  // `liveness: none`.
+  string liveness_metric = 4;
+  google.protobuf.Duration max_gap = 5;
+
+  repeated SourceNode nodes = 6;
+}
+
+// SourceNode is a source as it is seen on one node.
+message SourceNode {
+  string node = 1;
+
+  // The last signal of any kind.
+  google.protobuf.Timestamp date_signaled = 2;
+
+  // The last data point of the liveness counter.
+  google.protobuf.Timestamp date_alive = 3;
+
+  // When the running process started: the liveness counter's
+  // StartTimeUnixNano.
+  google.protobuf.Timestamp date_started = 4;
+
+  // The Resource's service.instance.id, when it sends one.
+  string instance = 5;
+
+  bool alive = 6;
+  google.protobuf.Timestamp date_restarted = 7;
+}
+
+message SourceRef {
+  string name = 1;
+}
+
+message SourceGetRequest {
+  SourceRef ref = 1;
+}
+
+message SourceFilter {
+  string provider = 1;
+}
+
+message SourceListRequest {
+  repeated SourceFilter filters = 1;
+  int32 size = 2;
+  string after = 3;
+}
+
+message SourceListResponse {
+  repeated Source items = 1;
+  string next = 2;
+}
+
+service SourceService {
+  rpc Get(SourceGetRequest) returns (Source);
+  rpc List(SourceListRequest) returns (SourceListResponse);
+}
+
+// --- Rule -------------------------------------------------------------------
+
+// Rule is a definition Ward evaluates, as its provider wrote it.
+message Rule {
+  string id = 1;
+
+  // log, metric, node or composite.
+  string kind = 2;
+
+  string provider = 3;
+  string revision = 4;
+  string severity = 5;
+
+  // The definition, as JSON.
+  string definition = 6;
+}
+
+message RuleRef {
+  string id = 1;
+}
+
+message RuleGetRequest {
+  RuleRef ref = 1;
+}
+
+message RuleFilter {
+  string kind = 1;
+  string provider = 2;
+}
+
+message RuleListRequest {
+  repeated RuleFilter filters = 1;
+  int32 size = 2;
+  string after = 3;
+}
+
+message RuleListResponse {
+  repeated Rule items = 1;
+  string next = 2;
+}
+
+service RuleService {
+  rpc Get(RuleGetRequest) returns (Rule);
+  rpc List(RuleListRequest) returns (RuleListResponse);
+}
+
+// --- Provider ---------------------------------------------------------------
+
+// Provider is where sources and rules come from, and what it last supplied.
+message Provider {
+  string name = 1;
+
+  // file.
+  string type = 2;
+
+  // Where it reads from: a file's path.
+  string location = 3;
+
+  // The revision in effect: what was last supplied and accepted.
+  string revision = 4;
+  google.protobuf.Timestamp date_applied = 5;
+
+  // What the last supply was refused for, with the revision before it still in
+  // effect; empty when the last supply was accepted.
+  repeated string errors = 6;
+  repeated string warnings = 7;
+  google.protobuf.Timestamp date_refused = 8;
+}
+
+message ProviderRef {
+  string name = 1;
+}
+
+message ProviderGetRequest {
+  ProviderRef ref = 1;
+}
+
+message ProviderListRequest {
+  int32 size = 2;
+  string after = 3;
+}
+
+message ProviderListResponse {
+  repeated Provider items = 1;
+  string next = 2;
+}
+
+service ProviderService {
+  rpc Get(ProviderGetRequest) returns (Provider);
+  rpc List(ProviderListRequest) returns (ProviderListResponse);
+}
+
+// --- Node -------------------------------------------------------------------
+
+// Node is a Collector that sends to Ward and the host it runs on.
+message Node {
+  string name = 1;
+
+  // Whether what the node's Collector sends is known to arrive: its canary
+  // made the round trip within the gate's limits for gate.hold.
+  bool observable = 2;
+
+  // Why not, when it is not.
+  string reason = 3;
+
+  // The host's boot, from hostmetrics system.uptime; unset until known.
+  google.protobuf.Timestamp date_booted = 4;
+
+  Canary canary = 5;
+
+  // Spans Ward could not observe the node, most recent first.
+  repeated Gap gaps = 6;
+}
+
+message Canary {
+  // The last round trip.
+  google.protobuf.Duration rtt = 1;
+
+  // The last export that failed, and why.
+  google.protobuf.Timestamp date_failed = 2;
+  string error = 3;
+
+  // Sent and returned in the gate's check window.
+  int64 sent = 4;
+  int64 missing = 5;
+}
+
+message Gap {
+  google.protobuf.Timestamp date_from = 1;
+
+  // Unset while the gap is still open.
+  google.protobuf.Timestamp date_to = 2;
+
+  string reason = 3;
+}
+
+message NodeRef {
+  string name = 1;
+}
+
+message NodeGetRequest {
+  NodeRef ref = 1;
+}
+
+message NodeListRequest {
+  int32 size = 2;
+  string after = 3;
+}
+
+message NodeListResponse {
+  repeated Node items = 1;
+  string next = 2;
+}
+
+service NodeService {
+  rpc Get(NodeGetRequest) returns (Node);
+  rpc List(NodeListRequest) returns (NodeListResponse);
+}
+
+// --- Status -----------------------------------------------------------------
+
+// Status is Ward itself.
+message Status {
+  // A new one on every start.
+  string run = 1;
+  google.protobuf.Timestamp date_started = 2;
+
+  // How long the last tick took, and how many were skipped because one ran
+  // over.
+  google.protobuf.Duration tick = 3;
+  int64 overruns = 4;
+
+  // Signals waiting to be evaluated, and the queue's bound.
+  int64 queued = 5;
+  int64 queue_size = 6;
+
+  // Signals that arrived for a span already decided.
+  int64 late = 7;
+
+  // Records no rule matched, by source and, when they carry one, by
+  // diag.condition.type.
+  repeated Unmatched unmatched = 8;
+
+  // Attributes a rule reads that arrived with another type.
+  repeated TypeViolation violations = 9;
+
+  // Resources that matched no node.
+  repeated string unknown_hosts = 10;
+
+  // Sources that have sent nothing since Ward started.
+  repeated string silent_sources = 11;
+}
+
+message Unmatched {
+  string source = 1;
+  string condition_type = 2;
+  int64 count = 3;
+}
+
+message TypeViolation {
+  string source = 1;
+  string attribute = 2;
+  string want = 3;
+  string got = 4;
+  int64 count = 5;
+}
+
+message StatusGetRequest {}
+
+service StatusService {
+  rpc Get(StatusGetRequest) returns (Status);
+}
+
+// --- Component (Phase 2) ----------------------------------------------------
+
+// Component is a node of the component tree a provider defines, and its health:
+// the worst of what it holds.
+message Component {
+  string name = 1;
+  string parent = 2;
+
+  // unhealthy, unknown, degraded, no_data or healthy.
+  string health = 3;
+
+  // Conditions under it, by state, its children's included.
+  map<string, int64> counts = 4;
+}
+
+message ComponentRef {
+  string name = 1;
+}
+
+message ComponentGetRequest {
+  ComponentRef ref = 1;
+}
+
+message ComponentFilter {
+  string parent = 1;
+  string health = 2;
+}
+
+message ComponentListRequest {
+  repeated ComponentFilter filters = 1;
+  int32 size = 2;
+  string after = 3;
+}
+
+message ComponentListResponse {
+  repeated Component items = 1;
+  string next = 2;
+}
+
+service ComponentService {
+  rpc Get(ComponentGetRequest) returns (Component);
+  rpc List(ComponentListRequest) returns (ComponentListResponse);
+}

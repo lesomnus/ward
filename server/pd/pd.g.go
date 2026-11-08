@@ -40,9 +40,12 @@ import (
 	entAccess "github.com/lesomnus/ward/internal/ent/access"
 	entArchived "github.com/lesomnus/ward/internal/ent/archived"
 	entAudit "github.com/lesomnus/ward/internal/ent/audit"
+	entCheckpoint "github.com/lesomnus/ward/internal/ent/checkpoint"
 	entHolder "github.com/lesomnus/ward/internal/ent/holder"
 	entIssue "github.com/lesomnus/ward/internal/ent/issue"
+	entIssueEvent "github.com/lesomnus/ward/internal/ent/issueevent"
 	entOutbox "github.com/lesomnus/ward/internal/ent/outbox"
+	entOverride "github.com/lesomnus/ward/internal/ent/override"
 	entOwed "github.com/lesomnus/ward/internal/ent/owed"
 	predicate "github.com/lesomnus/ward/internal/ent/predicate"
 	entRowSeal "github.com/lesomnus/ward/internal/ent/rowseal"
@@ -94,24 +97,30 @@ func Check() error { return version.Same(Payday) }
 // trail says what kind of thing it was long after the row is gone. So a
 // number is chosen once and never given to something else.
 const (
-	AccessDomain   pdid.Domain = 6   // "access"
-	ArchivedDomain pdid.Domain = 5   // "archived"
-	AuditDomain    pdid.Domain = 3   // "audit"
-	HolderDomain   pdid.Domain = 2   // "holder"
-	IssueDomain    pdid.Domain = 7   // "issue"
-	OutboxDomain   pdid.Domain = 4   // "outbox"
-	OwedDomain     pdid.Domain = 254 // "owed"
-	RowSealDomain  pdid.Domain = 255 // "row-seal"
-	TenantDomain   pdid.Domain = 1   // "tenant"
+	AccessDomain     pdid.Domain = 6   // "access"
+	ArchivedDomain   pdid.Domain = 5   // "archived"
+	AuditDomain      pdid.Domain = 3   // "audit"
+	CheckpointDomain pdid.Domain = 10  // "checkpoint"
+	HolderDomain     pdid.Domain = 2   // "holder"
+	IssueDomain      pdid.Domain = 7   // "issue"
+	IssueEventDomain pdid.Domain = 8   // "issue-event"
+	OutboxDomain     pdid.Domain = 4   // "outbox"
+	OverrideDomain   pdid.Domain = 9   // "override"
+	OwedDomain       pdid.Domain = 254 // "owed"
+	RowSealDomain    pdid.Domain = 255 // "row-seal"
+	TenantDomain     pdid.Domain = 1   // "tenant"
 )
 
 func init() {
 	pdid.Register("ward.Access", AccessDomain, "access")
 	pdid.Register("ward.Archived", ArchivedDomain, "archived")
 	pdid.Register("ward.Audit", AuditDomain, "audit")
+	pdid.Register("ward.Checkpoint", CheckpointDomain, "checkpoint")
 	pdid.Register("ward.Holder", HolderDomain, "holder")
 	pdid.Register("ward.Issue", IssueDomain, "issue")
+	pdid.Register("ward.IssueEvent", IssueEventDomain, "issue-event")
 	pdid.Register("ward.Outbox", OutboxDomain, "outbox")
+	pdid.Register("ward.Override", OverrideDomain, "override")
 	pdid.Register("ward.Owed", OwedDomain, "owed")
 	pdid.Register("ward.RowSeal", RowSealDomain, "row-seal")
 	pdid.Register("ward.Tenant", TenantDomain, "tenant")
@@ -122,15 +131,18 @@ func init() {
 // Domains is the domain of each entity by the full name of its message,
 // which is the name a [Minter] is asked about.
 var Domains = map[string]pdid.Domain{
-	"ward.Access":   AccessDomain,
-	"ward.Archived": ArchivedDomain,
-	"ward.Audit":    AuditDomain,
-	"ward.Holder":   HolderDomain,
-	"ward.Issue":    IssueDomain,
-	"ward.Outbox":   OutboxDomain,
-	"ward.Owed":     OwedDomain,
-	"ward.RowSeal":  RowSealDomain,
-	"ward.Tenant":   TenantDomain,
+	"ward.Access":     AccessDomain,
+	"ward.Archived":   ArchivedDomain,
+	"ward.Audit":      AuditDomain,
+	"ward.Checkpoint": CheckpointDomain,
+	"ward.Holder":     HolderDomain,
+	"ward.Issue":      IssueDomain,
+	"ward.IssueEvent": IssueEventDomain,
+	"ward.Outbox":     OutboxDomain,
+	"ward.Override":   OverrideDomain,
+	"ward.Owed":       OwedDomain,
+	"ward.RowSeal":    RowSealDomain,
+	"ward.Tenant":     TenantDomain,
 }
 
 // ColumnRenames are the columns of payday's own entities in this schema that
@@ -160,7 +172,10 @@ var IndexRenames = []rename.Index{
 	{Table: "holder", From: "holder_tenant_id_date_created_id", To: "holder_page"},
 	{Table: "issue", From: "issue_date_created_id", To: "issue_page"},
 	{Table: "issue", From: "issue_state_date_created_id", To: "issue_state"},
+	{Table: "issueevent", From: "issueevent_cursor_id", To: "issueevent_page"},
+	{Table: "issueevent", From: "issueevent_issue_id_cursor", To: "issueevent_issue"},
 	{Table: "outbox", From: "outbox_id", To: "outbox_queue"},
+	{Table: "override", From: "override_date_created_id", To: "override_page"},
 	{Table: "owed", From: "owed_date_created_id", To: "owed_owed"},
 	{Table: "tenant", From: "tenant_date_created_id", To: "tenant_page"},
 }
@@ -255,6 +270,15 @@ func (wall) AuditScope(ctx context.Context) (predicate.Audit, error) {
 	return entAudit.Or(entAudit.TenantIdIn(vs...), entAudit.ActorTenantIdIn(vs...), entAudit.CounterpartTenantIdIn(vs...)), nil
 }
 
+// CheckpointScope: declared `global`, so it is not behind the wall at all.
+func (wall) CheckpointScope(ctx context.Context) (predicate.Checkpoint, error) {
+	if _, ok := frame.AccountOf(ctx); ok {
+		return nothing[predicate.Checkpoint](), nil
+	}
+
+	return nil, nil
+}
+
 // HolderScope: a row belongs to the tenant its "tenant" reaches.
 func (wall) HolderScope(ctx context.Context) (predicate.Holder, error) {
 	if _, ok := frame.AccountOf(ctx); ok {
@@ -278,10 +302,28 @@ func (wall) IssueScope(ctx context.Context) (predicate.Issue, error) {
 	return nil, nil
 }
 
+// IssueEventScope: declared `global`, so it is not behind the wall at all.
+func (wall) IssueEventScope(ctx context.Context) (predicate.IssueEvent, error) {
+	if _, ok := frame.AccountOf(ctx); ok {
+		return nothing[predicate.IssueEvent](), nil
+	}
+
+	return nil, nil
+}
+
 // OutboxScope: declared `global`, so it is not behind the wall at all.
 func (wall) OutboxScope(ctx context.Context) (predicate.Outbox, error) {
 	if _, ok := frame.AccountOf(ctx); ok {
 		return nothing[predicate.Outbox](), nil
+	}
+
+	return nil, nil
+}
+
+// OverrideScope: declared `global`, so it is not behind the wall at all.
+func (wall) OverrideScope(ctx context.Context) (predicate.Override, error) {
+	if _, ok := frame.AccountOf(ctx); ok {
+		return nothing[predicate.Override](), nil
 	}
 
 	return nil, nil
@@ -838,6 +880,45 @@ func filterAudit(f *ward.AuditFilter) (predicate.Audit, error) {
 	}
 
 	return entAudit.And(ps...), nil
+}
+
+type sinkCheckpoint struct {
+	ward.CheckpointServiceServer
+	store  bare.Store
+	w      *watch.Watch
+	namer  slug.Namer
+	joined bool
+}
+
+func (s Sink) Checkpoint() ward.CheckpointServiceServer {
+	return sinkCheckpoint{s.Server.Checkpoint(), s.Server.Store, s.w, s.namer, s.joined}
+}
+
+// Erase forgets what the transaction was told about the row, before it is
+// erased: whether a frame may see it, and where a walk from it arrives.
+// Neither is true of a row that is gone, nor of another put under its
+// key. See [seen.Forget].
+func (s sinkCheckpoint) Erase(ctx context.Context, req *ward.CheckpointRef) (*ward.CheckpointEraseResponse, error) {
+	seen.Forget(s.store.Db.Driver(), "Checkpoint", req)
+
+	return s.CheckpointServiceServer.Erase(ctx, req)
+}
+
+// Apply forgets what the transaction was told about the row, before it is
+// written: a document may move it to a set the caller cannot see. See
+// [seen.Forget].
+func (s sinkCheckpoint) Apply(ctx context.Context, req *ward.CheckpointApplyRequest) (*ward.Checkpoint, error) {
+	seen.Forget(s.store.Db.Driver(), "Checkpoint", req.GetRef())
+
+	return s.CheckpointServiceServer.Apply(ctx, req)
+}
+
+// Patch forgets what the transaction was told about the row, before it is
+// written; see [sinkCheckpoint.Apply].
+func (s sinkCheckpoint) Patch(ctx context.Context, req *ward.CheckpointPatchRequest) (*ward.Checkpoint, error) {
+	seen.Forget(s.store.Db.Driver(), "Checkpoint", req.GetRef())
+
+	return s.CheckpointServiceServer.Patch(ctx, req)
 }
 
 type sinkHolder struct {
@@ -1555,6 +1636,412 @@ func filterIssue(f *ward.IssueFilter) (predicate.Issue, error) {
 	return entIssue.And(ps...), nil
 }
 
+type sinkIssueEvent struct {
+	ward.IssueEventServiceServer
+	store  bare.Store
+	w      *watch.Watch
+	namer  slug.Namer
+	joined bool
+}
+
+func (s Sink) IssueEvent() ward.IssueEventServiceServer {
+	return sinkIssueEvent{s.Server.IssueEvent(), s.Server.Store, s.w, s.namer, s.joined}
+}
+
+// Erase forgets what the transaction was told about the row, before it is
+// erased: whether a frame may see it, and where a walk from it arrives.
+// Neither is true of a row that is gone, nor of another put under its
+// key. See [seen.Forget].
+func (s sinkIssueEvent) Erase(ctx context.Context, req *ward.IssueEventRef) (*ward.IssueEventEraseResponse, error) {
+	seen.Forget(s.store.Db.Driver(), "IssueEvent", req)
+
+	return s.IssueEventServiceServer.Erase(ctx, req)
+}
+
+// Apply forgets what the transaction was told about the row, before it is
+// written: a document may move it to a set the caller cannot see. See
+// [seen.Forget].
+func (s sinkIssueEvent) Apply(ctx context.Context, req *ward.IssueEventApplyRequest) (*ward.IssueEvent, error) {
+	seen.Forget(s.store.Db.Driver(), "IssueEvent", req.GetRef())
+
+	return s.IssueEventServiceServer.Apply(ctx, req)
+}
+
+// Patch forgets what the transaction was told about the row, before it is
+// written; see [sinkIssueEvent.Apply].
+func (s sinkIssueEvent) Patch(ctx context.Context, req *ward.IssueEventPatchRequest) (*ward.IssueEvent, error) {
+	seen.Forget(s.store.Db.Driver(), "IssueEvent", req.GetRef())
+
+	return s.IssueEventServiceServer.Patch(ctx, req)
+}
+
+// orderIssueEvent is how IssueEvents come back.
+//
+// The last column is the key, and it is not decoration: a cursor cannot
+// tell apart two rows equal in every column of the order, so the page after
+// the first of them either repeats the second or skips it. Rows written by
+// one request are stamped a moment apart at best.
+var orderIssueEvent = []sqlpage.Order{
+	{Column: entIssueEvent.FieldCursor, Desc: false},
+	{Column: entIssueEvent.FieldId, Desc: false},
+}
+
+func afterIssueEvent(v string, by []sqlpage.Order, tag string) (func(*sql.Selector), error) {
+	var (
+		at0 int64
+		at1 uuid.UUID
+	)
+	if err := pdAfter(v, tag, &at0, &at1); err != nil {
+		return nil, err
+	}
+
+	return sqlpage.After(by, []any{at0, at1})
+}
+
+func nextIssueEvent(last *ent.IssueEvent, tag string) (string, error) {
+	return pdNext(tag, last.Cursor, last.Id)
+}
+
+// orderByIssueEvent is an order as ent orders a query by it.
+func orderByIssueEvent(by []sqlpage.Order) []entIssueEvent.OrderOption {
+	out := make([]entIssueEvent.OrderOption, len(by))
+	for i, o := range by {
+		if o.Desc {
+			out[i] = sql.OrderByField(o.Column, sql.OrderDesc()).ToFunc()
+			continue
+		}
+
+		out[i] = sql.OrderByField(o.Column).ToFunc()
+	}
+
+	return out
+}
+
+const (
+	// IssueEventPageSize is what a request that did not say gets, and
+	// IssueEventPageLimit is the most it gets however loudly it asks.
+	IssueEventPageSize  = 100
+	IssueEventPageLimit = 1000
+
+	// IssueEventFilterLimit is how many filters one request may carry. Each is a
+	// predicate in the same query, so it is what says how much of the
+	// database a request may ask to read -- and it is refused rather than
+	// clamped, because dropping half the filters would answer a question
+	// nobody asked.
+	IssueEventFilterLimit = 32
+)
+
+// List answers with the IssueEvents that match any of the given filters, or with
+// every one there is if the request named none, a page at a time.
+func (s sinkIssueEvent) List(ctx context.Context, req *ward.IssueEventListRequest) (*ward.IssueEventListResponse, error) {
+	q := s.store.Db.IssueEvent.Query()
+
+	// Through the same narrowing every generated read goes through, and not
+	// by asking the scope alone: what narrows a read is the wall today and
+	// the wall and something else tomorrow, and a list that reached past it
+	// would be the one read that missed the something else.
+	if p, err := bare.IssueEventNarrow(ctx, s.store.Scope, nil); err != nil {
+		return nil, err
+	} else if p != nil {
+		q.Where(p)
+	}
+
+	if fs := req.GetFilters(); len(fs) > 0 {
+		if len(fs) > IssueEventFilterLimit {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"filters: %d of them, and %d is the most one list carries", len(fs), IssueEventFilterLimit)
+		}
+
+		ps := make([]predicate.IssueEvent, 0, len(fs))
+		for i, f := range fs {
+			p, err := filterIssueEvent(f)
+			if err != nil {
+				return nil, status.Errorf(codes.InvalidArgument, "filters[%d]: %s", i, err)
+			}
+
+			ps = append(ps, p)
+		}
+
+		q.Where(entIssueEvent.Or(ps...))
+	}
+
+	// Which order, and which way: one the schema declared, and never one a
+	// request makes up, since an order is a walk of an index.
+	by, after, next, tag := orderIssueEvent, afterIssueEvent, nextIssueEvent, ""
+	if req.GetReverse() {
+		// The same index, walked from the other end.
+		by, tag = pdReverse(by), tag+"/reverse"
+	}
+
+	if v := req.GetAfter(); v != "" {
+		p, err := after(v, by, tag)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "after: %s", err)
+		}
+
+		q.Where(p)
+	}
+
+	// One row more than the page, which is how "is there another" is answered
+	// without a second query and without a count. The extra is dropped before
+	// the answer is built; it was only ever asked for to see whether it was
+	// there -- so a full last page answers with no cursor rather than sending
+	// the caller back for an empty one.
+	size := sqlpage.Size(int(req.GetSize()), IssueEventPageSize, IssueEventPageLimit)
+	us, err := q.Order(orderByIssueEvent(by)...).Limit(size + 1).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	more := len(us) > size
+	if more {
+		us = us[:size]
+	}
+
+	items := make([]*ward.IssueEvent, len(us))
+	for i, u := range us {
+		items[i] = u.Proto()
+	}
+
+	res := ward.IssueEventListResponse_builder{Items: items}.Build()
+	if more {
+		v, err := next(us[len(us)-1], tag)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "next: %s", err)
+		}
+
+		res.SetNext(v)
+	}
+
+	return res, nil
+}
+
+// filterIssueEvent turns one filter into the predicate that selects what it
+// names. Naming nothing is refused, since the request asked for "these" and
+// did not say which.
+func filterIssueEvent(f *ward.IssueEventFilter) (predicate.IssueEvent, error) {
+	ps := make([]predicate.IssueEvent, 0, 1)
+	if f.HasRef() {
+		p, err := bare.IssueEventPick(f.GetRef())
+		if err != nil {
+			return nil, err
+		}
+
+		ps = append(ps, p)
+	}
+	if f.HasIssueId() {
+		ps = append(ps, entIssueEvent.IssueIdEQ(f.GetIssueId()))
+	}
+	if len(ps) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "a filter that names nothing")
+	}
+
+	return entIssueEvent.And(ps...), nil
+}
+
+type sinkOverride struct {
+	ward.OverrideServiceServer
+	store  bare.Store
+	w      *watch.Watch
+	namer  slug.Namer
+	joined bool
+}
+
+func (s Sink) Override() ward.OverrideServiceServer {
+	return sinkOverride{s.Server.Override(), s.Server.Store, s.w, s.namer, s.joined}
+}
+
+// Erase forgets what the transaction was told about the row, before it is
+// erased: whether a frame may see it, and where a walk from it arrives.
+// Neither is true of a row that is gone, nor of another put under its
+// key. See [seen.Forget].
+func (s sinkOverride) Erase(ctx context.Context, req *ward.OverrideRef) (*ward.OverrideEraseResponse, error) {
+	seen.Forget(s.store.Db.Driver(), "Override", req)
+
+	return s.OverrideServiceServer.Erase(ctx, req)
+}
+
+// Apply forgets what the transaction was told about the row, before it is
+// written: a document may move it to a set the caller cannot see. See
+// [seen.Forget].
+func (s sinkOverride) Apply(ctx context.Context, req *ward.OverrideApplyRequest) (*ward.Override, error) {
+	seen.Forget(s.store.Db.Driver(), "Override", req.GetRef())
+
+	return s.OverrideServiceServer.Apply(ctx, req)
+}
+
+// Patch forgets what the transaction was told about the row, before it is
+// written; see [sinkOverride.Apply].
+func (s sinkOverride) Patch(ctx context.Context, req *ward.OverridePatchRequest) (*ward.Override, error) {
+	seen.Forget(s.store.Db.Driver(), "Override", req.GetRef())
+
+	return s.OverrideServiceServer.Patch(ctx, req)
+}
+
+// orderOverride is how Overrides come back.
+//
+// The last column is the key, and it is not decoration: a cursor cannot
+// tell apart two rows equal in every column of the order, so the page after
+// the first of them either repeats the second or skips it. Rows written by
+// one request are stamped a moment apart at best.
+var orderOverride = []sqlpage.Order{
+	{Column: entOverride.FieldDateCreated, Desc: false},
+	{Column: entOverride.FieldId, Desc: false},
+}
+
+func afterOverride(v string, by []sqlpage.Order, tag string) (func(*sql.Selector), error) {
+	var (
+		at0 time.Time
+		at1 uuid.UUID
+	)
+	if err := pdAfter(v, tag, &at0, &at1); err != nil {
+		return nil, err
+	}
+
+	return sqlpage.After(by, []any{at0, at1})
+}
+
+func nextOverride(last *ent.Override, tag string) (string, error) {
+	return pdNext(tag, last.DateCreated, last.Id)
+}
+
+// orderByOverride is an order as ent orders a query by it.
+func orderByOverride(by []sqlpage.Order) []entOverride.OrderOption {
+	out := make([]entOverride.OrderOption, len(by))
+	for i, o := range by {
+		if o.Desc {
+			out[i] = sql.OrderByField(o.Column, sql.OrderDesc()).ToFunc()
+			continue
+		}
+
+		out[i] = sql.OrderByField(o.Column).ToFunc()
+	}
+
+	return out
+}
+
+const (
+	// OverridePageSize is what a request that did not say gets, and
+	// OverridePageLimit is the most it gets however loudly it asks.
+	OverridePageSize  = 100
+	OverridePageLimit = 1000
+
+	// OverrideFilterLimit is how many filters one request may carry. Each is a
+	// predicate in the same query, so it is what says how much of the
+	// database a request may ask to read -- and it is refused rather than
+	// clamped, because dropping half the filters would answer a question
+	// nobody asked.
+	OverrideFilterLimit = 32
+)
+
+// List answers with the Overrides that match any of the given filters, or with
+// every one there is if the request named none, a page at a time.
+func (s sinkOverride) List(ctx context.Context, req *ward.OverrideListRequest) (*ward.OverrideListResponse, error) {
+	q := s.store.Db.Override.Query()
+
+	// Through the same narrowing every generated read goes through, and not
+	// by asking the scope alone: what narrows a read is the wall today and
+	// the wall and something else tomorrow, and a list that reached past it
+	// would be the one read that missed the something else.
+	if p, err := bare.OverrideNarrow(ctx, s.store.Scope, nil); err != nil {
+		return nil, err
+	} else if p != nil {
+		q.Where(p)
+	}
+
+	if fs := req.GetFilters(); len(fs) > 0 {
+		if len(fs) > OverrideFilterLimit {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"filters: %d of them, and %d is the most one list carries", len(fs), OverrideFilterLimit)
+		}
+
+		ps := make([]predicate.Override, 0, len(fs))
+		for i, f := range fs {
+			p, err := filterOverride(f)
+			if err != nil {
+				return nil, status.Errorf(codes.InvalidArgument, "filters[%d]: %s", i, err)
+			}
+
+			ps = append(ps, p)
+		}
+
+		q.Where(entOverride.Or(ps...))
+	}
+
+	// Which order, and which way: one the schema declared, and never one a
+	// request makes up, since an order is a walk of an index.
+	by, after, next, tag := orderOverride, afterOverride, nextOverride, ""
+	if req.GetReverse() {
+		// The same index, walked from the other end.
+		by, tag = pdReverse(by), tag+"/reverse"
+	}
+
+	if v := req.GetAfter(); v != "" {
+		p, err := after(v, by, tag)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "after: %s", err)
+		}
+
+		q.Where(p)
+	}
+
+	// One row more than the page, which is how "is there another" is answered
+	// without a second query and without a count. The extra is dropped before
+	// the answer is built; it was only ever asked for to see whether it was
+	// there -- so a full last page answers with no cursor rather than sending
+	// the caller back for an empty one.
+	size := sqlpage.Size(int(req.GetSize()), OverridePageSize, OverridePageLimit)
+	us, err := q.Order(orderByOverride(by)...).Limit(size + 1).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	more := len(us) > size
+	if more {
+		us = us[:size]
+	}
+
+	items := make([]*ward.Override, len(us))
+	for i, u := range us {
+		items[i] = u.Proto()
+	}
+
+	res := ward.OverrideListResponse_builder{Items: items}.Build()
+	if more {
+		v, err := next(us[len(us)-1], tag)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "next: %s", err)
+		}
+
+		res.SetNext(v)
+	}
+
+	return res, nil
+}
+
+// filterOverride turns one filter into the predicate that selects what it
+// names. Naming nothing is refused, since the request asked for "these" and
+// did not say which.
+func filterOverride(f *ward.OverrideFilter) (predicate.Override, error) {
+	ps := make([]predicate.Override, 0, 1)
+	if f.HasRef() {
+		p, err := bare.OverridePick(f.GetRef())
+		if err != nil {
+			return nil, err
+		}
+
+		ps = append(ps, p)
+	}
+	if f.HasRule() {
+		ps = append(ps, entOverride.RuleEQ(f.GetRule()))
+	}
+	if len(ps) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "a filter that names nothing")
+	}
+
+	return entOverride.And(ps...), nil
+}
+
 type sinkTenant struct {
 	ward.TenantServiceServer
 	store  bare.Store
@@ -2270,12 +2757,18 @@ func described(key pdid.Id) (protoreflect.MessageDescriptor, []protoreflect.Fiel
 		return describedArchived.md, describedArchived.secret, describedArchived.personal
 	case AuditDomain:
 		return describedAudit.md, describedAudit.secret, describedAudit.personal
+	case CheckpointDomain:
+		return describedCheckpoint.md, describedCheckpoint.secret, describedCheckpoint.personal
 	case HolderDomain:
 		return describedHolder.md, describedHolder.secret, describedHolder.personal
 	case IssueDomain:
 		return describedIssue.md, describedIssue.secret, describedIssue.personal
+	case IssueEventDomain:
+		return describedIssueEvent.md, describedIssueEvent.secret, describedIssueEvent.personal
 	case OutboxDomain:
 		return describedOutbox.md, describedOutbox.secret, describedOutbox.personal
+	case OverrideDomain:
+		return describedOverride.md, describedOverride.secret, describedOverride.personal
 	case OwedDomain:
 		return describedOwed.md, describedOwed.secret, describedOwed.personal
 	case RowSealDomain:
@@ -2316,13 +2809,22 @@ var (
 	describedAudit = describe((*ward.Audit)(nil),
 		[]protoreflect.FieldNumber{},
 		[]protoreflect.FieldNumber{})
+	describedCheckpoint = describe((*ward.Checkpoint)(nil),
+		[]protoreflect.FieldNumber{},
+		[]protoreflect.FieldNumber{})
 	describedHolder = describe((*ward.Holder)(nil),
 		[]protoreflect.FieldNumber{},
 		[]protoreflect.FieldNumber{4, 5, 6, 7})
 	describedIssue = describe((*ward.Issue)(nil),
 		[]protoreflect.FieldNumber{},
 		[]protoreflect.FieldNumber{})
+	describedIssueEvent = describe((*ward.IssueEvent)(nil),
+		[]protoreflect.FieldNumber{},
+		[]protoreflect.FieldNumber{})
 	describedOutbox = describe((*ward.Outbox)(nil),
+		[]protoreflect.FieldNumber{},
+		[]protoreflect.FieldNumber{})
+	describedOverride = describe((*ward.Override)(nil),
 		[]protoreflect.FieldNumber{},
 		[]protoreflect.FieldNumber{})
 	describedOwed = describe((*ward.Owed)(nil),
@@ -2355,8 +2857,11 @@ func hidden(key pdid.Id, p *patchpb.Patch) *patchpb.Patch {
 func added(by string) bool {
 	switch by {
 	case ward.AuditService_Add_FullMethodName,
+		ward.CheckpointService_Add_FullMethodName,
 		ward.HolderService_Add_FullMethodName,
 		ward.IssueService_Add_FullMethodName,
+		ward.IssueEventService_Add_FullMethodName,
+		ward.OverrideService_Add_FullMethodName,
 		ward.TenantService_Add_FullMethodName:
 		return true
 	}
@@ -2497,10 +3002,16 @@ func left(ctx context.Context, s bare.Server, key pdid.Id, image proto.Message) 
 	var vs []audit.Live
 	var err error
 	switch key.Domain() {
+	case CheckpointDomain:
+		vs, err = rowsCheckpoint(ctx, s.Db, entCheckpoint.IdEQ(uuid.UUID(key)))
 	case HolderDomain:
 		vs, err = rowsHolder(ctx, s.Db, entHolder.IdEQ(uuid.UUID(key)))
 	case IssueDomain:
 		vs, err = rowsIssue(ctx, s.Db, entIssue.IdEQ(uuid.UUID(key)))
+	case IssueEventDomain:
+		vs, err = rowsIssueEvent(ctx, s.Db, entIssueEvent.IdEQ(uuid.UUID(key)))
+	case OverrideDomain:
+		vs, err = rowsOverride(ctx, s.Db, entOverride.IdEQ(uuid.UUID(key)))
 	case TenantDomain:
 		vs, err = rowsTenant(ctx, s.Db, entTenant.IdEQ(uuid.UUID(key)))
 	default:
@@ -2865,17 +3376,72 @@ func Digests(ctx context.Context, db *ent.Client, d *audit.Digest, p trail.Polic
 	}
 
 	out := audit.Rows{Skipped: []audit.Skipped{}}
+	if err := audit.CheckKind(ctx, d, checkedCheckpoint(db), archived, &out); err != nil {
+		return out, fmt.Errorf("checkpoint: %w", err)
+	}
 	if err := audit.CheckKind(ctx, d, checkedHolder(db), archived, &out); err != nil {
 		return out, fmt.Errorf("holder: %w", err)
 	}
 	if err := audit.CheckKind(ctx, d, checkedIssue(db), archived, &out); err != nil {
 		return out, fmt.Errorf("issue: %w", err)
 	}
+	if err := audit.CheckKind(ctx, d, checkedIssueEvent(db), archived, &out); err != nil {
+		return out, fmt.Errorf("issue-event: %w", err)
+	}
+	if err := audit.CheckKind(ctx, d, checkedOverride(db), archived, &out); err != nil {
+		return out, fmt.Errorf("override: %w", err)
+	}
 	if err := audit.CheckKind(ctx, d, checkedTenant(db), archived, &out); err != nil {
 		return out, fmt.Errorf("tenant: %w", err)
 	}
 
 	return out, nil
+}
+
+// checkedCheckpoint is what a check of the rows reads of the checkpoint kind.
+func checkedCheckpoint(db *ent.Client) audit.Kind {
+	read := func(ctx context.Context, ps ...predicate.Checkpoint) (audit.Page, error) {
+		var out audit.Page
+		err := snapshot(ctx, db, func(ctx context.Context, db *ent.Client) error {
+			rows, err := rowsCheckpoint(ctx, db, ps...)
+			if err != nil {
+				return err
+			}
+
+			recorded, err := newestDigests(ctx, db, objects(rows))
+			out = audit.Page{Rows: rows, Recorded: recorded}
+			return err
+		})
+
+		return out, err
+	}
+
+	return audit.Kind{
+		Domain: CheckpointDomain,
+		After: func(ctx context.Context, after pdid.Id) (audit.Page, error) {
+			return read(ctx, entCheckpoint.IdGT(uuid.UUID(after)))
+		},
+		Of: func(ctx context.Context, ids []pdid.Id) (audit.Page, error) {
+			return read(ctx, entCheckpoint.IdIn(uuids(ids)...))
+		},
+		Trail: func(ctx context.Context, yield func([]pdid.Id) error) error {
+			return trailObjects(ctx, db, CheckpointDomain, yield)
+		},
+		Gone: func(ctx context.Context, ids []pdid.Id) (map[pdid.Id]*audit.Recorded, error) {
+			var out map[pdid.Id]*audit.Recorded
+			err := snapshot(ctx, db, func(ctx context.Context, db *ent.Client) error {
+				rows, err := rowsCheckpoint(ctx, db, entCheckpoint.IdIn(uuids(ids)...))
+				if err != nil {
+					return err
+				}
+
+				out, err = goneOf(ctx, db, ids, rows)
+				return err
+			})
+
+			return out, err
+		},
+	}
 }
 
 // checkedHolder is what a check of the rows reads of the holder kind.
@@ -2976,6 +3542,98 @@ func checkedIssue(db *ent.Client) audit.Kind {
 	}
 }
 
+// checkedIssueEvent is what a check of the rows reads of the issue-event kind.
+func checkedIssueEvent(db *ent.Client) audit.Kind {
+	read := func(ctx context.Context, ps ...predicate.IssueEvent) (audit.Page, error) {
+		var out audit.Page
+		err := snapshot(ctx, db, func(ctx context.Context, db *ent.Client) error {
+			rows, err := rowsIssueEvent(ctx, db, ps...)
+			if err != nil {
+				return err
+			}
+
+			recorded, err := newestDigests(ctx, db, objects(rows))
+			out = audit.Page{Rows: rows, Recorded: recorded}
+			return err
+		})
+
+		return out, err
+	}
+
+	return audit.Kind{
+		Domain: IssueEventDomain,
+		After: func(ctx context.Context, after pdid.Id) (audit.Page, error) {
+			return read(ctx, entIssueEvent.IdGT(uuid.UUID(after)))
+		},
+		Of: func(ctx context.Context, ids []pdid.Id) (audit.Page, error) {
+			return read(ctx, entIssueEvent.IdIn(uuids(ids)...))
+		},
+		Trail: func(ctx context.Context, yield func([]pdid.Id) error) error {
+			return trailObjects(ctx, db, IssueEventDomain, yield)
+		},
+		Gone: func(ctx context.Context, ids []pdid.Id) (map[pdid.Id]*audit.Recorded, error) {
+			var out map[pdid.Id]*audit.Recorded
+			err := snapshot(ctx, db, func(ctx context.Context, db *ent.Client) error {
+				rows, err := rowsIssueEvent(ctx, db, entIssueEvent.IdIn(uuids(ids)...))
+				if err != nil {
+					return err
+				}
+
+				out, err = goneOf(ctx, db, ids, rows)
+				return err
+			})
+
+			return out, err
+		},
+	}
+}
+
+// checkedOverride is what a check of the rows reads of the override kind.
+func checkedOverride(db *ent.Client) audit.Kind {
+	read := func(ctx context.Context, ps ...predicate.Override) (audit.Page, error) {
+		var out audit.Page
+		err := snapshot(ctx, db, func(ctx context.Context, db *ent.Client) error {
+			rows, err := rowsOverride(ctx, db, ps...)
+			if err != nil {
+				return err
+			}
+
+			recorded, err := newestDigests(ctx, db, objects(rows))
+			out = audit.Page{Rows: rows, Recorded: recorded}
+			return err
+		})
+
+		return out, err
+	}
+
+	return audit.Kind{
+		Domain: OverrideDomain,
+		After: func(ctx context.Context, after pdid.Id) (audit.Page, error) {
+			return read(ctx, entOverride.IdGT(uuid.UUID(after)))
+		},
+		Of: func(ctx context.Context, ids []pdid.Id) (audit.Page, error) {
+			return read(ctx, entOverride.IdIn(uuids(ids)...))
+		},
+		Trail: func(ctx context.Context, yield func([]pdid.Id) error) error {
+			return trailObjects(ctx, db, OverrideDomain, yield)
+		},
+		Gone: func(ctx context.Context, ids []pdid.Id) (map[pdid.Id]*audit.Recorded, error) {
+			var out map[pdid.Id]*audit.Recorded
+			err := snapshot(ctx, db, func(ctx context.Context, db *ent.Client) error {
+				rows, err := rowsOverride(ctx, db, entOverride.IdIn(uuids(ids)...))
+				if err != nil {
+					return err
+				}
+
+				out, err = goneOf(ctx, db, ids, rows)
+				return err
+			})
+
+			return out, err
+		},
+	}
+}
+
 // checkedTenant is what a check of the rows reads of the tenant kind.
 func checkedTenant(db *ent.Client) audit.Kind {
 	read := func(ctx context.Context, ps ...predicate.Tenant) (audit.Page, error) {
@@ -3022,6 +3680,26 @@ func checkedTenant(db *ent.Client) audit.Kind {
 	}
 }
 
+// rowsCheckpoint is the rows `ps` says of the checkpoint kind -- every row there is,
+// live or erased softly -- at most a page of them in identifier order, each as
+// a Get reads it.
+func rowsCheckpoint(ctx context.Context, db *ent.Client, ps ...predicate.Checkpoint) ([]audit.Live, error) {
+	q := db.Checkpoint.Query().Where(ps...)
+	bare.CheckpointSelectInit(q, nil)
+
+	vs, err := q.Order(entCheckpoint.ById()).Limit(audit.RowsPage).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]audit.Live, len(vs))
+	for i, v := range vs {
+		out[i] = audit.Live{Object: pdid.Id(v.Id), Row: v.Proto()}
+	}
+
+	return out, nil
+}
+
 // rowsHolder is the rows `ps` says of the holder kind -- every row there is,
 // live or erased softly -- at most a page of them in identifier order, each as
 // a Get reads it.
@@ -3050,6 +3728,46 @@ func rowsIssue(ctx context.Context, db *ent.Client, ps ...predicate.Issue) ([]au
 	bare.IssueSelectInit(q, nil)
 
 	vs, err := q.Order(entIssue.ById()).Limit(audit.RowsPage).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]audit.Live, len(vs))
+	for i, v := range vs {
+		out[i] = audit.Live{Object: pdid.Id(v.Id), Row: v.Proto()}
+	}
+
+	return out, nil
+}
+
+// rowsIssueEvent is the rows `ps` says of the issue-event kind -- every row there is,
+// live or erased softly -- at most a page of them in identifier order, each as
+// a Get reads it.
+func rowsIssueEvent(ctx context.Context, db *ent.Client, ps ...predicate.IssueEvent) ([]audit.Live, error) {
+	q := db.IssueEvent.Query().Where(ps...)
+	bare.IssueEventSelectInit(q, nil)
+
+	vs, err := q.Order(entIssueEvent.ById()).Limit(audit.RowsPage).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]audit.Live, len(vs))
+	for i, v := range vs {
+		out[i] = audit.Live{Object: pdid.Id(v.Id), Row: v.Proto()}
+	}
+
+	return out, nil
+}
+
+// rowsOverride is the rows `ps` says of the override kind -- every row there is,
+// live or erased softly -- at most a page of them in identifier order, each as
+// a Get reads it.
+func rowsOverride(ctx context.Context, db *ent.Client, ps ...predicate.Override) ([]audit.Live, error) {
+	q := db.Override.Query().Where(ps...)
+	bare.OverrideSelectInit(q, nil)
+
+	vs, err := q.Order(entOverride.ById()).Limit(audit.RowsPage).All(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -3305,10 +4023,16 @@ func record(ctx context.Context, db *ent.Client, content audit.Contents, action 
 		for page := range slices.Chunk(byKind[d], audit.RowsPage) {
 			var rows []audit.Live
 			switch d {
+			case CheckpointDomain:
+				rows, err = rowsCheckpoint(ctx, db, entCheckpoint.IdIn(uuids(page)...))
 			case HolderDomain:
 				rows, err = rowsHolder(ctx, db, entHolder.IdIn(uuids(page)...))
 			case IssueDomain:
 				rows, err = rowsIssue(ctx, db, entIssue.IdIn(uuids(page)...))
+			case IssueEventDomain:
+				rows, err = rowsIssueEvent(ctx, db, entIssueEvent.IdIn(uuids(page)...))
+			case OverrideDomain:
+				rows, err = rowsOverride(ctx, db, entOverride.IdIn(uuids(page)...))
 			case TenantDomain:
 				rows, err = rowsTenant(ctx, db, entTenant.IdIn(uuids(page)...))
 			default:
@@ -3425,10 +4149,16 @@ func (s trailStore) Carry(ctx context.Context, digest *audit.Digest, d pdid.Doma
 		var rows []audit.Live
 		var err error
 		switch d {
+		case CheckpointDomain:
+			rows, err = rowsCheckpoint(ctx, s.db, entCheckpoint.IdIn(uuids(ids)...))
 		case HolderDomain:
 			rows, err = rowsHolder(ctx, s.db, entHolder.IdIn(uuids(ids)...))
 		case IssueDomain:
 			rows, err = rowsIssue(ctx, s.db, entIssue.IdIn(uuids(ids)...))
+		case IssueEventDomain:
+			rows, err = rowsIssueEvent(ctx, s.db, entIssueEvent.IdIn(uuids(ids)...))
+		case OverrideDomain:
+			rows, err = rowsOverride(ctx, s.db, entOverride.IdIn(uuids(ids)...))
 		case TenantDomain:
 			rows, err = rowsTenant(ctx, s.db, entTenant.IdIn(uuids(ids)...))
 		default:
@@ -3587,6 +4317,40 @@ func (s Intercept) WithDriver(drv dialect.Driver) (ward.Server, error) {
 	return Intercept{Overlay: ward.NewOverlay(next), unary: s.unary, stream: s.stream}, nil
 }
 
+func (s Intercept) Checkpoint() ward.CheckpointServiceServer {
+	return interceptCheckpoint{s, s.Next().Checkpoint()}
+}
+
+type interceptCheckpoint struct {
+	Intercept
+	ward.CheckpointServiceServer
+}
+
+func (s interceptCheckpoint) Add(ctx context.Context, req *ward.CheckpointAddRequest) (*ward.Checkpoint, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.CheckpointServiceServer,
+		ward.CheckpointService_Add_FullMethodName, req, s.CheckpointServiceServer.Add)
+}
+
+func (s interceptCheckpoint) Get(ctx context.Context, req *ward.CheckpointGetRequest) (*ward.Checkpoint, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.CheckpointServiceServer,
+		ward.CheckpointService_Get_FullMethodName, req, s.CheckpointServiceServer.Get)
+}
+
+func (s interceptCheckpoint) Patch(ctx context.Context, req *ward.CheckpointPatchRequest) (*ward.Checkpoint, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.CheckpointServiceServer,
+		ward.CheckpointService_Patch_FullMethodName, req, s.CheckpointServiceServer.Patch)
+}
+
+func (s interceptCheckpoint) Apply(ctx context.Context, req *ward.CheckpointApplyRequest) (*ward.Checkpoint, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.CheckpointServiceServer,
+		ward.CheckpointService_Apply_FullMethodName, req, s.CheckpointServiceServer.Apply)
+}
+
+func (s interceptCheckpoint) Erase(ctx context.Context, req *ward.CheckpointRef) (*ward.CheckpointEraseResponse, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.CheckpointServiceServer,
+		ward.CheckpointService_Erase_FullMethodName, req, s.CheckpointServiceServer.Erase)
+}
+
 func (s Intercept) Issue() ward.IssueServiceServer {
 	return interceptIssue{s, s.Next().Issue()}
 }
@@ -3624,6 +4388,109 @@ func (s interceptIssue) Erase(ctx context.Context, req *ward.IssueRef) (*ward.Is
 func (s interceptIssue) List(ctx context.Context, req *ward.IssueListRequest) (*ward.IssueListResponse, error) {
 	return grpcx.RunUnary(ctx, s.unary, s.IssueServiceServer,
 		ward.IssueService_List_FullMethodName, req, s.IssueServiceServer.List)
+}
+
+func (s interceptIssue) Search(ctx context.Context, req *ward.IssueSearchRequest) (*ward.IssueListResponse, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.IssueServiceServer,
+		ward.IssueService_Search_FullMethodName, req, s.IssueServiceServer.Search)
+}
+
+func (s interceptIssue) Acknowledge(ctx context.Context, req *ward.IssueAcknowledgeRequest) (*ward.Issue, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.IssueServiceServer,
+		ward.IssueService_Acknowledge_FullMethodName, req, s.IssueServiceServer.Acknowledge)
+}
+
+func (s interceptIssue) Comment(ctx context.Context, req *ward.IssueCommentRequest) (*ward.IssueEvent, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.IssueServiceServer,
+		ward.IssueService_Comment_FullMethodName, req, s.IssueServiceServer.Comment)
+}
+
+func (s interceptIssue) Reset(ctx context.Context, req *ward.IssueResetRequest) (*ward.Issue, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.IssueServiceServer,
+		ward.IssueService_Reset_FullMethodName, req, s.IssueServiceServer.Reset)
+}
+
+func (s Intercept) IssueEvent() ward.IssueEventServiceServer {
+	return interceptIssueEvent{s, s.Next().IssueEvent()}
+}
+
+type interceptIssueEvent struct {
+	Intercept
+	ward.IssueEventServiceServer
+}
+
+func (s interceptIssueEvent) Add(ctx context.Context, req *ward.IssueEventAddRequest) (*ward.IssueEvent, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.IssueEventServiceServer,
+		ward.IssueEventService_Add_FullMethodName, req, s.IssueEventServiceServer.Add)
+}
+
+func (s interceptIssueEvent) Get(ctx context.Context, req *ward.IssueEventGetRequest) (*ward.IssueEvent, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.IssueEventServiceServer,
+		ward.IssueEventService_Get_FullMethodName, req, s.IssueEventServiceServer.Get)
+}
+
+func (s interceptIssueEvent) Patch(ctx context.Context, req *ward.IssueEventPatchRequest) (*ward.IssueEvent, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.IssueEventServiceServer,
+		ward.IssueEventService_Patch_FullMethodName, req, s.IssueEventServiceServer.Patch)
+}
+
+func (s interceptIssueEvent) Apply(ctx context.Context, req *ward.IssueEventApplyRequest) (*ward.IssueEvent, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.IssueEventServiceServer,
+		ward.IssueEventService_Apply_FullMethodName, req, s.IssueEventServiceServer.Apply)
+}
+
+func (s interceptIssueEvent) Erase(ctx context.Context, req *ward.IssueEventRef) (*ward.IssueEventEraseResponse, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.IssueEventServiceServer,
+		ward.IssueEventService_Erase_FullMethodName, req, s.IssueEventServiceServer.Erase)
+}
+
+func (s interceptIssueEvent) List(ctx context.Context, req *ward.IssueEventListRequest) (*ward.IssueEventListResponse, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.IssueEventServiceServer,
+		ward.IssueEventService_List_FullMethodName, req, s.IssueEventServiceServer.List)
+}
+
+func (s interceptIssueEvent) Follow(req *ward.IssueEventFollowRequest, out grpc.ServerStreamingServer[ward.IssueEvent]) error {
+	return grpcx.RunStream(s.stream, s.IssueEventServiceServer,
+		ward.IssueEventService_Follow_FullMethodName, req, out, s.IssueEventServiceServer.Follow)
+}
+
+func (s Intercept) Override() ward.OverrideServiceServer {
+	return interceptOverride{s, s.Next().Override()}
+}
+
+type interceptOverride struct {
+	Intercept
+	ward.OverrideServiceServer
+}
+
+func (s interceptOverride) Add(ctx context.Context, req *ward.OverrideAddRequest) (*ward.Override, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.OverrideServiceServer,
+		ward.OverrideService_Add_FullMethodName, req, s.OverrideServiceServer.Add)
+}
+
+func (s interceptOverride) Get(ctx context.Context, req *ward.OverrideGetRequest) (*ward.Override, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.OverrideServiceServer,
+		ward.OverrideService_Get_FullMethodName, req, s.OverrideServiceServer.Get)
+}
+
+func (s interceptOverride) Patch(ctx context.Context, req *ward.OverridePatchRequest) (*ward.Override, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.OverrideServiceServer,
+		ward.OverrideService_Patch_FullMethodName, req, s.OverrideServiceServer.Patch)
+}
+
+func (s interceptOverride) Apply(ctx context.Context, req *ward.OverrideApplyRequest) (*ward.Override, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.OverrideServiceServer,
+		ward.OverrideService_Apply_FullMethodName, req, s.OverrideServiceServer.Apply)
+}
+
+func (s interceptOverride) Erase(ctx context.Context, req *ward.OverrideRef) (*ward.OverrideEraseResponse, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.OverrideServiceServer,
+		ward.OverrideService_Erase_FullMethodName, req, s.OverrideServiceServer.Erase)
+}
+
+func (s interceptOverride) List(ctx context.Context, req *ward.OverrideListRequest) (*ward.OverrideListResponse, error) {
+	return grpcx.RunUnary(ctx, s.unary, s.OverrideServiceServer,
+		ward.OverrideService_List_FullMethodName, req, s.OverrideServiceServer.List)
 }
 
 func (s Intercept) Access() ward.AccessServiceServer {
@@ -5439,6 +6306,16 @@ func unpack(op *pdpb.Op) (proto.Message, error) {
 
 	var v proto.Message
 	switch m {
+	case ward.CheckpointService_Add_FullMethodName:
+		v = &ward.CheckpointAddRequest{}
+	case ward.CheckpointService_Get_FullMethodName:
+		v = &ward.CheckpointGetRequest{}
+	case ward.CheckpointService_Patch_FullMethodName:
+		v = &ward.CheckpointPatchRequest{}
+	case ward.CheckpointService_Apply_FullMethodName:
+		v = &ward.CheckpointApplyRequest{}
+	case ward.CheckpointService_Erase_FullMethodName:
+		v = &ward.CheckpointRef{}
 	case ward.IssueService_Add_FullMethodName:
 		v = &ward.IssueAddRequest{}
 	case ward.IssueService_Get_FullMethodName:
@@ -5451,6 +6328,38 @@ func unpack(op *pdpb.Op) (proto.Message, error) {
 		v = &ward.IssueRef{}
 	case ward.IssueService_List_FullMethodName:
 		v = &ward.IssueListRequest{}
+	case ward.IssueService_Search_FullMethodName:
+		v = &ward.IssueSearchRequest{}
+	case ward.IssueService_Acknowledge_FullMethodName:
+		v = &ward.IssueAcknowledgeRequest{}
+	case ward.IssueService_Comment_FullMethodName:
+		v = &ward.IssueCommentRequest{}
+	case ward.IssueService_Reset_FullMethodName:
+		v = &ward.IssueResetRequest{}
+	case ward.IssueEventService_Add_FullMethodName:
+		v = &ward.IssueEventAddRequest{}
+	case ward.IssueEventService_Get_FullMethodName:
+		v = &ward.IssueEventGetRequest{}
+	case ward.IssueEventService_Patch_FullMethodName:
+		v = &ward.IssueEventPatchRequest{}
+	case ward.IssueEventService_Apply_FullMethodName:
+		v = &ward.IssueEventApplyRequest{}
+	case ward.IssueEventService_Erase_FullMethodName:
+		v = &ward.IssueEventRef{}
+	case ward.IssueEventService_List_FullMethodName:
+		v = &ward.IssueEventListRequest{}
+	case ward.OverrideService_Add_FullMethodName:
+		v = &ward.OverrideAddRequest{}
+	case ward.OverrideService_Get_FullMethodName:
+		v = &ward.OverrideGetRequest{}
+	case ward.OverrideService_Patch_FullMethodName:
+		v = &ward.OverridePatchRequest{}
+	case ward.OverrideService_Apply_FullMethodName:
+		v = &ward.OverrideApplyRequest{}
+	case ward.OverrideService_Erase_FullMethodName:
+		v = &ward.OverrideRef{}
+	case ward.OverrideService_List_FullMethodName:
+		v = &ward.OverrideListRequest{}
 	case ward.TenantService_Add_FullMethodName:
 		v = &ward.TenantAddRequest{}
 	case ward.TenantService_Get_FullMethodName:
@@ -5503,6 +6412,16 @@ func dispatch(ctx context.Context, s ward.Server, m string, v proto.Message) (*a
 		err error
 	)
 	switch m {
+	case ward.CheckpointService_Add_FullMethodName:
+		res, err = s.Checkpoint().Add(ctx, v.(*ward.CheckpointAddRequest))
+	case ward.CheckpointService_Get_FullMethodName:
+		res, err = s.Checkpoint().Get(ctx, v.(*ward.CheckpointGetRequest))
+	case ward.CheckpointService_Patch_FullMethodName:
+		res, err = s.Checkpoint().Patch(ctx, v.(*ward.CheckpointPatchRequest))
+	case ward.CheckpointService_Apply_FullMethodName:
+		res, err = s.Checkpoint().Apply(ctx, v.(*ward.CheckpointApplyRequest))
+	case ward.CheckpointService_Erase_FullMethodName:
+		res, err = s.Checkpoint().Erase(ctx, v.(*ward.CheckpointRef))
 	case ward.IssueService_Add_FullMethodName:
 		res, err = s.Issue().Add(ctx, v.(*ward.IssueAddRequest))
 	case ward.IssueService_Get_FullMethodName:
@@ -5515,6 +6434,38 @@ func dispatch(ctx context.Context, s ward.Server, m string, v proto.Message) (*a
 		res, err = s.Issue().Erase(ctx, v.(*ward.IssueRef))
 	case ward.IssueService_List_FullMethodName:
 		res, err = s.Issue().List(ctx, v.(*ward.IssueListRequest))
+	case ward.IssueService_Search_FullMethodName:
+		res, err = s.Issue().Search(ctx, v.(*ward.IssueSearchRequest))
+	case ward.IssueService_Acknowledge_FullMethodName:
+		res, err = s.Issue().Acknowledge(ctx, v.(*ward.IssueAcknowledgeRequest))
+	case ward.IssueService_Comment_FullMethodName:
+		res, err = s.Issue().Comment(ctx, v.(*ward.IssueCommentRequest))
+	case ward.IssueService_Reset_FullMethodName:
+		res, err = s.Issue().Reset(ctx, v.(*ward.IssueResetRequest))
+	case ward.IssueEventService_Add_FullMethodName:
+		res, err = s.IssueEvent().Add(ctx, v.(*ward.IssueEventAddRequest))
+	case ward.IssueEventService_Get_FullMethodName:
+		res, err = s.IssueEvent().Get(ctx, v.(*ward.IssueEventGetRequest))
+	case ward.IssueEventService_Patch_FullMethodName:
+		res, err = s.IssueEvent().Patch(ctx, v.(*ward.IssueEventPatchRequest))
+	case ward.IssueEventService_Apply_FullMethodName:
+		res, err = s.IssueEvent().Apply(ctx, v.(*ward.IssueEventApplyRequest))
+	case ward.IssueEventService_Erase_FullMethodName:
+		res, err = s.IssueEvent().Erase(ctx, v.(*ward.IssueEventRef))
+	case ward.IssueEventService_List_FullMethodName:
+		res, err = s.IssueEvent().List(ctx, v.(*ward.IssueEventListRequest))
+	case ward.OverrideService_Add_FullMethodName:
+		res, err = s.Override().Add(ctx, v.(*ward.OverrideAddRequest))
+	case ward.OverrideService_Get_FullMethodName:
+		res, err = s.Override().Get(ctx, v.(*ward.OverrideGetRequest))
+	case ward.OverrideService_Patch_FullMethodName:
+		res, err = s.Override().Patch(ctx, v.(*ward.OverridePatchRequest))
+	case ward.OverrideService_Apply_FullMethodName:
+		res, err = s.Override().Apply(ctx, v.(*ward.OverrideApplyRequest))
+	case ward.OverrideService_Erase_FullMethodName:
+		res, err = s.Override().Erase(ctx, v.(*ward.OverrideRef))
+	case ward.OverrideService_List_FullMethodName:
+		res, err = s.Override().List(ctx, v.(*ward.OverrideListRequest))
 	case ward.TenantService_Add_FullMethodName:
 		res, err = s.Tenant().Add(ctx, v.(*ward.TenantAddRequest))
 	case ward.TenantService_Get_FullMethodName:
@@ -5565,9 +6516,12 @@ func Resources(s ward.Server, drv dialect.Driver, guard batch.Guard, w *watch.Wa
 		&ward.Access{},
 		&ward.Archived{},
 		&ward.Audit{},
+		&ward.Checkpoint{},
 		&ward.Holder{},
 		&ward.Issue{},
+		&ward.IssueEvent{},
 		&ward.Outbox{},
+		&ward.Override{},
 		&ward.Owed{},
 		&ward.RowSeal{},
 		&ward.Tenant{},
@@ -5669,6 +6623,38 @@ func ResourceProjector(db *ent.Client, scope bare.Scope, guard batch.Guard) reso
 				return nil, err
 			}
 			return publicResource(v), nil
+		case *ward.Checkpoint:
+			ctx, err := read.Allow(ctx, ward.CheckpointService_Get_FullMethodName, 1)
+			if err != nil {
+				switch status.Code(err) {
+				case codes.PermissionDenied, codes.Unauthenticated, codes.Unimplemented:
+					return nil, nil
+				}
+				return nil, err
+			}
+			pred, err := bare.CheckpointNarrow(ctx, scope, nil)
+			if err != nil {
+				return nil, err
+			}
+			row, err := resourcesql.Row(db.Dialect(), entCheckpoint.Table, []resourcesql.Column{
+				{Number: 1, Name: entCheckpoint.FieldId, Type: 64, Nullable: false, Key: 0},
+				{Number: 8, Name: entCheckpoint.FieldDateAlive, Type: 65, Nullable: false, Key: 0},
+				{Number: 9, Name: entCheckpoint.FieldRun, Type: 9, Nullable: false, Key: 0},
+				{Number: 13, Name: entCheckpoint.FieldDateUpdated, Type: 65, Nullable: false, Key: 0},
+				{Number: 15, Name: entCheckpoint.FieldDateCreated, Type: 65, Nullable: false, Key: 0},
+			}, v)
+			if err != nil {
+				return nil, err
+			}
+			query := db.Checkpoint.Query()
+			if pred != nil {
+				query.Where(pred)
+			}
+			ok, err := query.Modify(func(q *sql.Selector) { q.From(row) }).Exist(ctx)
+			if err != nil || !ok {
+				return nil, err
+			}
+			return publicResource(v), nil
 		case *ward.Holder:
 			ctx, err := read.Allow(ctx, ward.HolderService_Get_FullMethodName, 1)
 			if err != nil {
@@ -5755,6 +6741,94 @@ func ResourceProjector(db *ent.Client, scope bare.Scope, guard batch.Guard) reso
 				return nil, err
 			}
 			return publicResource(v), nil
+		case *ward.IssueEvent:
+			ctx, err := read.Allow(ctx, ward.IssueEventService_Get_FullMethodName, 1)
+			if err != nil {
+				switch status.Code(err) {
+				case codes.PermissionDenied, codes.Unauthenticated, codes.Unimplemented:
+					return nil, nil
+				}
+				return nil, err
+			}
+			pred, err := bare.IssueEventNarrow(ctx, scope, nil)
+			if err != nil {
+				return nil, err
+			}
+			row, err := resourcesql.Row(db.Dialect(), entIssueEvent.Table, []resourcesql.Column{
+				{Number: 1, Name: entIssueEvent.FieldId, Type: 64, Nullable: false, Key: 0},
+				{Number: 8, Name: entIssueEvent.FieldCursor, Type: 3, Nullable: false, Key: 0},
+				{Number: 9, Name: entIssueEvent.FieldIssueId, Type: 12, Nullable: false, Key: 0},
+				{Number: 10, Name: entIssueEvent.FieldEvent, Type: 9, Nullable: false, Key: 0},
+				{Number: 11, Name: entIssueEvent.FieldDateOccurred, Type: 65, Nullable: false, Key: 0},
+				{Number: 12, Name: entIssueEvent.FieldComment, Type: 9, Nullable: false, Key: 0},
+				{Number: 15, Name: entIssueEvent.FieldDateCreated, Type: 65, Nullable: false, Key: 0},
+				{Number: 16, Name: entIssueEvent.FieldRule, Type: 9, Nullable: false, Key: 0},
+				{Number: 17, Name: entIssueEvent.FieldSource, Type: 9, Nullable: false, Key: 0},
+				{Number: 18, Name: entIssueEvent.FieldNode, Type: 9, Nullable: false, Key: 0},
+				{Number: 19, Name: entIssueEvent.FieldKey, Type: 9, Nullable: false, Key: 0},
+				{Number: 20, Name: entIssueEvent.FieldSeverity, Type: 9, Nullable: false, Key: 0},
+				{Number: 21, Name: entIssueEvent.FieldLevel, Type: 9, Nullable: false, Key: 0},
+				{Number: 22, Name: entIssueEvent.FieldState, Type: 9, Nullable: false, Key: 0},
+				{Number: 23, Name: entIssueEvent.FieldDateOpened, Type: 65, Nullable: false, Key: 0},
+				{Number: 24, Name: entIssueEvent.FieldDateSeen, Type: 65, Nullable: false, Key: 0},
+				{Number: 25, Name: entIssueEvent.FieldDateClosed, Type: 65, Nullable: true, Key: 0},
+				{Number: 26, Name: entIssueEvent.FieldCloseReason, Type: 9, Nullable: false, Key: 0},
+				{Number: 27, Name: entIssueEvent.FieldCount, Type: 3, Nullable: false, Key: 0},
+				{Number: 28, Name: entIssueEvent.FieldRestarts, Type: 3, Nullable: false, Key: 0},
+				{Number: 29, Name: entIssueEvent.FieldAttention, Type: 8, Nullable: false, Key: 0},
+				{Number: 30, Name: entIssueEvent.FieldAcked, Type: 8, Nullable: false, Key: 0},
+				{Number: 31, Name: entIssueEvent.FieldSuppressed, Type: 8, Nullable: false, Key: 0},
+				{Number: 32, Name: entIssueEvent.FieldShelved, Type: 8, Nullable: false, Key: 0},
+				{Number: 33, Name: entIssueEvent.FieldOutOfService, Type: 8, Nullable: false, Key: 0},
+			}, v)
+			if err != nil {
+				return nil, err
+			}
+			query := db.IssueEvent.Query()
+			if pred != nil {
+				query.Where(pred)
+			}
+			ok, err := query.Modify(func(q *sql.Selector) { q.From(row) }).Exist(ctx)
+			if err != nil || !ok {
+				return nil, err
+			}
+			return publicResource(v), nil
+		case *ward.Override:
+			ctx, err := read.Allow(ctx, ward.OverrideService_Get_FullMethodName, 1)
+			if err != nil {
+				switch status.Code(err) {
+				case codes.PermissionDenied, codes.Unauthenticated, codes.Unimplemented:
+					return nil, nil
+				}
+				return nil, err
+			}
+			pred, err := bare.OverrideNarrow(ctx, scope, nil)
+			if err != nil {
+				return nil, err
+			}
+			row, err := resourcesql.Row(db.Dialect(), entOverride.Table, []resourcesql.Column{
+				{Number: 1, Name: entOverride.FieldId, Type: 64, Nullable: false, Key: 0},
+				{Number: 8, Name: entOverride.FieldRule, Type: 9, Nullable: false, Key: 0},
+				{Number: 9, Name: entOverride.FieldNode, Type: 9, Nullable: false, Key: 0},
+				{Number: 10, Name: entOverride.FieldKey, Type: 9, Nullable: false, Key: 0},
+				{Number: 11, Name: entOverride.FieldKind, Type: 9, Nullable: false, Key: 0},
+				{Number: 12, Name: entOverride.FieldDateUnshelve, Type: 65, Nullable: true, Key: 0},
+				{Number: 13, Name: entOverride.FieldDateUpdated, Type: 65, Nullable: false, Key: 0},
+				{Number: 15, Name: entOverride.FieldDateCreated, Type: 65, Nullable: false, Key: 0},
+				{Number: 16, Name: entOverride.FieldComment, Type: 9, Nullable: false, Key: 0},
+			}, v)
+			if err != nil {
+				return nil, err
+			}
+			query := db.Override.Query()
+			if pred != nil {
+				query.Where(pred)
+			}
+			ok, err := query.Modify(func(q *sql.Selector) { q.From(row) }).Exist(ctx)
+			if err != nil || !ok {
+				return nil, err
+			}
+			return publicResource(v), nil
 		case *ward.Tenant:
 			ctx, err := read.Allow(ctx, ward.TenantService_Get_FullMethodName, 1)
 			if err != nil {
@@ -5831,6 +6905,14 @@ func resourceChangeKind(method string) pdpb.ChangeKind {
 		return pdpb.ChangeKind_CHANGE_KIND_UPDATED
 	case ward.AuditService_Erase_FullMethodName:
 		return pdpb.ChangeKind_CHANGE_KIND_DELETED
+	case ward.CheckpointService_Add_FullMethodName:
+		return pdpb.ChangeKind_CHANGE_KIND_CREATED
+	case ward.CheckpointService_Patch_FullMethodName:
+		return pdpb.ChangeKind_CHANGE_KIND_UPDATED
+	case ward.CheckpointService_Apply_FullMethodName:
+		return pdpb.ChangeKind_CHANGE_KIND_UPDATED
+	case ward.CheckpointService_Erase_FullMethodName:
+		return pdpb.ChangeKind_CHANGE_KIND_DELETED
 	case ward.HolderService_Add_FullMethodName:
 		return pdpb.ChangeKind_CHANGE_KIND_CREATED
 	case ward.HolderService_Patch_FullMethodName:
@@ -5846,6 +6928,22 @@ func resourceChangeKind(method string) pdpb.ChangeKind {
 	case ward.IssueService_Apply_FullMethodName:
 		return pdpb.ChangeKind_CHANGE_KIND_UPDATED
 	case ward.IssueService_Erase_FullMethodName:
+		return pdpb.ChangeKind_CHANGE_KIND_DELETED
+	case ward.IssueEventService_Add_FullMethodName:
+		return pdpb.ChangeKind_CHANGE_KIND_CREATED
+	case ward.IssueEventService_Patch_FullMethodName:
+		return pdpb.ChangeKind_CHANGE_KIND_UPDATED
+	case ward.IssueEventService_Apply_FullMethodName:
+		return pdpb.ChangeKind_CHANGE_KIND_UPDATED
+	case ward.IssueEventService_Erase_FullMethodName:
+		return pdpb.ChangeKind_CHANGE_KIND_DELETED
+	case ward.OverrideService_Add_FullMethodName:
+		return pdpb.ChangeKind_CHANGE_KIND_CREATED
+	case ward.OverrideService_Patch_FullMethodName:
+		return pdpb.ChangeKind_CHANGE_KIND_UPDATED
+	case ward.OverrideService_Apply_FullMethodName:
+		return pdpb.ChangeKind_CHANGE_KIND_UPDATED
+	case ward.OverrideService_Erase_FullMethodName:
 		return pdpb.ChangeKind_CHANGE_KIND_DELETED
 	case ward.TenantService_Add_FullMethodName:
 		return pdpb.ChangeKind_CHANGE_KIND_CREATED
@@ -5873,7 +6971,7 @@ func (r resourceRecorder) Record(ctx context.Context, s bare.Server, c bare.Chan
 		return nil
 	}
 	switch image.ProtoReflect().Descriptor().FullName() {
-	case "ward.Access", "ward.Audit", "ward.Holder", "ward.Issue", "ward.Tenant":
+	case "ward.Access", "ward.Audit", "ward.Checkpoint", "ward.Holder", "ward.Issue", "ward.IssueEvent", "ward.Override", "ward.Tenant":
 	default:
 		return nil
 	}

@@ -15,14 +15,23 @@ type Archived func(*sql.Selector)
 // Audit is the predicate function for audit builders.
 type Audit func(*sql.Selector)
 
+// Checkpoint is the predicate function for checkpoint builders.
+type Checkpoint func(*sql.Selector)
+
 // Holder is the predicate function for holder builders.
 type Holder func(*sql.Selector)
 
 // Issue is the predicate function for issue builders.
 type Issue func(*sql.Selector)
 
+// IssueEvent is the predicate function for issueevent builders.
+type IssueEvent func(*sql.Selector)
+
 // Outbox is the predicate function for outbox builders.
 type Outbox func(*sql.Selector)
+
+// Override is the predicate function for override builders.
+type Override func(*sql.Selector)
 
 // Owed is the predicate function for owed builders.
 type Owed func(*sql.Selector)

@@ -48,3 +48,61 @@ func IssueById(v []byte) *IssueRef {
 func IssueGetById(v []byte) *IssueGetRequest {
 	return IssueGetRequest_builder{Ref: IssueById(v)}.Build()
 }
+
+func (x *IssueEventRef) Pick() *IssueEventGetRequest {
+	return IssueEventGetRequest_builder{Ref: x}.Build()
+}
+
+func (x *IssueEvent) Ref() *IssueEventRef {
+	if v := x.GetId(); len(v) > 0 {
+		return IssueEventById(v)
+	}
+	if v := x.GetCursor(); v != 0 {
+		return IssueEventByCursor(v)
+	}
+
+	return nil
+}
+
+func (x *IssueEvent) Pick() *IssueEventGetRequest {
+	return x.Ref().Pick()
+}
+
+func (x *IssueEventRef) Picks(v *IssueEvent) bool {
+	switch x.WhichKey() {
+	case IssueEventRef_Id_case:
+		return bytes.Equal(x.GetId(), v.GetId())
+	case IssueEventRef_Cursor_case:
+		return x.GetCursor() == v.GetCursor()
+	default:
+		return false
+	}
+}
+
+func (x *IssueEventGetRequest) WithSelect(f func(s *IssueEventSelect)) *IssueEventGetRequest {
+	if !x.HasSelect() {
+		x.SetSelect(&IssueEventSelect{})
+	}
+	f(x.GetSelect())
+	return x
+}
+
+func IssueEventById(v []byte) *IssueEventRef {
+	x := &IssueEventRef{}
+	x.SetId(v)
+	return x
+}
+
+func IssueEventByCursor(v int64) *IssueEventRef {
+	x := &IssueEventRef{}
+	x.SetCursor(v)
+	return x
+}
+
+func IssueEventGetById(v []byte) *IssueEventGetRequest {
+	return IssueEventGetRequest_builder{Ref: IssueEventById(v)}.Build()
+}
+
+func IssueEventGetByCursor(v int64) *IssueEventGetRequest {
+	return IssueEventGetRequest_builder{Ref: IssueEventByCursor(v)}.Build()
+}

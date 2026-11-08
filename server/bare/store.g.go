@@ -12,9 +12,12 @@ import (
 	access "github.com/lesomnus/ward/internal/ent/access"
 	archived "github.com/lesomnus/ward/internal/ent/archived"
 	audit "github.com/lesomnus/ward/internal/ent/audit"
+	checkpoint "github.com/lesomnus/ward/internal/ent/checkpoint"
 	holder "github.com/lesomnus/ward/internal/ent/holder"
 	issue "github.com/lesomnus/ward/internal/ent/issue"
+	issueevent "github.com/lesomnus/ward/internal/ent/issueevent"
 	outbox "github.com/lesomnus/ward/internal/ent/outbox"
+	override "github.com/lesomnus/ward/internal/ent/override"
 	owed "github.com/lesomnus/ward/internal/ent/owed"
 	predicate "github.com/lesomnus/ward/internal/ent/predicate"
 	rowseal "github.com/lesomnus/ward/internal/ent/rowseal"
@@ -368,7 +371,10 @@ func snapshotOrNil(v proto.Message) proto.Message {
 // Embed [Unscoped] to write out only the entities there is something to
 // say about.
 type Scope interface {
+	CheckpointScope(ctx context.Context) (predicate.Checkpoint, error)
 	IssueScope(ctx context.Context) (predicate.Issue, error)
+	IssueEventScope(ctx context.Context) (predicate.IssueEvent, error)
+	OverrideScope(ctx context.Context) (predicate.Override, error)
 	AccessScope(ctx context.Context) (predicate.Access, error)
 	ArchivedScope(ctx context.Context) (predicate.Archived, error)
 	AuditScope(ctx context.Context) (predicate.Audit, error)
@@ -391,7 +397,16 @@ type Unscoped struct{}
 
 var _ Scope = Unscoped{}
 
+func (Unscoped) CheckpointScope(_ context.Context) (predicate.Checkpoint, error) {
+	return nil, nil
+}
 func (Unscoped) IssueScope(_ context.Context) (predicate.Issue, error) {
+	return nil, nil
+}
+func (Unscoped) IssueEventScope(_ context.Context) (predicate.IssueEvent, error) {
+	return nil, nil
+}
+func (Unscoped) OverrideScope(_ context.Context) (predicate.Override, error) {
 	return nil, nil
 }
 func (Unscoped) AccessScope(_ context.Context) (predicate.Access, error) {
@@ -438,6 +453,26 @@ type Scopes []Scope
 
 var _ Scope = Scopes{}
 
+func (ss Scopes) CheckpointScope(ctx context.Context) (predicate.Checkpoint, error) {
+	ps := make([]predicate.Checkpoint, 0, len(ss))
+	for _, s := range ss {
+		p, err := s.CheckpointScope(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if p == nil {
+			continue
+		}
+
+		ps = append(ps, p)
+	}
+	if len(ps) == 0 {
+		return nil, nil
+	}
+
+	return checkpoint.And(ps...), nil
+}
+
 func (ss Scopes) IssueScope(ctx context.Context) (predicate.Issue, error) {
 	ps := make([]predicate.Issue, 0, len(ss))
 	for _, s := range ss {
@@ -456,6 +491,46 @@ func (ss Scopes) IssueScope(ctx context.Context) (predicate.Issue, error) {
 	}
 
 	return issue.And(ps...), nil
+}
+
+func (ss Scopes) IssueEventScope(ctx context.Context) (predicate.IssueEvent, error) {
+	ps := make([]predicate.IssueEvent, 0, len(ss))
+	for _, s := range ss {
+		p, err := s.IssueEventScope(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if p == nil {
+			continue
+		}
+
+		ps = append(ps, p)
+	}
+	if len(ps) == 0 {
+		return nil, nil
+	}
+
+	return issueevent.And(ps...), nil
+}
+
+func (ss Scopes) OverrideScope(ctx context.Context) (predicate.Override, error) {
+	ps := make([]predicate.Override, 0, len(ss))
+	for _, s := range ss {
+		p, err := s.OverrideScope(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if p == nil {
+			continue
+		}
+
+		ps = append(ps, p)
+	}
+	if len(ps) == 0 {
+		return nil, nil
+	}
+
+	return override.And(ps...), nil
 }
 
 func (ss Scopes) AccessScope(ctx context.Context) (predicate.Access, error) {
@@ -791,7 +866,14 @@ func (s Server) WithDriver(drv dialect.Driver) (ward.Server, error) {
 	return s, nil
 }
 
-func (s Server) Issue() ward.IssueServiceServer       { return IssueServiceServer{Store: s.Store} }
+func (s Server) Checkpoint() ward.CheckpointServiceServer {
+	return CheckpointServiceServer{Store: s.Store}
+}
+func (s Server) Issue() ward.IssueServiceServer { return IssueServiceServer{Store: s.Store} }
+func (s Server) IssueEvent() ward.IssueEventServiceServer {
+	return IssueEventServiceServer{Store: s.Store}
+}
+func (s Server) Override() ward.OverrideServiceServer { return OverrideServiceServer{Store: s.Store} }
 func (s Server) Access() ward.AccessServiceServer     { return AccessServiceServer{Store: s.Store} }
 func (s Server) Archived() ward.ArchivedServiceServer { return ArchivedServiceServer{Store: s.Store} }
 func (s Server) Audit() ward.AuditServiceServer       { return AuditServiceServer{Store: s.Store} }

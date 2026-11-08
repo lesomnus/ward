@@ -10,6 +10,8 @@ package cmd
 
 import (
 	"github.com/lesomnus/payday/config"
+
+	"github.com/lesomnus/ward/conf"
 )
 
 // Name is what this app is called, and it is the only place it is written.
@@ -39,4 +41,27 @@ type Config struct {
 	// What the values are is what this app is regulated as, which payday cannot
 	// know. `trail.Profiles` carries the sentence each number comes from.
 	Audit config.AuditConfig `yaml:"audit"`
+
+	// Ward's own blocks. Every value is written out; Ward refuses to start
+	// on a missing one (conf.Ward.Validate).
+	Operator  conf.Operator        `yaml:"operator"`
+	Receivers conf.Receivers       `yaml:"receivers"`
+	Engine    conf.Engine          `yaml:"engine"`
+	Nodes     map[string]conf.Node `yaml:"nodes"`
+	Providers []conf.Provider      `yaml:"providers"`
+	Store     conf.Store           `yaml:"store"`
+	Exporters []conf.Exporter      `yaml:"exporters"`
+}
+
+// Ward is the part of c that is Ward's own.
+func (c Config) Ward() conf.Ward {
+	return conf.Ward{
+		Operator:  c.Operator,
+		Receivers: c.Receivers,
+		Engine:    c.Engine,
+		Nodes:     c.Nodes,
+		Providers: c.Providers,
+		Store:     c.Store,
+		Exporters: c.Exporters,
+	}
 }

@@ -12,9 +12,12 @@ import (
 	"github.com/lesomnus/ward/internal/ent/access"
 	"github.com/lesomnus/ward/internal/ent/archived"
 	"github.com/lesomnus/ward/internal/ent/audit"
+	"github.com/lesomnus/ward/internal/ent/checkpoint"
 	"github.com/lesomnus/ward/internal/ent/holder"
 	"github.com/lesomnus/ward/internal/ent/issue"
+	"github.com/lesomnus/ward/internal/ent/issueevent"
 	"github.com/lesomnus/ward/internal/ent/outbox"
+	"github.com/lesomnus/ward/internal/ent/override"
 	"github.com/lesomnus/ward/internal/ent/owed"
 	"github.com/lesomnus/ward/internal/ent/rowseal"
 	"github.com/lesomnus/ward/internal/ent/tenant"
@@ -81,15 +84,18 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			access.Table:   access.ValidColumn,
-			archived.Table: archived.ValidColumn,
-			audit.Table:    audit.ValidColumn,
-			holder.Table:   holder.ValidColumn,
-			issue.Table:    issue.ValidColumn,
-			outbox.Table:   outbox.ValidColumn,
-			owed.Table:     owed.ValidColumn,
-			rowseal.Table:  rowseal.ValidColumn,
-			tenant.Table:   tenant.ValidColumn,
+			access.Table:     access.ValidColumn,
+			archived.Table:   archived.ValidColumn,
+			audit.Table:      audit.ValidColumn,
+			checkpoint.Table: checkpoint.ValidColumn,
+			holder.Table:     holder.ValidColumn,
+			issue.Table:      issue.ValidColumn,
+			issueevent.Table: issueevent.ValidColumn,
+			outbox.Table:     outbox.ValidColumn,
+			override.Table:   override.ValidColumn,
+			owed.Table:       owed.ValidColumn,
+			rowseal.Table:    rowseal.ValidColumn,
+			tenant.Table:     tenant.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

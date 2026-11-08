@@ -1,0 +1,64 @@
+edition = "2023";
+
+package ward;
+
+import "google/protobuf/timestamp.proto";
+import "orm.proto";
+import "payday.proto";
+
+option features.field_presence = IMPLICIT;
+option go_package = "github.com/lesomnus/ward";
+
+// Override is an operator's hold on one Condition -- one (rule, node, key) --
+// that outlives a restart: a shelve, timed or until the open Issue closes, or
+// taking it out of service. It marks the Condition and its Issues; it never
+// changes what Ward decides.
+message Override {
+  bytes id = 1 [(orm.field) = {
+    type: TYPE_UUID
+    key: true
+    default: ""
+  }];
+
+  string rule = 8;
+  string node = 9;
+  string key = 10;
+
+  // shelve.timed, shelve.one_shot or out_of_service.
+  string kind = 11;
+
+  // When a timed shelve ends.
+  google.protobuf.Timestamp date_unshelve = 12 [(orm.field) = {nullable: true}];
+
+  google.protobuf.Timestamp date_updated = 13 [(orm.field) = {version: {}}];
+  google.protobuf.Timestamp date_created = 15 [(orm.field) = {
+    immutable: true
+    default: ""
+  }];
+
+  string comment = 16;
+
+  option (orm.message) = {
+    rpc: {crud: true}
+    indexes: [
+      {
+        name: "page"
+        refs: [
+          {name: "date_created", number: 15},
+          {name: "id", number: 1}
+        ]
+      }
+    ]
+  };
+  option (payday.entity) = {
+    domain: 9
+    global: {}
+    erase: {hard: {}}
+    list: {
+      order: [{field: {name: "date_created"}}, {field: {name: "id"}}]
+      by: [{name: "ref"}, {name: "rule"}]
+      size: 100
+      max: 1000
+    }
+  };
+}

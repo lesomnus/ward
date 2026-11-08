@@ -14,9 +14,12 @@ import (
 	"github.com/lesomnus/ward/internal/ent/access"
 	"github.com/lesomnus/ward/internal/ent/archived"
 	"github.com/lesomnus/ward/internal/ent/audit"
+	"github.com/lesomnus/ward/internal/ent/checkpoint"
 	"github.com/lesomnus/ward/internal/ent/holder"
 	"github.com/lesomnus/ward/internal/ent/issue"
+	"github.com/lesomnus/ward/internal/ent/issueevent"
 	"github.com/lesomnus/ward/internal/ent/outbox"
+	"github.com/lesomnus/ward/internal/ent/override"
 	"github.com/lesomnus/ward/internal/ent/owed"
 	"github.com/lesomnus/ward/internal/ent/rowseal"
 	"github.com/lesomnus/ward/internal/ent/tenant"
@@ -35,12 +38,18 @@ type Client struct {
 	Archived *ArchivedClient
 	// Audit is the client for interacting with the Audit builders.
 	Audit *AuditClient
+	// Checkpoint is the client for interacting with the Checkpoint builders.
+	Checkpoint *CheckpointClient
 	// Holder is the client for interacting with the Holder builders.
 	Holder *HolderClient
 	// Issue is the client for interacting with the Issue builders.
 	Issue *IssueClient
+	// IssueEvent is the client for interacting with the IssueEvent builders.
+	IssueEvent *IssueEventClient
 	// Outbox is the client for interacting with the Outbox builders.
 	Outbox *OutboxClient
+	// Override is the client for interacting with the Override builders.
+	Override *OverrideClient
 	// Owed is the client for interacting with the Owed builders.
 	Owed *OwedClient
 	// RowSeal is the client for interacting with the RowSeal builders.
@@ -60,9 +69,12 @@ func (c *Client) init() {
 	c.Access = NewAccessClient(c.config)
 	c.Archived = NewArchivedClient(c.config)
 	c.Audit = NewAuditClient(c.config)
+	c.Checkpoint = NewCheckpointClient(c.config)
 	c.Holder = NewHolderClient(c.config)
 	c.Issue = NewIssueClient(c.config)
+	c.IssueEvent = NewIssueEventClient(c.config)
 	c.Outbox = NewOutboxClient(c.config)
+	c.Override = NewOverrideClient(c.config)
 	c.Owed = NewOwedClient(c.config)
 	c.RowSeal = NewRowSealClient(c.config)
 	c.Tenant = NewTenantClient(c.config)
@@ -156,17 +168,20 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		Access:   NewAccessClient(cfg),
-		Archived: NewArchivedClient(cfg),
-		Audit:    NewAuditClient(cfg),
-		Holder:   NewHolderClient(cfg),
-		Issue:    NewIssueClient(cfg),
-		Outbox:   NewOutboxClient(cfg),
-		Owed:     NewOwedClient(cfg),
-		RowSeal:  NewRowSealClient(cfg),
-		Tenant:   NewTenantClient(cfg),
+		ctx:        ctx,
+		config:     cfg,
+		Access:     NewAccessClient(cfg),
+		Archived:   NewArchivedClient(cfg),
+		Audit:      NewAuditClient(cfg),
+		Checkpoint: NewCheckpointClient(cfg),
+		Holder:     NewHolderClient(cfg),
+		Issue:      NewIssueClient(cfg),
+		IssueEvent: NewIssueEventClient(cfg),
+		Outbox:     NewOutboxClient(cfg),
+		Override:   NewOverrideClient(cfg),
+		Owed:       NewOwedClient(cfg),
+		RowSeal:    NewRowSealClient(cfg),
+		Tenant:     NewTenantClient(cfg),
 	}, nil
 }
 
@@ -184,17 +199,20 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		Access:   NewAccessClient(cfg),
-		Archived: NewArchivedClient(cfg),
-		Audit:    NewAuditClient(cfg),
-		Holder:   NewHolderClient(cfg),
-		Issue:    NewIssueClient(cfg),
-		Outbox:   NewOutboxClient(cfg),
-		Owed:     NewOwedClient(cfg),
-		RowSeal:  NewRowSealClient(cfg),
-		Tenant:   NewTenantClient(cfg),
+		ctx:        ctx,
+		config:     cfg,
+		Access:     NewAccessClient(cfg),
+		Archived:   NewArchivedClient(cfg),
+		Audit:      NewAuditClient(cfg),
+		Checkpoint: NewCheckpointClient(cfg),
+		Holder:     NewHolderClient(cfg),
+		Issue:      NewIssueClient(cfg),
+		IssueEvent: NewIssueEventClient(cfg),
+		Outbox:     NewOutboxClient(cfg),
+		Override:   NewOverrideClient(cfg),
+		Owed:       NewOwedClient(cfg),
+		RowSeal:    NewRowSealClient(cfg),
+		Tenant:     NewTenantClient(cfg),
 	}, nil
 }
 
@@ -270,8 +288,8 @@ func (c *Client) InTx() bool {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Access, c.Archived, c.Audit, c.Holder, c.Issue, c.Outbox, c.Owed, c.RowSeal,
-		c.Tenant,
+		c.Access, c.Archived, c.Audit, c.Checkpoint, c.Holder, c.Issue, c.IssueEvent,
+		c.Outbox, c.Override, c.Owed, c.RowSeal, c.Tenant,
 	} {
 		n.Use(hooks...)
 	}
@@ -281,8 +299,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Access, c.Archived, c.Audit, c.Holder, c.Issue, c.Outbox, c.Owed, c.RowSeal,
-		c.Tenant,
+		c.Access, c.Archived, c.Audit, c.Checkpoint, c.Holder, c.Issue, c.IssueEvent,
+		c.Outbox, c.Override, c.Owed, c.RowSeal, c.Tenant,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -297,12 +315,18 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Archived.mutate(ctx, m)
 	case *AuditMutation:
 		return c.Audit.mutate(ctx, m)
+	case *CheckpointMutation:
+		return c.Checkpoint.mutate(ctx, m)
 	case *HolderMutation:
 		return c.Holder.mutate(ctx, m)
 	case *IssueMutation:
 		return c.Issue.mutate(ctx, m)
+	case *IssueEventMutation:
+		return c.IssueEvent.mutate(ctx, m)
 	case *OutboxMutation:
 		return c.Outbox.mutate(ctx, m)
+	case *OverrideMutation:
+		return c.Override.mutate(ctx, m)
 	case *OwedMutation:
 		return c.Owed.mutate(ctx, m)
 	case *RowSealMutation:
@@ -713,6 +737,139 @@ func (c *AuditClient) mutate(ctx context.Context, m *AuditMutation) (Value, erro
 	}
 }
 
+// CheckpointClient is a client for the Checkpoint schema.
+type CheckpointClient struct {
+	config
+}
+
+// NewCheckpointClient returns a client for the Checkpoint from the given config.
+func NewCheckpointClient(c config) *CheckpointClient {
+	return &CheckpointClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `checkpoint.Hooks(f(g(h())))`.
+func (c *CheckpointClient) Use(hooks ...Hook) {
+	c.hooks.Checkpoint = append(c.hooks.Checkpoint, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `checkpoint.Intercept(f(g(h())))`.
+func (c *CheckpointClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Checkpoint = append(c.inters.Checkpoint, interceptors...)
+}
+
+// Create returns a builder for creating a Checkpoint entity.
+func (c *CheckpointClient) Create() *CheckpointCreate {
+	mutation := newCheckpointMutation(c.config, OpCreate)
+	return &CheckpointCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Checkpoint entities.
+func (c *CheckpointClient) CreateBulk(builders ...*CheckpointCreate) *CheckpointCreateBulk {
+	return &CheckpointCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CheckpointClient) MapCreateBulk(slice any, setFunc func(*CheckpointCreate, int)) *CheckpointCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CheckpointCreateBulk{err: fmt.Errorf("calling to CheckpointClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CheckpointCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CheckpointCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Checkpoint.
+func (c *CheckpointClient) Update() *CheckpointUpdate {
+	mutation := newCheckpointMutation(c.config, OpUpdate)
+	return &CheckpointUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CheckpointClient) UpdateOne(_m *Checkpoint) *CheckpointUpdateOne {
+	mutation := newCheckpointMutation(c.config, OpUpdateOne, withCheckpoint(_m))
+	return &CheckpointUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneId returns an update builder for the given id.
+func (c *CheckpointClient) UpdateOneId(id uuid.UUID) *CheckpointUpdateOne {
+	mutation := newCheckpointMutation(c.config, OpUpdateOne, withCheckpointId(id))
+	return &CheckpointUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Checkpoint.
+func (c *CheckpointClient) Delete() *CheckpointDelete {
+	mutation := newCheckpointMutation(c.config, OpDelete)
+	return &CheckpointDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CheckpointClient) DeleteOne(_m *Checkpoint) *CheckpointDeleteOne {
+	return c.DeleteOneId(_m.Id)
+}
+
+// DeleteOneId returns a builder for deleting the given entity by its id.
+func (c *CheckpointClient) DeleteOneId(id uuid.UUID) *CheckpointDeleteOne {
+	builder := c.Delete().Where(checkpoint.Id(id))
+	builder.mutation.id = &id
+	builder.mutation.SetOp(OpDeleteOne)
+	return &CheckpointDeleteOne{builder}
+}
+
+// Query returns a query builder for Checkpoint.
+func (c *CheckpointClient) Query() *CheckpointQuery {
+	return &CheckpointQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCheckpoint},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Checkpoint entity by its id.
+func (c *CheckpointClient) Get(ctx context.Context, id uuid.UUID) (*Checkpoint, error) {
+	return c.Query().Where(checkpoint.Id(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CheckpointClient) GetX(ctx context.Context, id uuid.UUID) *Checkpoint {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *CheckpointClient) Hooks() []Hook {
+	return c.hooks.Checkpoint
+}
+
+// Interceptors returns the client interceptors.
+func (c *CheckpointClient) Interceptors() []Interceptor {
+	return c.inters.Checkpoint
+}
+
+func (c *CheckpointClient) mutate(ctx context.Context, m *CheckpointMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CheckpointCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CheckpointUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CheckpointUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CheckpointDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Checkpoint mutation op: %q", m.Op())
+	}
+}
+
 // HolderClient is a client for the Holder schema.
 type HolderClient struct {
 	config
@@ -995,6 +1152,139 @@ func (c *IssueClient) mutate(ctx context.Context, m *IssueMutation) (Value, erro
 	}
 }
 
+// IssueEventClient is a client for the IssueEvent schema.
+type IssueEventClient struct {
+	config
+}
+
+// NewIssueEventClient returns a client for the IssueEvent from the given config.
+func NewIssueEventClient(c config) *IssueEventClient {
+	return &IssueEventClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `issueevent.Hooks(f(g(h())))`.
+func (c *IssueEventClient) Use(hooks ...Hook) {
+	c.hooks.IssueEvent = append(c.hooks.IssueEvent, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `issueevent.Intercept(f(g(h())))`.
+func (c *IssueEventClient) Intercept(interceptors ...Interceptor) {
+	c.inters.IssueEvent = append(c.inters.IssueEvent, interceptors...)
+}
+
+// Create returns a builder for creating a IssueEvent entity.
+func (c *IssueEventClient) Create() *IssueEventCreate {
+	mutation := newIssueEventMutation(c.config, OpCreate)
+	return &IssueEventCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of IssueEvent entities.
+func (c *IssueEventClient) CreateBulk(builders ...*IssueEventCreate) *IssueEventCreateBulk {
+	return &IssueEventCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *IssueEventClient) MapCreateBulk(slice any, setFunc func(*IssueEventCreate, int)) *IssueEventCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &IssueEventCreateBulk{err: fmt.Errorf("calling to IssueEventClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*IssueEventCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &IssueEventCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for IssueEvent.
+func (c *IssueEventClient) Update() *IssueEventUpdate {
+	mutation := newIssueEventMutation(c.config, OpUpdate)
+	return &IssueEventUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *IssueEventClient) UpdateOne(_m *IssueEvent) *IssueEventUpdateOne {
+	mutation := newIssueEventMutation(c.config, OpUpdateOne, withIssueEvent(_m))
+	return &IssueEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneId returns an update builder for the given id.
+func (c *IssueEventClient) UpdateOneId(id uuid.UUID) *IssueEventUpdateOne {
+	mutation := newIssueEventMutation(c.config, OpUpdateOne, withIssueEventId(id))
+	return &IssueEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for IssueEvent.
+func (c *IssueEventClient) Delete() *IssueEventDelete {
+	mutation := newIssueEventMutation(c.config, OpDelete)
+	return &IssueEventDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *IssueEventClient) DeleteOne(_m *IssueEvent) *IssueEventDeleteOne {
+	return c.DeleteOneId(_m.Id)
+}
+
+// DeleteOneId returns a builder for deleting the given entity by its id.
+func (c *IssueEventClient) DeleteOneId(id uuid.UUID) *IssueEventDeleteOne {
+	builder := c.Delete().Where(issueevent.Id(id))
+	builder.mutation.id = &id
+	builder.mutation.SetOp(OpDeleteOne)
+	return &IssueEventDeleteOne{builder}
+}
+
+// Query returns a query builder for IssueEvent.
+func (c *IssueEventClient) Query() *IssueEventQuery {
+	return &IssueEventQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeIssueEvent},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a IssueEvent entity by its id.
+func (c *IssueEventClient) Get(ctx context.Context, id uuid.UUID) (*IssueEvent, error) {
+	return c.Query().Where(issueevent.Id(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *IssueEventClient) GetX(ctx context.Context, id uuid.UUID) *IssueEvent {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *IssueEventClient) Hooks() []Hook {
+	return c.hooks.IssueEvent
+}
+
+// Interceptors returns the client interceptors.
+func (c *IssueEventClient) Interceptors() []Interceptor {
+	return c.inters.IssueEvent
+}
+
+func (c *IssueEventClient) mutate(ctx context.Context, m *IssueEventMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&IssueEventCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&IssueEventUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&IssueEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&IssueEventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown IssueEvent mutation op: %q", m.Op())
+	}
+}
+
 // OutboxClient is a client for the Outbox schema.
 type OutboxClient struct {
 	config
@@ -1125,6 +1415,139 @@ func (c *OutboxClient) mutate(ctx context.Context, m *OutboxMutation) (Value, er
 		return (&OutboxDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Outbox mutation op: %q", m.Op())
+	}
+}
+
+// OverrideClient is a client for the Override schema.
+type OverrideClient struct {
+	config
+}
+
+// NewOverrideClient returns a client for the Override from the given config.
+func NewOverrideClient(c config) *OverrideClient {
+	return &OverrideClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `override.Hooks(f(g(h())))`.
+func (c *OverrideClient) Use(hooks ...Hook) {
+	c.hooks.Override = append(c.hooks.Override, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `override.Intercept(f(g(h())))`.
+func (c *OverrideClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Override = append(c.inters.Override, interceptors...)
+}
+
+// Create returns a builder for creating a Override entity.
+func (c *OverrideClient) Create() *OverrideCreate {
+	mutation := newOverrideMutation(c.config, OpCreate)
+	return &OverrideCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Override entities.
+func (c *OverrideClient) CreateBulk(builders ...*OverrideCreate) *OverrideCreateBulk {
+	return &OverrideCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *OverrideClient) MapCreateBulk(slice any, setFunc func(*OverrideCreate, int)) *OverrideCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &OverrideCreateBulk{err: fmt.Errorf("calling to OverrideClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*OverrideCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &OverrideCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Override.
+func (c *OverrideClient) Update() *OverrideUpdate {
+	mutation := newOverrideMutation(c.config, OpUpdate)
+	return &OverrideUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *OverrideClient) UpdateOne(_m *Override) *OverrideUpdateOne {
+	mutation := newOverrideMutation(c.config, OpUpdateOne, withOverride(_m))
+	return &OverrideUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneId returns an update builder for the given id.
+func (c *OverrideClient) UpdateOneId(id uuid.UUID) *OverrideUpdateOne {
+	mutation := newOverrideMutation(c.config, OpUpdateOne, withOverrideId(id))
+	return &OverrideUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Override.
+func (c *OverrideClient) Delete() *OverrideDelete {
+	mutation := newOverrideMutation(c.config, OpDelete)
+	return &OverrideDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *OverrideClient) DeleteOne(_m *Override) *OverrideDeleteOne {
+	return c.DeleteOneId(_m.Id)
+}
+
+// DeleteOneId returns a builder for deleting the given entity by its id.
+func (c *OverrideClient) DeleteOneId(id uuid.UUID) *OverrideDeleteOne {
+	builder := c.Delete().Where(override.Id(id))
+	builder.mutation.id = &id
+	builder.mutation.SetOp(OpDeleteOne)
+	return &OverrideDeleteOne{builder}
+}
+
+// Query returns a query builder for Override.
+func (c *OverrideClient) Query() *OverrideQuery {
+	return &OverrideQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeOverride},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Override entity by its id.
+func (c *OverrideClient) Get(ctx context.Context, id uuid.UUID) (*Override, error) {
+	return c.Query().Where(override.Id(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *OverrideClient) GetX(ctx context.Context, id uuid.UUID) *Override {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *OverrideClient) Hooks() []Hook {
+	return c.hooks.Override
+}
+
+// Interceptors returns the client interceptors.
+func (c *OverrideClient) Interceptors() []Interceptor {
+	return c.inters.Override
+}
+
+func (c *OverrideClient) mutate(ctx context.Context, m *OverrideMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&OverrideCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&OverrideUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&OverrideUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&OverrideDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Override mutation op: %q", m.Op())
 	}
 }
 
@@ -1530,10 +1953,11 @@ func (c *TenantClient) mutate(ctx context.Context, m *TenantMutation) (Value, er
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Access, Archived, Audit, Holder, Issue, Outbox, Owed, RowSeal, Tenant []ent.Hook
+		Access, Archived, Audit, Checkpoint, Holder, Issue, IssueEvent, Outbox,
+		Override, Owed, RowSeal, Tenant []ent.Hook
 	}
 	inters struct {
-		Access, Archived, Audit, Holder, Issue, Outbox, Owed, RowSeal,
-		Tenant []ent.Interceptor
+		Access, Archived, Audit, Checkpoint, Holder, Issue, IssueEvent, Outbox,
+		Override, Owed, RowSeal, Tenant []ent.Interceptor
 	}
 )

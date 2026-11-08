@@ -20,6 +20,33 @@ service IssueService {
   rpc Erase(IssueRef) returns (IssueEraseResponse);
   // List reads Issues a page at a time.
   rpc List(IssueListRequest) returns (IssueListResponse);
+  // Issues by when they opened and closed.
+  rpc Search(IssueSearchRequest) returns (IssueListResponse);
+  // An operator has seen it. Refused for an Issue already acknowledged.
+  rpc Acknowledge(IssueAcknowledgeRequest) returns (Issue);
+  // An operator's note, kept as an IssueEvent.
+  rpc Comment(IssueCommentRequest) returns (IssueEvent);
+  // Closes an Issue a latching rule left cleared. Refused while it is active.
+  rpc Reset(IssueResetRequest) returns (Issue);
+}
+
+service IssueEventService {
+  // Add creates a new IssueEvent
+  rpc Add(IssueEventAddRequest) returns (IssueEvent);
+  // Get retrieves a IssueEvent
+  rpc Get(IssueEventGetRequest) returns (IssueEvent);
+  // Patch updates an existing IssueEvent
+  rpc Patch(IssueEventPatchRequest) returns (IssueEvent);
+  // Apply applies a patch document to an existing IssueEvent
+  rpc Apply(IssueEventApplyRequest) returns (IssueEvent);
+  // Erase deletes a IssueEvent
+  rpc Erase(IssueEventRef) returns (IssueEventEraseResponse);
+  // List reads IssueEvents a page at a time.
+  rpc List(IssueEventListRequest) returns (IssueEventListResponse);
+  // The transitions after a cursor, then each new one as it is committed.
+  // At-least-once: a follower that reconnects with the last cursor it saw may
+  // see a transition again. A cursor older than store.retention is refused.
+  rpc Follow(IssueEventFollowRequest) returns (stream IssueEvent);
 }
 
 message IssueAddRequest {
@@ -201,4 +228,192 @@ message IssueFilter {
   string rule = 3;
   string node = 4;
   bool attention = 5;
+}
+
+message IssueSearchRequest {
+  google.protobuf.Timestamp date_opened_from = 1;
+  google.protobuf.Timestamp date_opened_to = 2;
+  google.protobuf.Timestamp date_closed_from = 3;
+  google.protobuf.Timestamp date_closed_to = 4;
+
+  // open or closed; empty for both.
+  string state = 5 [features.field_presence = IMPLICIT];
+
+  int32 size = 6 [features.field_presence = IMPLICIT];
+  string after = 7 [features.field_presence = IMPLICIT];
+}
+
+message IssueAcknowledgeRequest {
+  IssueRef ref = 1;
+  string comment = 2 [features.field_presence = IMPLICIT];
+}
+
+message IssueCommentRequest {
+  IssueRef ref = 1;
+  string comment = 2 [features.field_presence = IMPLICIT];
+}
+
+message IssueResetRequest {
+  IssueRef ref = 1;
+  string comment = 2 [features.field_presence = IMPLICIT];
+}
+
+message IssueEventAddRequest {
+  bytes id = 1;
+  int64 cursor = 8 [features.field_presence = IMPLICIT];
+  bytes issue_id = 9 [features.field_presence = IMPLICIT];
+  string event = 10 [features.field_presence = IMPLICIT];
+  google.protobuf.Timestamp date_occurred = 11;
+  string comment = 12 [features.field_presence = IMPLICIT];
+  google.protobuf.Timestamp date_created = 15;
+  string rule = 16 [features.field_presence = IMPLICIT];
+  string source = 17 [features.field_presence = IMPLICIT];
+  string node = 18 [features.field_presence = IMPLICIT];
+  string key = 19 [features.field_presence = IMPLICIT];
+  string severity = 20 [features.field_presence = IMPLICIT];
+  string level = 21 [features.field_presence = IMPLICIT];
+  string state = 22 [features.field_presence = IMPLICIT];
+  google.protobuf.Timestamp date_opened = 23;
+  google.protobuf.Timestamp date_seen = 24;
+  google.protobuf.Timestamp date_closed = 25;
+  string close_reason = 26 [features.field_presence = IMPLICIT];
+  int64 count = 27 [features.field_presence = IMPLICIT];
+  int64 restarts = 28 [features.field_presence = IMPLICIT];
+  bool attention = 29 [features.field_presence = IMPLICIT];
+  bool acked = 30 [features.field_presence = IMPLICIT];
+  bool suppressed = 31 [features.field_presence = IMPLICIT];
+  bool shelved = 32 [features.field_presence = IMPLICIT];
+  bool out_of_service = 33 [features.field_presence = IMPLICIT];
+}
+
+message IssueEventGetRequest {
+  IssueEventRef ref = 1;
+  IssueEventSelect select = 2;
+}
+
+message IssueEventRef {
+  oneof key {
+    bytes id = 1;
+    int64 cursor = 8;
+  }
+}
+
+message IssueEventSelect {
+  bool all = 1;
+  bool cursor = 8;
+  bool issue_id = 9;
+  bool event = 10;
+  bool date_occurred = 11;
+  bool comment = 12;
+  bool date_created = 15;
+  bool rule = 16;
+  bool source = 17;
+  bool node = 18;
+  bool key = 19;
+  bool severity = 20;
+  bool level = 21;
+  bool state = 22;
+  bool date_opened = 23;
+  bool date_seen = 24;
+  bool date_closed = 25;
+  bool close_reason = 26;
+  bool count = 27;
+  bool restarts = 28;
+  bool attention = 29;
+  bool acked = 30;
+  bool suppressed = 31;
+  bool shelved = 32;
+  bool out_of_service = 33;
+}
+
+message IssueEventPatchRequest {
+  IssueEventRef ref = 1;
+  int64 cursor = 16;
+  bytes issue_id = 18;
+  string event = 20;
+  google.protobuf.Timestamp date_occurred = 22;
+  string comment = 24;
+  string rule = 32;
+  string source = 34;
+  string node = 36;
+  string key = 38;
+  string severity = 40;
+  string level = 42;
+  string state = 44;
+  google.protobuf.Timestamp date_opened = 46;
+  google.protobuf.Timestamp date_seen = 48;
+  google.protobuf.Timestamp date_closed = 50;
+  // Clear date_closed instead of writing it.
+  // It takes a field of its own because an unset value already means
+  // "leave it alone", so no value could have meant NULL. It wins
+  // outright: setting both this and date_closed clears.
+  bool date_closed_null = 51;
+  string close_reason = 52;
+  int64 count = 54;
+  int64 restarts = 56;
+  bool attention = 58;
+  bool acked = 60;
+  bool suppressed = 62;
+  bool shelved = 64;
+  bool out_of_service = 66;
+}
+
+message IssueEventApplyRequest {
+  IssueEventRef ref = 1;
+  patch.Patch patch = 2;
+}
+
+message IssueEventEraseResponse {
+  // Erased is whether this call is the one that erased the row.
+  //
+  // False for a row that was already gone, was never there, or is out
+  // of this caller's reach -- which are one answer on purpose, and the
+  // reason the RPC does not fail instead.
+  bool erased = 1;
+}
+
+message IssueEventListRequest {
+  // Bounded because the work is: each filter is a predicate in the same query,
+  // so this is what says how much of the database one request may read.
+  repeated IssueEventFilter filters = 1;
+
+  // How many to answer with. Nothing said is what the schema declared, and more
+  // than the cap is the cap -- a caller asking for more than there is meant no
+  // harm, so it is not an error and it is not the whole table either.
+  int32 size = 2 [features.field_presence = IMPLICIT];
+
+  // Where to carry on from: the "next" of the answer before. It names the last
+  // row of that page rather than counting rows from the start, so a row added
+  // ahead of the page does not shift it and a caller reading through never sees
+  // one twice or misses one.
+  string after = 3 [features.field_presence = IMPLICIT];
+
+  // Read the order the other way round, every column of it at once -- newest
+  // first where it is oldest first -- which the index the order walks walks
+  // from the other end. A cursor is of the way it was read, so the next page
+  // carries on that way, and one of the other way is refused.
+  bool reverse = 4 [features.field_presence = IMPLICIT];
+}
+
+message IssueEventListResponse {
+  repeated IssueEvent items = 1;
+
+  // What to ask for next, and empty when this was the last of them.
+  //
+  // Empty means there is no more *for now*: a list is read as it is, and one
+  // that has grown since answers a fresh call. It is not empty merely because
+  // the page came back short -- a page is short when the last row of it was the
+  // last row there was, which is a thing the server can only know by having
+  // looked.
+  string next = 2 [features.field_presence = IMPLICIT];
+}
+
+message IssueEventFilter {
+  IssueEventRef ref = 1;
+  bytes issue_id = 2;
+}
+
+message IssueEventFollowRequest {
+  // The last cursor seen; 0 for the oldest transition still kept.
+  int64 after = 1 [features.field_presence = IMPLICIT];
 }

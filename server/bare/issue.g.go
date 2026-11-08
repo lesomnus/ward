@@ -10,6 +10,7 @@ import (
 	ward "github.com/lesomnus/ward"
 	ent "github.com/lesomnus/ward/internal/ent"
 	issue "github.com/lesomnus/ward/internal/ent/issue"
+	issueevent "github.com/lesomnus/ward/internal/ent/issueevent"
 	predicate "github.com/lesomnus/ward/internal/ent/predicate"
 	ent1 "github.com/protobuf-orm/ent"
 	dialect "github.com/protobuf-orm/ent/dialect"
@@ -631,6 +632,619 @@ func IssuePick(req *ward.IssueRef) (predicate.Issue, error) {
 		}
 	case ward.IssueRef_Key_not_set_case:
 		return nil, status.Errorf(codes.InvalidArgument, "key not set: Issue")
+	default:
+		return nil, status.Errorf(codes.Unimplemented, "unknown type of key: %s", req.WhichKey())
+	}
+}
+
+type IssueEventServiceServer struct {
+	Store
+
+	ward.UnimplementedIssueEventServiceServer
+}
+
+// NewIssueEventServiceServer answers with a server that runs its queries with `db`.
+//
+// It takes the options of [Server] so that what is built here can be told
+// where to report its writes and what it may see. Built without them, it
+// reports nowhere and sees everything.
+func NewIssueEventServiceServer(db *ent.Client, opts ...Option) ward.IssueEventServiceServer {
+	s := Server{Store: Store{Db: db}}
+	for _, opt := range opts {
+		opt(&s)
+	}
+	return IssueEventServiceServer{Store: s.Store}
+}
+
+// IssueEventNarrow answers with `p` and everything else that narrows a
+// read of a IssueEvent, which is whatever `scope` says.
+//
+// Every read this package makes goes through it, and a read written by
+// hand should too -- a List is the one read nothing generates, and so the
+// one that would otherwise answer with rows nobody should be given.
+func IssueEventNarrow(ctx context.Context, scope Scope, p predicate.IssueEvent) (predicate.IssueEvent, error) {
+	ps := make([]predicate.IssueEvent, 0, 2)
+	if p != nil {
+		ps = append(ps, p)
+	}
+	if scope != nil {
+		q, err := scope.IssueEventScope(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if q != nil {
+			ps = append(ps, q)
+		}
+	}
+
+	switch len(ps) {
+	case 0:
+		return nil, nil
+	case 1:
+		return ps[0], nil
+	default:
+		return issueevent.And(ps...), nil
+	}
+}
+
+// narrow is [IssueEventNarrow] with this server's own scope.
+func (s IssueEventServiceServer) narrow(ctx context.Context, p predicate.IssueEvent) (predicate.IssueEvent, error) {
+	return IssueEventNarrow(ctx, s.Scope, p)
+}
+
+func (s IssueEventServiceServer) snapshot(ctx context.Context, p predicate.IssueEvent, lock bool) (*ent.IssueEvent, error) {
+	q := s.Db.IssueEvent.Query().Where(p)
+	q.Modify(func(q *sql.Selector) {
+		if lock && s.Db.Dialect() != dialect.SQLite {
+			q.ForUpdate()
+		}
+	})
+	return q.Only(ctx)
+}
+func (s IssueEventServiceServer) image(v *ward.IssueEvent) *ward.IssueEvent {
+	if v == nil {
+		return nil
+	}
+	out := proto.Clone(v).(*ward.IssueEvent)
+	return out
+}
+
+// create is the row an Add of `req` writes, as a builder not yet saved,
+// and what the answer says about its edges. Add and AddMany both write
+// with it, so that an item of an AddMany is the row an Add of it would be.
+func (st IssueEventServiceServer) create(ctx context.Context, req *ward.IssueEventAddRequest) (*ent.IssueEventCreate, []func(v *ward.IssueEvent), error) {
+	var ds []func(v *ward.IssueEvent)
+	q := st.Db.IssueEvent.Create()
+	var k uuid.UUID
+	if req.HasId() {
+		if v, err := entuuid.FromBytes(req.GetId()); err != nil {
+			return nil, nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			k = v
+		}
+	}
+	if v, err := mint(ctx, st.Mint, "ward.IssueEvent", k, req.HasId()); err != nil {
+		return nil, nil, err
+	} else {
+		q.SetId(v)
+	}
+	q.SetCursor(req.GetCursor())
+	q.SetIssueId(req.GetIssueId())
+	q.SetEvent(req.GetEvent())
+	if req.HasDateOccurred() {
+		q.SetDateOccurred(req.GetDateOccurred().AsTime())
+	} else {
+		q.SetDateOccurred(st.now())
+	}
+	q.SetComment(req.GetComment())
+	if req.HasDateCreated() {
+		q.SetDateCreated(req.GetDateCreated().AsTime())
+	} else {
+		q.SetDateCreated(st.now())
+	}
+	q.SetRule(req.GetRule())
+	q.SetSource(req.GetSource())
+	q.SetNode(req.GetNode())
+	q.SetKey(req.GetKey())
+	q.SetSeverity(req.GetSeverity())
+	q.SetLevel(req.GetLevel())
+	q.SetState(req.GetState())
+	if req.HasDateOpened() {
+		q.SetDateOpened(req.GetDateOpened().AsTime())
+	} else {
+		q.SetDateOpened(st.now())
+	}
+	if req.HasDateSeen() {
+		q.SetDateSeen(req.GetDateSeen().AsTime())
+	} else {
+		q.SetDateSeen(st.now())
+	}
+	if req.HasDateClosed() {
+		q.SetDateClosed(req.GetDateClosed().AsTime())
+	}
+	q.SetCloseReason(req.GetCloseReason())
+	q.SetCount(req.GetCount())
+	q.SetRestarts(req.GetRestarts())
+	q.SetAttention(req.GetAttention())
+	q.SetAcked(req.GetAcked())
+	q.SetSuppressed(req.GetSuppressed())
+	q.SetShelved(req.GetShelved())
+	q.SetOutOfService(req.GetOutOfService())
+	return q, ds, nil
+}
+
+func (s IssueEventServiceServer) Add(ctx context.Context, req *ward.IssueEventAddRequest) (*ward.IssueEvent, error) {
+	tx, err := ent1.JoinTx[*ent.Client, *ent.Tx](ctx, s.Db, s.Rec != nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Close()
+
+	st := s
+	st.Db = tx.Db
+
+	q, ds, err := st.create(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var stored *ent.IssueEvent
+	if snapshotOptions(s.Rec, ward.IssueEventService_Add_FullMethodName).Value {
+		q.Stored(&stored)
+	}
+
+	tx.Writing()
+	u, err := q.Save(ctx)
+	if err != nil {
+		if err, ok := err.(*ent.ConstraintError); ok {
+			if sqlgraph.IsUniqueConstraintError(err) {
+				return nil, status.Error(codes.AlreadyExists, "IssueEvent already exists")
+			}
+			if sqlgraph.IsForeignKeyConstraintError(err) {
+				return nil, status.Error(codes.NotFound, "IssueEvent: referenced entity not found")
+			}
+		}
+		return nil, err
+	}
+
+	v := u.Proto()
+	for _, d := range ds {
+		d(v)
+	}
+	var value *ward.IssueEvent
+	if stored != nil {
+		value = s.image(stored.Proto())
+	}
+	if err := record(ctx, s.Rec, st.Db, Change{
+		By:    ward.IssueEventService_Add_FullMethodName,
+		Key:   u.Id,
+		Value: value,
+	}); err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return v, nil
+}
+
+// IssueEventAddRule is what a layer in front says about one row an Add of IssueEvent
+// would write: the request to write it with -- the one it was handed, or a
+// copy it changed -- or a refusal. Nil is the request it was handed.
+type IssueEventAddRule func(ctx context.Context, req *ward.IssueEventAddRequest) (*ward.IssueEventAddRequest, error)
+
+// IssueEventWithAddRule answers with `next` behind `rule` for the RPCs that add.
+// An Add is asked about, and every item of an AddMany in order, and the
+// call is refused for the first one that is -- an AddMany naming the item.
+// What reaches `next` is one call either way: an AddMany stays one AddMany.
+//
+// A layer that overrides Add itself, for something an Add does that a rule
+// cannot say, still has its AddMany asked through this.
+func IssueEventWithAddRule(next ward.IssueEventServiceServer, rule IssueEventAddRule) ward.IssueEventServiceServer {
+	return issueEventAddRuled{next, rule}
+}
+
+type issueEventAddRuled struct {
+	ward.IssueEventServiceServer
+	rule IssueEventAddRule
+}
+
+func (s issueEventAddRuled) Add(ctx context.Context, req *ward.IssueEventAddRequest) (*ward.IssueEvent, error) {
+	r, err := s.rule(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if r == nil {
+		r = req
+	}
+	return s.IssueEventServiceServer.Add(ctx, r)
+}
+
+func (s IssueEventServiceServer) Get(ctx context.Context, req *ward.IssueEventGetRequest) (*ward.IssueEvent, error) {
+	p, err := IssueEventPick(req.GetRef())
+	if err != nil {
+		return nil, err
+	}
+	p, err = s.narrow(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+
+	q := s.Db.IssueEvent.Query().Where(p)
+	IssueEventSelectInit(q, req.GetSelect())
+
+	v, err := q.Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, status.Error(codes.NotFound, "IssueEvent not found")
+		}
+		return nil, err
+	}
+	return v.Proto(), nil
+}
+
+func selectIssueEventKey(q *ent.IssueEventQuery) {
+	q.Select(issueevent.FieldId)
+}
+
+func IssueEventSelectedFields(m *ward.IssueEventSelect) []string {
+	if m.GetAll() {
+		return issueevent.Columns
+	}
+
+	vs := make([]string, 0, len(issueevent.Columns))
+	{
+		vs = append(vs, issueevent.FieldId)
+	}
+	if m.GetCursor() {
+		vs = append(vs, issueevent.FieldCursor)
+	}
+	if m.GetIssueId() {
+		vs = append(vs, issueevent.FieldIssueId)
+	}
+	if m.GetEvent() {
+		vs = append(vs, issueevent.FieldEvent)
+	}
+	if m.GetDateOccurred() {
+		vs = append(vs, issueevent.FieldDateOccurred)
+	}
+	if m.GetComment() {
+		vs = append(vs, issueevent.FieldComment)
+	}
+	if m.GetDateCreated() {
+		vs = append(vs, issueevent.FieldDateCreated)
+	}
+	if m.GetRule() {
+		vs = append(vs, issueevent.FieldRule)
+	}
+	if m.GetSource() {
+		vs = append(vs, issueevent.FieldSource)
+	}
+	if m.GetNode() {
+		vs = append(vs, issueevent.FieldNode)
+	}
+	if m.GetKey() {
+		vs = append(vs, issueevent.FieldKey)
+	}
+	if m.GetSeverity() {
+		vs = append(vs, issueevent.FieldSeverity)
+	}
+	if m.GetLevel() {
+		vs = append(vs, issueevent.FieldLevel)
+	}
+	if m.GetState() {
+		vs = append(vs, issueevent.FieldState)
+	}
+	if m.GetDateOpened() {
+		vs = append(vs, issueevent.FieldDateOpened)
+	}
+	if m.GetDateSeen() {
+		vs = append(vs, issueevent.FieldDateSeen)
+	}
+	if m.GetDateClosed() {
+		vs = append(vs, issueevent.FieldDateClosed)
+	}
+	if m.GetCloseReason() {
+		vs = append(vs, issueevent.FieldCloseReason)
+	}
+	if m.GetCount() {
+		vs = append(vs, issueevent.FieldCount)
+	}
+	if m.GetRestarts() {
+		vs = append(vs, issueevent.FieldRestarts)
+	}
+	if m.GetAttention() {
+		vs = append(vs, issueevent.FieldAttention)
+	}
+	if m.GetAcked() {
+		vs = append(vs, issueevent.FieldAcked)
+	}
+	if m.GetSuppressed() {
+		vs = append(vs, issueevent.FieldSuppressed)
+	}
+	if m.GetShelved() {
+		vs = append(vs, issueevent.FieldShelved)
+	}
+	if m.GetOutOfService() {
+		vs = append(vs, issueevent.FieldOutOfService)
+	}
+
+	return vs
+}
+
+func IssueEventSelect(q *ent.IssueEventQuery, m *ward.IssueEventSelect) {
+	if !m.GetAll() {
+		fields := IssueEventSelectedFields(m)
+		q.Select(fields...)
+	}
+}
+
+func IssueEventSelectInit(q *ent.IssueEventQuery, m *ward.IssueEventSelect) {
+	if m != nil {
+		IssueEventSelect(q, m)
+	}
+}
+
+func (s IssueEventServiceServer) Patch(ctx context.Context, req *ward.IssueEventPatchRequest) (*ward.IssueEvent, error) {
+	doc, err := ormpatch.FromPatchRequest(issueEventOrmEntity, req.ProtoReflect(), nil)
+	if err != nil {
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
+		if errors.Is(err, ormpatch.ErrRequestLayout) {
+			return nil, status.Errorf(codes.Internal, "%s", err)
+		}
+		if errors.Is(err, ormpatch.ErrUnsupported) {
+			return nil, status.Errorf(codes.Unimplemented, "%s", err)
+		}
+		return nil, status.Errorf(codes.InvalidArgument, "%s", err)
+	}
+
+	return s.apply(ctx, req.GetRef(), doc, ward.IssueEventService_Patch_FullMethodName)
+}
+
+func IssueEventGetKey(ctx context.Context, db *ent.Client, ref *ward.IssueEventRef) (uuid.UUID, error) {
+	var z uuid.UUID
+	if ref.HasId() {
+		if v, err := entuuid.FromBytes(ref.GetId()); err != nil {
+			return z, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return v, nil
+		}
+	}
+
+	p, err := IssueEventPick(ref)
+	if err != nil {
+		return z, err
+	}
+
+	v, err := db.IssueEvent.Query().Where(p).OnlyId(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return z, status.Error(codes.NotFound, "IssueEvent not found")
+		}
+		return z, err
+	}
+
+	return v, nil
+}
+
+var issueEventOrmEntity = ormpatch.MustEntityOf(ward.File_ward_issue_proto, "IssueEvent")
+
+var issueEventPatchColumns = entpatch.Columns{
+	1: issueevent.FieldId, 8: issueevent.FieldCursor, 9: issueevent.FieldIssueId, 10: issueevent.FieldEvent, 11: issueevent.FieldDateOccurred, 12: issueevent.FieldComment, 15: issueevent.FieldDateCreated, 16: issueevent.FieldRule, 17: issueevent.FieldSource, 18: issueevent.FieldNode, 19: issueevent.FieldKey, 20: issueevent.FieldSeverity, 21: issueevent.FieldLevel, 22: issueevent.FieldState, 23: issueevent.FieldDateOpened, 24: issueevent.FieldDateSeen, 25: issueevent.FieldDateClosed, 26: issueevent.FieldCloseReason, 27: issueevent.FieldCount, 28: issueevent.FieldRestarts, 29: issueevent.FieldAttention, 30: issueevent.FieldAcked, 31: issueevent.FieldSuppressed, 32: issueevent.FieldShelved, 33: issueevent.FieldOutOfService}
+
+func (s IssueEventServiceServer) Apply(ctx context.Context, req *ward.IssueEventApplyRequest) (*ward.IssueEvent, error) {
+	if !req.HasPatch() {
+		return nil, status.Errorf(codes.InvalidArgument, "%s", ormpatch.ErrNoPatch)
+	}
+	return s.apply(ctx, req.GetRef(), req.GetPatch(), ward.IssueEventService_Apply_FullMethodName)
+}
+
+func (s IssueEventServiceServer) apply(ctx context.Context, ref *ward.IssueEventRef, doc *patchpb.Patch, by string) (*ward.IssueEvent, error) {
+	plan := &ormpatch.Plan{Entity: issueEventOrmEntity}
+	if doc != nil {
+		v, err := ormpatch.Compile(issueEventOrmEntity, doc)
+		if err != nil {
+			if errors.Is(err, ormpatch.ErrUnsupported) {
+				return nil, status.Errorf(codes.Unimplemented, "%s", err)
+			}
+			return nil, status.Errorf(codes.InvalidArgument, "%s", err)
+		}
+		plan = v
+	}
+
+	pred, mod, err := entpatch.Build(plan, issueEventPatchColumns, s.Db.Dialect())
+	if err != nil {
+		if errors.Is(err, entpatch.ErrValue) {
+			return nil, status.Errorf(codes.InvalidArgument, "%s", err)
+		}
+		return nil, status.Errorf(codes.Internal, "%s", err)
+	}
+
+	tx, err := ent1.JoinTx[*ent.Client, *ent.Tx](ctx, s.Db, true)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Close()
+
+	st := s
+	st.Db = tx.Db
+
+	k, err := IssueEventGetKey(ctx, st.Db, ref)
+	if err != nil {
+		return nil, err
+	}
+	at := &ward.IssueEventRef{}
+	at.SetId(k[:])
+	p, err := s.narrow(ctx, issueevent.IdEQ(k))
+	if err != nil {
+		return nil, err
+	}
+
+	var previous *ward.IssueEvent
+	images := snapshotOptions(s.Rec, by)
+	if images.Previous && mod != nil {
+		u, err := st.snapshot(ctx, p, true)
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return nil, status.Error(codes.NotFound, "resource not found")
+			}
+			return nil, err
+		}
+		previous = s.image(u.Proto())
+	}
+	if mod == nil {
+		q := st.Db.IssueEvent.Query().Where(p)
+		if pred != nil {
+			q.Where(predicate.IssueEvent(pred))
+		}
+		if ok, err := q.Exist(ctx); err != nil {
+			return nil, err
+		} else if !ok {
+			return nil, func() error {
+				if ok, err := st.Db.IssueEvent.Query().Where(p).Exist(ctx); err != nil {
+					return err
+				} else if !ok {
+					return status.Error(codes.NotFound, "IssueEvent not found")
+				}
+				return status.Error(codes.FailedPrecondition, "a test in the patch did not hold")
+			}()
+		}
+	} else {
+		q := st.Db.IssueEvent.Update().Where(p)
+		if pred != nil {
+			q.Where(predicate.IssueEvent(pred))
+		}
+		q.Modify(mod)
+		tx.Writing()
+		if n, err := q.Save(ctx); err != nil {
+			if err, ok := err.(*ent.ConstraintError); ok {
+				if sqlgraph.IsUniqueConstraintError(err) {
+					return nil, status.Error(codes.AlreadyExists, "IssueEvent already exists")
+				}
+				if sqlgraph.IsForeignKeyConstraintError(err) {
+					return nil, status.Error(codes.NotFound, "IssueEvent: referenced entity not found")
+				}
+			}
+			return nil, err
+		} else if n == 0 {
+			return nil, func() error {
+				if ok, err := st.Db.IssueEvent.Query().Where(p).Exist(ctx); err != nil {
+					return err
+				} else if !ok {
+					return status.Error(codes.NotFound, "IssueEvent not found")
+				}
+				return status.Error(codes.FailedPrecondition, "a test in the patch did not hold")
+			}()
+		}
+	}
+
+	out, err := st.Get(ctx, at.Pick())
+	if err != nil {
+		return nil, err
+	}
+	if mod != nil {
+		var value *ward.IssueEvent
+		if images.Value {
+			value = s.image(out)
+		}
+		if err := record(ctx, s.Rec, st.Db, Change{
+			By:       by,
+			Key:      k,
+			Patch:    doc,
+			Previous: previous, Value: value,
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (s IssueEventServiceServer) Erase(ctx context.Context, req *ward.IssueEventRef) (*ward.IssueEventEraseResponse, error) {
+	p, err := IssueEventPick(req)
+	if err != nil {
+		return nil, err
+	}
+	p, err = s.narrow(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := ent1.JoinTx[*ent.Client, *ent.Tx](ctx, s.Db, s.Rec != nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Close()
+
+	st := s
+	st.Db = tx.Db
+
+	var k any
+	var previous *ward.IssueEvent
+	if s.Rec != nil {
+		images := snapshotOptions(s.Rec, ward.IssueEventService_Erase_FullMethodName)
+		var v *ent.IssueEvent
+		var err error
+		if images.Previous {
+			v, err = st.snapshot(ctx, p, true)
+		} else {
+			v, err = st.Db.IssueEvent.Query().Where(p).Select(issueevent.FieldId).Only(ctx)
+		}
+		if err != nil {
+			if ent.IsNotFound(err) {
+				return &ward.IssueEventEraseResponse{}, nil
+			}
+			return nil, err
+		}
+
+		k = v.Id
+		if images.Previous {
+			previous = s.image(v.Proto())
+		}
+		p = issueevent.And(p, issueevent.IdEQ(v.Id))
+	}
+
+	tx.Writing()
+	n, err := st.Db.IssueEvent.Delete().Where(p).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if n > 0 {
+		if err := record(ctx, s.Rec, st.Db, Change{
+			By:       ward.IssueEventService_Erase_FullMethodName,
+			Key:      k,
+			Previous: previous,
+		}); err != nil {
+			return nil, err
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	res := &ward.IssueEventEraseResponse{}
+	res.SetErased(n > 0)
+
+	return res, nil
+}
+
+func IssueEventPick(req *ward.IssueEventRef) (predicate.IssueEvent, error) {
+	switch req.WhichKey() {
+	case ward.IssueEventRef_Id_case:
+		if v, err := entuuid.FromBytes(req.GetId()); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "id: %s", err)
+		} else {
+			return issueevent.IdEQ(v), nil
+		}
+	case ward.IssueEventRef_Cursor_case:
+		return issueevent.CursorEQ(req.GetCursor()), nil
+	case ward.IssueEventRef_Key_not_set_case:
+		return nil, status.Errorf(codes.InvalidArgument, "key not set: IssueEvent")
 	default:
 		return nil, status.Errorf(codes.Unimplemented, "unknown type of key: %s", req.WhichKey())
 	}
