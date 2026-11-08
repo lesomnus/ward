@@ -148,6 +148,12 @@ type cond struct {
 	hasValue   bool
 	valueState string
 	evaluated  time.Time
+
+	// What it read -- the state a state rule reads, the level a limit judges,
+	// normal included -- and since when.
+	reading      string
+	read         bool
+	readingSince time.Time
 }
 
 // NewEvaluator answers with an evaluator that has no definitions yet.
@@ -1103,6 +1109,13 @@ func (e *Evaluator) metricTick(c *cond, h time.Time) {
 	e.unhold(c)
 
 	j := e.judge(c, m)
+	reading := j.level
+	if r.State != nil {
+		reading = m.state
+	}
+	if !c.read || reading != c.reading {
+		c.reading, c.read, c.readingSince = reading, true, h
+	}
 	if j.level != c.cand.level || c.candSince.IsZero() {
 		c.cand = j
 		c.candSince = h

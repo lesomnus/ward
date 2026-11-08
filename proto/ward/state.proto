@@ -61,6 +61,15 @@ message Condition {
 
   // The time of its last signal: a record its rule matched, or a data point.
   google.protobuf.Timestamp date_signaled = 19;
+
+  // Its rule's source: the service whose signals it is judged on. Empty for
+  // a node, composite or host-metric rule.
+  string source = 20;
+
+  // When what its rule reads last changed: the state a state rule reads
+  // (value_state), or the level a limit judges -- normal included. Running
+  // since two seconds ago is date_value_changed two seconds ago.
+  google.protobuf.Timestamp date_value_changed = 21;
 }
 
 message ConditionRef {
@@ -207,8 +216,14 @@ message Rule {
   string revision = 4;
   string severity = 5;
 
-  // The definition, as JSON.
+  // The definition as its provider wrote it, in YAML.
   string definition = 6;
+
+  // The service whose signals it reads (its service.name), for a log or a
+  // metric rule over a source; the nodes it reads, for a node rule or a
+  // metric rule over host metrics. What produces the signals it judges.
+  string source = 7;
+  repeated string nodes = 8;
 }
 
 message RuleRef {

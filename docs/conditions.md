@@ -875,6 +875,17 @@ Condition 하나는 이렇게 그리면 된다.
 | `cleared` | 회복됐고 운영자의 reset을 기다린다 |
 
 `date_signaled`는 마지막 신호 시각이다. 증거가 얼마나 최근인지 보일 때 쓴다.
+
+`date_value_changed`는 읽은 것이 마지막으로 바뀐 시각이다. 상태 규칙은 읽은 상태를,
+단계 규칙은 판정한 단계를 보며, 정상끼리 바뀐 것도 포함한다. "running, 2초 전부터"처럼
+보일 때 쓴다.
+
+`source`는 그 Condition의 신호를 내는 서비스, 곧 규칙의 `source`다. `RuleService`의
+규칙에도 `source`와 `nodes`가 있다. 같은 이름으로 `SourceService`를 보면 그 서비스의
+프로세스가 언제 시작했는지(`date_started`), 살아 있는지(`alive`)를 노드별로 알 수 있다.
+그래서 신호가 아직 없는 Condition 옆에 그 생산자의 상태를 같이 보일 수 있다. 예를 들어
+"cam1 디코딩: 관측 안 됨 / 생산자 ingest: 2초 전 시작"이다. 생산자의 시작 시각은
+생존 counter의 첫 data point가 와야 알 수 있다.
 본 적도 기대한 적도 없는 Condition을 `ConditionService/Get`하면 `NotFound`다.
 "정상"이라고 답하지 않는다.
 

@@ -1085,3 +1085,63 @@ func TestExpectedConditions(t *testing.T) {
 		t.Error("an unobserved condition stayed after nothing expected it")
 	}
 }
+
+const stateRules = `
+version: 1
+sources: {}
+rules:
+  - id: box.state
+    kind: metric
+    source: det
+    severity: warning
+    metric: {name: box.status}
+    key: [{attribute: box.id}]
+    value: {of: last, window: 5s, across: max}
+    state: {from: {attribute: box.state}, normal: [created, running], abnormal: {exited: error}, other: warning}
+    activate: {for: 0s}
+    resolve: {for: 0s}
+    startup_grace: 0s
+    operator: {ack: none, latch: false}
+`
+
+// A Condition says since when what it reads has been so -- a change between
+// normal states too, which opens no Issue (design §10.2).
+func TestValueChanged(t *testing.T) {
+	h := newHarness(t, stateRules)
+	states := []string{"created", "running", "exited"}
+	at := func(d time.Duration) string {
+		switch {
+		case d < 10*s:
+			return "created"
+		case d < 20*s:
+			return "running"
+		}
+		return "exited"
+	}
+	for d := time.Duration(0); d < 30*s; d += s {
+		for i, st := range states {
+			v := 0.0
+			if st == at(d) {
+				v = 1
+			}
+			h.arrive(t0.Add(d+s), pointIn{rule: h.rule("box.state"), node: "n1", key: "b1", t: t0.Add(d), v: v, series: uint64(i + 1), group: uint64(i + 1), state: st})
+		}
+	}
+	c := func() *cond { return h.cond("box.state", "n1", "b1") }
+
+	h.run(t0.Add(8 * s))
+	if c().reading != "created" || c().readingSince.After(t0.Add(time.Second)) {
+		t.Errorf("created: %q since %s", c().reading, c().readingSince.Sub(t0))
+	}
+	h.run(t0.Add(18 * s))
+	if c().reading != "running" || c().readingSince != t0.Add(10*s) || c().issue != nil {
+		t.Errorf("running: %q since %s, issue %v", c().reading, c().readingSince.Sub(t0), c().issue != nil)
+	}
+	if v := h.ev.view(c().k); v.ValueState != "running" || v.DateValueChanged != t0.Add(10*s) || v.Source != "det" {
+		t.Errorf("view: %q since %s, source %q", v.ValueState, v.DateValueChanged.Sub(t0), v.Source)
+	}
+	h.run(t0.Add(28 * s))
+	if c().reading != "exited" || c().readingSince != t0.Add(20*s) || c().issue == nil {
+		t.Errorf("exited: %q since %s, issue %v", c().reading, c().readingSince.Sub(t0), c().issue != nil)
+	}
+}

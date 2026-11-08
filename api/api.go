@@ -89,6 +89,7 @@ func toCondition(v engine.ConditionView) *app.Condition {
 		DateUnshelve: ts(v.DateUnshelve), DateChanged: ts(v.DateChanged),
 		Declared: v.Declared, Value: v.Value, ValueState: v.ValueState,
 		DateEvaluated: ts(v.DateEvaluated), DateSignaled: ts(v.DateSignaled),
+		Source: v.Source, DateValueChanged: ts(v.DateValueChanged),
 	}
 	if v.Issue != nil {
 		b.IssueId = v.Issue.ID[:]
@@ -254,6 +255,7 @@ func toRule(r *def.Rule) *app.Rule {
 	return app.Rule_builder{
 		Id: r.ID, Kind: r.Kind, Provider: r.Provider, Revision: r.Revision,
 		Severity: r.Severity, Definition: string(b),
+		Source: r.Source, Nodes: r.Nodes,
 	}.Build()
 }
 

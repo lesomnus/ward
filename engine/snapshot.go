@@ -45,6 +45,13 @@ type ConditionView struct {
 	// The time of its last signal.
 	DateSignaled time.Time
 
+	// Its rule's source.
+	Source string
+
+	// When what its rule reads last changed: the state a state rule reads,
+	// or the level a limit judges, normal included.
+	DateValueChanged time.Time
+
 	// The open Issue; nil when there is none.
 	Issue *Issue
 }
@@ -138,6 +145,7 @@ func (ev *Evaluator) view(k condKey) ConditionView {
 	v := ConditionView{Rule: k.rule, Node: k.node, Key: k.key, State: StateInactive}
 	if r := ev.defs.Rules[k.rule]; r != nil {
 		v.Severity = r.Severity
+		v.Source = r.Source
 	}
 	if o := ev.overrides[k]; o != nil {
 		v.Shelved = o.shelve != ""
@@ -161,6 +169,7 @@ func (ev *Evaluator) view(k condKey) ConditionView {
 	}
 	v.ValueState = c.valueState
 	v.DateEvaluated = c.evaluated
+	v.DateValueChanged = c.readingSince
 	if c.cur.rank > 0 {
 		v.Level, v.Severity = c.cur.level, c.cur.severity
 	}

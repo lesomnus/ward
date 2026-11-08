@@ -404,6 +404,17 @@ func TestServe(t *testing.T) {
 		t.Errorf("a condition nothing saw nor expects: %v, want NotFound", err)
 	}
 
+	// What produces the signals: the rule's source, on the rule and on each
+	// Condition; and since when a Condition reads what it reads.
+	rl, err := app.NewRuleServiceClient(conn).Get(ctx, app.RuleGetRequest_builder{Ref: app.RuleRef_builder{Id: "app.fail"}.Build()}.Build())
+	if err != nil || rl.GetSource() != "app" {
+		t.Errorf("rule app.fail: source %q, %v", rl.GetSource(), err)
+	}
+	down, err := conds.Get(ctx, app.ConditionGetRequest_builder{Ref: app.ConditionRef_builder{Rule: "app.down", Node: "n1"}.Build()}.Build())
+	if err != nil || down.GetSource() != "app" || down.GetDateValueChanged() == nil {
+		t.Errorf("app.down: source %q, date_value_changed %v, %v", down.GetSource(), down.GetDateValueChanged(), err)
+	}
+
 	waitFor(5*time.Second, "exported", func() (bool, string) {
 		got := ex.seen()
 		return slices.Equal(got, []string{"open ", "close resolved.silence"}), fmt.Sprint(got)
