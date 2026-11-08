@@ -29,7 +29,8 @@ Condition의 상태:
 
 | 상태 | 뜻 |
 | --- | --- |
-| `inactive` | 문제없음. 열린 Issue가 없다 |
+| `unobserved` | Ward가 기대하는 Condition인데 아직 아무 증거도 없다 ([8장](#8-정상-상태와-인벤토리)) |
+| `inactive` | 열린 Issue가 없다. 판정 보류(`held`)가 아니면 정상이다 |
 | `pending` | 활성화 조건의 일부만 찼다 (예: 2초 안에 3번 중 1번) |
 | `active` | 문제가 있다. Issue가 열려 있다 |
 | `stale` | 마지막으로는 active였지만 지금은 확인할 수 없다. Issue는 열려 있다 |
@@ -68,7 +69,8 @@ Issue가 닫힌 이유(`close_reason`):
 | 14 | 조합 | 여러 알람이 함께일 때만 의미가 있다 | composite | 없음 (다른 규칙) | `resolved.condition` |
 | 15 | 억제 | 원인 알람이 있을 때 결과 알람을 표시한다 | `suppress_when` | 없음 | (표시만) |
 
-어떤 유형을 고를지는 [9장](#9-어떤-유형을-고를까)에 정리했다.
+어떤 유형을 고를지는 [10장](#10-어떤-유형을-고를까)에 정리했다. 알람이 없을 때 "정상"을
+보이는 법은 [8장](#8-정상-상태와-인벤토리)에 있다.
 
 ## 3. 프로그램 쪽 공통 규약
 
@@ -781,7 +783,112 @@ hostmetrics로 `system.uptime`을 낸다.
 - 보류, 서비스 제외, 억제는 판정을 바꾸지 않는다. 표시만 한다.
 - 모든 전환은 `IssueEventService/Follow`로 순서대로 흐른다. 알림 전달은 이 피드를 받아서 한다.
 
-## 8. 저절로 생기는 것과 판정이 보류되는 때
+## 8. 정상 상태와 인벤토리
+
+규칙은 비정상만 정의한다. 그래서 알람이 없으면 화면이 비기 쉽다. 대시보드가
+"cam0 디코딩 정상", "disk1 보이지 않음", "배터리 정상 (54%)"처럼 정상과 부재까지
+보이려면 두 가지가 필요하다: **무엇이 있어야 하는지**(인벤토리)와 **지금 정상이라는 증거**.
+
+### 기대하는 Condition
+
+Condition은 보통 신호가 와야 생긴다. Key(`cam0`, `disk1`)는 신호의 attribute에서
+오므로, 신호가 오기 전에는 Ward도 그것이 있는지 모른다. 그래서 있어야 할 것을
+Component member로 적는다.
+
+- member가 규칙, 노드, Key를 모두 지정하면 Ward가 **기대하는 Condition**이다.
+  규칙의 `key`가 `[]`이면 Key는 적지 않아도 지정한 것으로 본다.
+- Ward는 정의가 반영될 때 그 Condition을 만든다. 증거가 오기 전에는 `unobserved`이고,
+  메모리에서 버리지 않는다 (`declared: true`).
+- 노드나 Key를 비운 member는 match일 뿐이다. 이미 있는 Condition을 Component에 넣지만
+  아무것도 기대하지 않는다.
+- 검증: Key가 없는 규칙에 Key를 쓰거나, `nodes`로 노드를 정한 규칙에 다른 노드를 쓰면
+  거절한다. 그런 Condition은 영원히 관측되지 않기 때문이다.
+
+이 문서 예제의 인벤토리:
+
+```yaml
+components:
+  edge-1:
+    parent: ""
+    members:
+      - {rule: node.unobservable, node: edge-1}
+      - {rule: node.disk_full, node: edge-1}
+  edge-1-ingest:
+    parent: edge-1
+    members:
+      - {rule: ingest.down, node: edge-1}                          # 입력 프로세스가 있어야 한다
+      - {rule: ingest.stalled, node: edge-1}
+      - {rule: ingest.crash_loop, node: edge-1}
+      - {rule: ingest.decode_failed, node: edge-1, key: cam0}      # 스트림 cam0, cam1
+      - {rule: ingest.decode_failed, node: edge-1, key: cam1}
+      - {rule: ingest.device_disconnected, node: edge-1, key: usb0}
+  edge-1-disks:
+    parent: edge-1
+    members:
+      - {rule: node.hardware, node: edge-1, key: disk0}            # 디스크 disk0, disk1의 hw.status
+      - {rule: node.hardware, node: edge-1, key: disk1}
+  edge-2-power:
+    parent: ""
+    members:
+      - {rule: power.battery_low, node: edge-2}
+      - {rule: cooling.temperature_rising, node: edge-2}
+      - {rule: cooling.off_setpoint, node: edge-2}
+  uploads:
+    parent: ""
+    members:
+      - {rule: uploader.throughput_low}                            # 모든 노드와 스트림: match만
+      - {rule: uploader.timeout}
+      - {rule: pipeline.degraded}
+```
+
+### 무엇이 정상의 증거인가
+
+| 규칙 | 기대하는 Condition이 `inactive`가 되는 때 | 정상인 동안 | 증거가 끊기면 |
+| --- | --- | --- | --- |
+| 메트릭 | 그 series의 data point가 처음 왔을 때 | `value`(판정한 값)와 `date_evaluated`가 갱신된다 | `held: true` (`no data`) |
+| 로그 | 그 노드에서 소스의 생존 counter나 맞는 레코드가 처음 왔을 때 | 맞는 레코드가 없고, 소스의 생존 counter가 `max_gap` 안에 온다 | `held: true` (`source not alive`) |
+| 노드, 조합 | 처음부터 있다 | | `held: true` |
+
+**로그 규칙만으로는 장치가 있는지 알 수 없다.** 위의 `cam1` 스트림이 실제로는 없어도,
+입력 프로세스가 살아 있고 `cam1` 오류 로그가 없으면 정상으로 보인다. 장치가 있는지를
+보이려면 장치마다 메트릭 series를 내고(예: 스트림별 처리 프레임 수, 장치별 `hw.status`),
+그 메트릭 규칙을 member로 둔다. 그러면 series가 오지 않는 장치는 `unobserved`로 남는다
+(위의 `disk1`).
+
+### 대시보드가 읽는 법
+
+`ComponentService/List`는 Component마다 다음을 돌려준다:
+- `health`
+- `rules`: 그 아래에서 열릴 수 있는 알람의 종류
+- `conditions`: 기대하는 것은 관측 전이어도 들어간다
+
+Condition 하나는 이렇게 그리면 된다.
+
+| Condition | 표시 |
+| --- | --- |
+| `unobserved` | 관측 안 됨 (있어야 하는데 증거가 없다) |
+| `inactive`, `held: false` | 정상. 메트릭이면 `value`나 `value_state`를 같이 (예: "정상 (10.0 Hz)", "ok") |
+| `inactive`, `held: true` | 모름 (`hold_reason`). 예: 소스가 죽었다 |
+| `pending` | 주의. 활성화 조건이 일부 찼다 |
+| `active` | 비정상. `level`, `severity`, `issue_id` |
+| `stale` | 모름. 마지막으로는 비정상이었다 |
+| `cleared` | 회복됐고 운영자의 reset을 기다린다 |
+
+`date_signaled`는 마지막 신호 시각이다. 증거가 얼마나 최근인지 보일 때 쓴다.
+본 적도 기대한 적도 없는 Condition을 `ConditionService/Get`하면 `NotFound`다.
+"정상"이라고 답하지 않는다.
+
+Component의 health는 아래 순서로 가장 나쁜 것을 고르고, 상위는 하위 중 가장 나쁜 값을 갖는다.
+
+1. `unhealthy`: error·critical인 active Issue가 있다
+2. `unknown`: stale이나 판정 보류인 Condition이 있거나, 노드를 관측할 수 없다
+3. `degraded`: warning인 active Issue가 있다
+4. `no_data`: `unobserved`인 Condition이 있거나, 속한 Condition이 없다
+5. `healthy`: 위에 해당하지 않는다
+
+member 없이 하위만 묶는 Component는 하위를 따른다.
+
+## 9. 저절로 생기는 것과 판정이 보류되는 때
 
 규칙에 쓰지 않아도 Ward가 하는 것:
 
@@ -789,6 +896,7 @@ hostmetrics로 `system.uptime`을 낸다.
 | --- | --- |
 | 노드를 관측할 수 없다 (게이트 실패) | 침묵·부재 판정을 보류한다. 60초 넘으면 active Condition을 `stale`로 바꾼다 |
 | 노드의 부팅 시각을 아직 모른다 | 침묵 판정을 보류한다 (`system.uptime`이 필요하다) |
+| 조용한 로그 Condition의 소스가 생존 counter를 보내지 않는다 | 정상이라고 하지 않고 판정 보류(`source not alive`)로 둔다. 조합과 억제에서 모름이다 |
 | 노드가 재부팅했다 | 그 노드의 열린 로그·메트릭 Issue를 `interrupted.reboot`로 닫는다 |
 | Ward가 `recovery_window`(120초)보다 오래 꺼져 있었다 | 열린 Issue를 `interrupted.diag_gap`으로 닫는다 |
 | Ward가 짧게 꺼졌다 | 이어서 판정한다. Collector가 다시 보낸 신호는 두 번 세지 않는다 |
@@ -800,7 +908,7 @@ hostmetrics로 `system.uptime`을 낸다.
 | 어느 노드에도 맞지 않는 Resource | `StatusService`의 `unknown_hosts`로 보고한다 |
 | 규칙의 의미가 바뀌었거나 지워졌다 | 열린 Issue를 `rule_changed`로 닫는다. severity만 바뀌면 열린 Issue에 반영한다 |
 
-## 9. 어떤 유형을 고를까
+## 10. 어떤 유형을 고를까
 
 1. **로그로 알 수 있나?**
    - 문제가 있는 동안 계속 로그가 나온다 → [4.1 반복 오류](#41-반복-오류-문제가-있는-동안-계속-실패한다).
@@ -822,7 +930,7 @@ hostmetrics로 `system.uptime`을 낸다.
 4. **노드가 문제인가?** → [6.1](#61-노드-관측-불가)
 5. **여러 알람의 관계인가?** → [6.2 조합](#62-조합), [6.3 억제](#63-억제)
 
-## 10. 설정 예제
+## 11. 설정 예제
 
 ### 정적 설정 (`ward.yaml`)
 
@@ -858,38 +966,8 @@ sources:                      # key는 OTel service.name
     liveness: none                                     # 생존 counter를 내지 않는다
 ```
 
-Component 트리 (`ComponentService`가 health를 계산한다):
-
-```yaml
-components:
-  edge:
-    parent: ""
-    members:
-      - {rule: node.unobservable}
-      - {rule: node.disk_full}
-      - {rule: node.hardware}
-  pipeline:
-    parent: edge
-    members:
-      - {rule: ingest.decode_failed}
-      - {rule: ingest.device_disconnected}
-      - {rule: ingest.down}
-      - {rule: ingest.crash_loop}
-      - {rule: ingest.stalled}
-      - {rule: uploader.throughput_low}
-      - {rule: uploader.timeout}
-      - {rule: pipeline.degraded}
-  power:
-    parent: edge
-    members:
-      - {rule: power.battery_low}
-      - {rule: cooling.temperature_rising}
-      - {rule: cooling.off_setpoint}
-```
-
-health는 `unhealthy`(error·critical인 active Issue) > `unknown`(stale, 노드 관측 불가)
-> `degraded`(warning인 active Issue) > `no_data`(생존 증거 없음) > `healthy` 순서다.
-상위는 하위 중 가장 나쁜 값을 갖는다.
+Component 트리(인벤토리)의 예는 [8장](#8-정상-상태와-인벤토리)에 있다. 위 규칙, 소스와
+함께 한 provider 파일에 넣으면 된다.
 
 ### 실제로 돌려 보기
 
