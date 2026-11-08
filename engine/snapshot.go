@@ -75,11 +75,12 @@ func (e *Engine) publish(now time.Time) {
 		v := NodeView{Name: n, Gate: e.Gate.Report(n)}
 		b := ev.boots[n]
 		v.DateBooted = b.latest()
-		// The canary fails, yet the node's own data still arrives: what is
+		// The canary fails, yet the node's own data -- its uptime, scraped
+		// after the failure began -- still arrives: what is
 		// broken is the way to its Collector, not the node. It stays
 		// unobservable -- nothing says its pipeline delivers in full -- but
 		// the reason says which (ward#29).
-		if !v.Gate.Observable && b != nil && now.Sub(b.seen) < 2*e.cfg.Engine.Gate.Hold &&
+		if !v.Gate.Observable && b != nil && b.seen.After(v.Gate.Since) &&
 			strings.Contains(v.Gate.Reason, GateUnreachable) {
 			v.Gate.Reason = "canary path: " + v.Gate.Reason
 		}

@@ -240,6 +240,8 @@ func (g *Gate) Observable(node string, p Path) (bool, string, time.Time) {
 type NodeGate struct {
 	Observable bool
 	Reason     string
+	// Since when it has been unobservable; zero when it is observable.
+	Since      time.Time
 	RTT        time.Duration
 	DateFailed time.Time
 	Error      string
@@ -268,8 +270,10 @@ func (g *Gate) Report(node string) NodeGate {
 	switch {
 	case !n.ok[PathLog]:
 		r.Reason = PathLog.String() + ": " + n.reason[PathLog]
+		r.Since = n.since[PathLog]
 	case !n.ok[PathMetric]:
 		r.Reason = PathMetric.String() + ": " + n.reason[PathMetric]
+		r.Since = n.since[PathMetric]
 	}
 	return r
 }
