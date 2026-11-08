@@ -154,12 +154,23 @@ type Exporter struct {
 }
 
 // Validate says everything that is missing or wrong, all at once.
-func (w Ward) Validate() error {
+func (w Ward) Validate() error { return w.validate(true) }
+
+// ValidateEmbedded is Validate for Ward run inside another program -- a
+// Collector, whose own receivers deliver the signals. There Ward has no
+// receiver of its own, and a receivers block is refused rather than ignored.
+func (w Ward) ValidateEmbedded() error { return w.validate(false) }
+
+func (w Ward) validate(receives bool) error {
 	var v validator
 
 	v.positive("operator.max_shelve", w.Operator.MaxShelve)
 
-	if o := w.Receivers.OTLP; o == nil {
+	if o := w.Receivers.OTLP; !receives {
+		if o != nil {
+			v.fail("receivers", "not used inside a Collector, whose receivers deliver the signals; leave it out")
+		}
+	} else if o == nil {
 		v.missing("receivers.otlp")
 	} else {
 		if o.GRPC == nil && o.HTTP == nil {

@@ -178,7 +178,7 @@ func TestServe(t *testing.T) {
 	if err := cli.Migrate(ctx, s); err != nil {
 		t.Fatal(err)
 	}
-	r, err := cli.Assemble(ctx, s, c.Ward())
+	r, err := cli.Assemble(ctx, s, c.Ward(), 0)
 	if err != nil {
 		t.Fatal(err)
 	}
