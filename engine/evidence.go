@@ -113,6 +113,31 @@ func (rs *runs) restarts(t time.Time, b *boots) []*run {
 	return out
 }
 
+// resets counts the runs that began in (from, to] after another run of the
+// same counter ended, not because the node booted. Unlike restarts, a run
+// with nothing seen before it is not counted: in a window, it is as likely
+// the process's first start, or Ward's (design §8.6: the windows count from
+// zero after Ward restarts).
+func (rs *runs) resets(from, to time.Time, b *boots) int {
+	if rs == nil {
+		return 0
+	}
+	n := 0
+	for i := 1; i < len(rs.list); i++ {
+		r := rs.list[i]
+		if !r.began.After(from) || r.began.After(to) {
+			continue
+		}
+		if !b.knownAt(r.began) {
+			break
+		}
+		if !b.between(rs.list[i-1].last, r.began) {
+			n++
+		}
+	}
+	return n
+}
+
 // boots are the boot times of a node, from hostmetrics' system.uptime.
 type boots struct {
 	list []time.Time

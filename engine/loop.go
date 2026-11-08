@@ -501,3 +501,8 @@ func (e *Engine) Follow(ctx context.Context, after int64, send func(*app.IssueEv
 		}
 	}
 }
+
+// Search finds Issues by when they opened and closed.
+func (e *Engine) Search(ctx context.Context, req *app.IssueSearchRequest) (*app.IssueListResponse, error) {
+	return e.Store.Search(ctx, req)
+}

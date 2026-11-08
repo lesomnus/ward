@@ -450,3 +450,69 @@ func fromPb(v *app.Issue) Issue {
 		Suppressed: v.GetSuppressed(), Shelved: v.GetShelved(), OutOfService: v.GetOutOfService(),
 	}
 }
+
+// Search finds Issues by when they opened and closed (IssueService/Search),
+// in the order they opened. after is the last Issue of the previous page.
+func (s *Store) Search(ctx context.Context, req *app.IssueSearchRequest) (*app.IssueListResponse, error) {
+	q := s.Ent.Issue.Query()
+	if req.HasDateOpenedFrom() {
+		q.Where(issue.DateOpenedGTE(req.GetDateOpenedFrom().AsTime()))
+	}
+	if req.HasDateOpenedTo() {
+		q.Where(issue.DateOpenedLT(req.GetDateOpenedTo().AsTime()))
+	}
+	if req.HasDateClosedFrom() {
+		q.Where(issue.DateClosedGTE(req.GetDateClosedFrom().AsTime()))
+	}
+	if req.HasDateClosedTo() {
+		q.Where(issue.DateClosedLT(req.GetDateClosedTo().AsTime()))
+	}
+	if st := req.GetState(); st != "" {
+		q.Where(issue.StateEQ(st))
+	}
+	if a := req.GetAfter(); a != "" {
+		at, id, err := parseAfter(a)
+		if err != nil {
+			return nil, err
+		}
+		q.Where(issue.Or(
+			issue.DateOpenedGT(at),
+			issue.And(issue.DateOpenedEQ(at), issue.IdGT(uuid.UUID(id))),
+		))
+	}
+	size := int(req.GetSize())
+	switch {
+	case size <= 0:
+		size = 50
+	case size > 500:
+		size = 500
+	}
+	vs, err := q.Order(ent.Asc(issue.FieldDateOpened), ent.Asc(issue.FieldId)).Limit(size + 1).All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	next := ""
+	if len(vs) > size {
+		vs = vs[:size]
+		last := vs[len(vs)-1]
+		next = fmt.Sprintf("%d.%x", last.DateOpened.UnixNano(), last.Id[:])
+	}
+	items := make([]*app.Issue, len(vs))
+	for i, v := range vs {
+		items[i] = v.Proto()
+	}
+	return app.IssueListResponse_builder{Items: items, Next: next}.Build(), nil
+}
+
+func parseAfter(a string) (time.Time, [16]byte, error) {
+	var (
+		ns int64
+		id [16]byte
+		b  []byte
+	)
+	if _, err := fmt.Sscanf(a, "%d.%x", &ns, &b); err != nil || len(b) != 16 {
+		return time.Time{}, id, status.Error(codes.InvalidArgument, "after: not a page this answered")
+	}
+	copy(id[:], b)
+	return time.Unix(0, ns), id, nil
+}

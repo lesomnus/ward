@@ -1125,13 +1125,7 @@ func (e *Evaluator) measure(c *cond, val *def.Value, pts []mpoint, h time.Time, 
 	case "resets":
 		b := e.boots[c.k.node]
 		for _, g := range slices.Sorted(maps.Keys(c.groups)) {
-			n := 0
-			for _, r := range c.groups[g].restarts(from, b) {
-				if !r.began.After(h) {
-					n++
-				}
-			}
-			vs = append(vs, float64(n))
+			vs = append(vs, float64(c.groups[g].resets(from, h, b)))
 		}
 		if len(vs) == 0 {
 			return measurement{v: 0, known: true}

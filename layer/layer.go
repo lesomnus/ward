@@ -9,9 +9,11 @@ package layer
 
 import (
 	"context"
+	"sync/atomic"
 
 	"github.com/protobuf-orm/ent/dialect"
 	"github.com/protobuf-orm/protoc-gen-orm-ent/runtime/enttx"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -105,13 +107,18 @@ func (sealCheckpoint) Erase(context.Context, *app.CheckpointRef) (*app.Checkpoin
 }
 
 // Ops is where Ward's own RPCs are implemented: those declared in
-// proto/ext/ward/*_svc.ext.proto. It has none yet.
-type Ops struct{ app.Overlay }
+// proto/ext/ward/*_svc.ext.proto. They are answered by the evaluation loop and
+// the Store, which serve builds after the stack: Ops reads them through a
+// Backend that serve fills in.
+type Ops struct {
+	app.Overlay
+	b *Backend
+}
 
-func NewOps(next app.Server) Ops { return Ops{app.NewOverlay(next)} }
+func NewOps(next app.Server, b *Backend) Ops { return Ops{app.NewOverlay(next), b} }
 
-func OpsBuild() app.Builder {
-	return app.BuilderFunc(func(next app.Server) (app.Server, error) { return NewOps(next), nil })
+func OpsBuild(b *Backend) app.Builder {
+	return app.BuilderFunc(func(next app.Server) (app.Server, error) { return NewOps(next, b), nil })
 }
 
 func (s Ops) WithDriver(drv dialect.Driver) (app.Server, error) {
@@ -119,7 +126,112 @@ func (s Ops) WithDriver(drv dialect.Driver) (app.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewOps(next), nil
+	return NewOps(next, s.b), nil
+}
+
+// Operations are what Ops hands its RPCs to.
+type Operations interface {
+	Acknowledge(ctx context.Context, id [16]byte, comment string) (*app.Issue, error)
+	Comment(ctx context.Context, id [16]byte, comment string) (*app.IssueEvent, error)
+	Reset(ctx context.Context, id [16]byte, comment string) (*app.Issue, error)
+	Search(ctx context.Context, req *app.IssueSearchRequest) (*app.IssueListResponse, error)
+	Follow(ctx context.Context, after int64, send func(*app.IssueEvent) error) error
+}
+
+// Backend holds the Operations once there are some.
+type Backend struct{ p atomic.Pointer[Operations] }
+
+// Set makes o what Ops answers with.
+func (b *Backend) Set(o Operations) { b.p.Store(&o) }
+
+func (b *Backend) get() (Operations, error) {
+	if b == nil {
+		return nil, status.Error(codes.Unavailable, "Ward is starting")
+	}
+	o := b.p.Load()
+	if o == nil {
+		return nil, status.Error(codes.Unavailable, "Ward is starting")
+	}
+	return *o, nil
+}
+
+func issueID(ref *app.IssueRef) ([16]byte, error) {
+	id := ref.GetId()
+	if len(id) != 16 {
+		return [16]byte{}, status.Error(codes.InvalidArgument, "ref.id: an Issue is named by its 16-byte id")
+	}
+	return [16]byte(id), nil
+}
+
+type opsIssue struct {
+	Ops
+	app.IssueServiceServer
+}
+
+func (s Ops) Issue() app.IssueServiceServer { return opsIssue{s, s.Next().Issue()} }
+
+func (s opsIssue) Search(ctx context.Context, req *app.IssueSearchRequest) (*app.IssueListResponse, error) {
+	o, err := s.b.get()
+	if err != nil {
+		return nil, err
+	}
+	return o.Search(ctx, req)
+}
+
+func (s opsIssue) Acknowledge(ctx context.Context, req *app.IssueAcknowledgeRequest) (*app.Issue, error) {
+	o, err := s.b.get()
+	if err != nil {
+		return nil, err
+	}
+	id, err := issueID(req.GetRef())
+	if err != nil {
+		return nil, err
+	}
+	return o.Acknowledge(ctx, id, req.GetComment())
+}
+
+func (s opsIssue) Comment(ctx context.Context, req *app.IssueCommentRequest) (*app.IssueEvent, error) {
+	o, err := s.b.get()
+	if err != nil {
+		return nil, err
+	}
+	id, err := issueID(req.GetRef())
+	if err != nil {
+		return nil, err
+	}
+	if req.GetComment() == "" {
+		return nil, status.Error(codes.InvalidArgument, "comment: empty")
+	}
+	return o.Comment(ctx, id, req.GetComment())
+}
+
+func (s opsIssue) Reset(ctx context.Context, req *app.IssueResetRequest) (*app.Issue, error) {
+	o, err := s.b.get()
+	if err != nil {
+		return nil, err
+	}
+	id, err := issueID(req.GetRef())
+	if err != nil {
+		return nil, err
+	}
+	return o.Reset(ctx, id, req.GetComment())
+}
+
+type opsIssueEvent struct {
+	Ops
+	app.IssueEventServiceServer
+}
+
+func (s Ops) IssueEvent() app.IssueEventServiceServer {
+	return opsIssueEvent{s, s.Next().IssueEvent()}
+}
+
+func (s opsIssueEvent) Follow(req *app.IssueEventFollowRequest, out grpc.ServerStreamingServer[app.IssueEvent]) error {
+	o, err := s.b.get()
+	if err != nil {
+		return err
+	}
+	return o.Follow(out.Context(), req.GetAfter(), out.Send)
 }
 
 var (

@@ -56,6 +56,14 @@ type Server struct {
 
 	Access *access.Writer
 	Spin   []any
+
+	// Backend is what layer.Ops answers Ward's own RPCs with: the evaluation
+	// loop, once serve has built it.
+	Backend *layer.Backend
+
+	// Register adds the services that are not payday's: the ones that read the
+	// evaluation loop's state (package api).
+	Register []func(*grpc.Server)
 }
 
 // Build opens the database and stacks the servers.
@@ -102,7 +110,8 @@ func Build(ctx context.Context, c Config) (*Server, error) {
 	}
 
 	// The last builder handles a call first: Gate, Audit, Seal, Ops, then the sink.
-	stacked, err := app.Build(walled.WithWatch(w), layer.OpsBuild(), layer.SealBuild(), pd.AuditBuild(), pd.GateBuild())
+	backend := &layer.Backend{}
+	stacked, err := app.Build(walled.WithWatch(w), layer.OpsBuild(backend), layer.SealBuild(), pd.AuditBuild(), pd.GateBuild())
 	if err != nil {
 		db.Close()
 		return nil, err
@@ -116,6 +125,7 @@ func Build(ctx context.Context, c Config) (*Server, error) {
 	s := &Server{
 		Db: db, Ent: client, Drv: drv, Dialect: dialect, Watch: w,
 		Walled: stacked, Ungated: ungated, Sink: sink.WithWatch(w),
+		Backend: backend,
 	}
 
 	s.Access = &access.Writer{Sink: pd.AccessSink(client)}
@@ -177,6 +187,10 @@ func (s *Server) Grpc(ctx context.Context, c Config, opts ...grpc.ServerOption) 
 
 	g := grpc.NewServer(os...)
 	app.RegisterIssueServiceServer(g, s.Walled.Issue())
+	app.RegisterIssueEventServiceServer(g, s.Walled.IssueEvent())
+	for _, r := range s.Register {
+		r(g)
+	}
 
 	return g, nil
 }

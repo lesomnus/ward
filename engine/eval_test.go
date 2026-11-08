@@ -719,3 +719,24 @@ func TestRestoreAndReplay(t *testing.T) {
 		t.Errorf("count %d after the replay, want 3", n)
 	}
 }
+
+// One restart is one reset; the run Ward saw first is not a reset at all.
+func TestResetsCountRestartsOnly(t *testing.T) {
+	h := newHarness(t, metricRules)
+	first := t0.Add(-5 * s) // started after Ward did
+	for tt := first; tt.Before(t0.Add(20 * s)); tt = tt.Add(s) {
+		h.point("det.loop", "n1", "", first, tt, 1)
+	}
+	again := t0.Add(25 * s)
+	for tt := again; tt.Before(t0.Add(40 * s)); tt = tt.Add(s) {
+		h.point("det.loop", "n1", "", again, tt, 1)
+	}
+	h.run(t0.Add(40 * s))
+	h.expect()
+	third := t0.Add(45 * s)
+	for tt := third; tt.Before(t0.Add(60 * s)); tt = tt.Add(s) {
+		h.point("det.loop", "n1", "", third, tt, 1)
+	}
+	h.run(t0.Add(60 * s))
+	h.expect("open det.loop/n1/ active level=crash_loop opened=45s")
+}
