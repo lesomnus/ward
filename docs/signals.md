@@ -146,3 +146,5 @@ processors:
 
 `deploy/collector/collector.yaml` is a node's full diag pipeline, and
 `example/emitter` is a service that sends all of the above on command.
+[conditions.md](conditions.md) goes through every kind of alarm a rule can
+make -- the signals each expects, a scenario and a rule -- in Korean.

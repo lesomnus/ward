@@ -71,6 +71,7 @@ gRPC on `:14319`, every service in package `ward`:
 | `cli/`, `cmd/` | the `ward` binary and its wiring |
 | `example/` | the emitter that plays a service, and an example provider file |
 | `deploy/` | a node's Collector configuration, and the compose environment |
+| `docs/` | `signals.md`, what a service sends; `conditions.md`, the kinds of alarm a rule makes, with the signals, scenarios and configuration of each (in Korean) |
 
 The stack a call goes down: `Gate → Audit → Seal → Ops → Sink`. The
 evaluation loop writes through the sink, under Ward's layers, one transaction a
