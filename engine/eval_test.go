@@ -851,3 +851,94 @@ func TestLateSignal(t *testing.T) {
 		t.Errorf("late %d, want 1", h.ev.Late())
 	}
 }
+
+const rateRules = `
+version: 1
+sources: {}
+rules:
+  - id: msgs.slow
+    kind: metric
+    source: det
+    severity: warning
+    metric: {name: msgs}
+    key: []
+    value: {of: rate, window: 4s, across: sum}
+    limit: {levels: [{name: slow, below: 8, severity: warning}], deadband: 1}
+    activate: {for: 2s}
+    resolve: {for: 2s}
+    startup_grace: 0s
+    operator: {ack: none, latch: false}
+  - id: temp.rising
+    kind: metric
+    nodes: [n1]
+    severity: warning
+    metric: {name: temp}
+    key: []
+    value: {of: change, window: 4s, across: max}
+    limit: {levels: [{name: rising, above: 0.5, severity: warning}], deadband: 0.1}
+    activate: {for: 0s}
+    resolve: {for: 2s}
+    startup_grace: 0s
+    operator: {ack: none, latch: false}
+  - id: speed.off
+    kind: metric
+    nodes: [n1]
+    severity: warning
+    metric: {name: speed}
+    key: []
+    value: {of: last, window: 4s, across: avg}
+    limit:
+      relative_to: {metric: {name: speed.target}, value: {of: last, window: 4s, across: avg}}
+      levels: [{name: fast, above: 100, severity: warning}, {name: slow, below: -100, severity: warning}]
+      deadband: 10
+    activate: {for: 0s}
+    resolve: {for: 0s}
+    startup_grace: 0s
+    operator: {ack: none, latch: false}
+`
+
+// rate is a counter's increase per second; change a gauge's; relative_to
+// judges a value against another metric paired by Key.
+func TestRateChangeRelative(t *testing.T) {
+	h := newHarness(t, rateRules)
+	start := t0.Add(-time.Hour)
+	n := 0.0
+	for d := -10 * s; d < 40*s; d += s {
+		at := t0.Add(d)
+		// 10 a second, then 2 a second from 10s, then 10 again from 25s.
+		switch {
+		case d >= 10*s && d < 25*s:
+			n += 2
+		default:
+			n += 10
+		}
+		h.point("msgs.slow", "n1", "", start, at, n)
+		// Flat, then rising 1 a second from 10s to 20s.
+		temp := 20.0
+		if d >= 10*s {
+			temp = 20 + float64(min(d, 20*s)-10*s)/float64(s)
+		}
+		h.point("temp.rising", "n1", "", time.Time{}, at, temp)
+		// 150 over its target from 15s to 25s.
+		target, speed := 1000.0, 1000.0
+		if d >= 15*s && d < 25*s {
+			speed = 1150
+		}
+		h.point("speed.off", "n1", "", time.Time{}, at, speed)
+		h.arrive(at.Add(s), pointIn{rule: h.rule("speed.off"), ref: true, node: "n1", t: at, v: target, series: 9, group: 9})
+	}
+	h.run(t0.Add(45 * s))
+	got := map[string][]string{}
+	for _, x := range h.out {
+		got[x.Issue.Rule] = append(got[x.Issue.Rule], x.Event+" "+x.Issue.Level)
+	}
+	for rule, want := range map[string][]string{
+		"msgs.slow":   {"open slow", "close slow"},
+		"temp.rising": {"open rising", "close rising"},
+		"speed.off":   {"open fast", "close fast"},
+	} {
+		if !slices.Equal(got[rule], want) {
+			t.Errorf("%s: %v, want %v\n%s", rule, got[rule], want, h.events())
+		}
+	}
+}

@@ -1143,11 +1143,14 @@ func (e *Evaluator) measure(c *cond, val *def.Value, pts []mpoint, h time.Time, 
 				continue
 			}
 			if val.Of == "rate" {
+				// Per second of what the points span: the window holds
+				// points one export interval short of its length, and
+				// dividing by the window would read every rate low by that.
 				inc := last.v - first.v
 				if inc < 0 {
 					inc = last.v
 				}
-				vs = append(vs, inc/val.Window.Seconds())
+				vs = append(vs, inc/span.Seconds())
 			} else {
 				vs = append(vs, (last.v-first.v)/span.Seconds())
 			}
