@@ -1,0 +1,149 @@
+# Rules about the emitter (example/emitter), one for each thing its control
+# endpoint can make it do. The times are short so that a change shows within
+# seconds; a deployment's would be longer.
+version: 1
+sources: {}
+rules:
+  # A repeating condition: the emitter sends it for as long as the trouble
+  # lasts, so 5 s without one, with the emitter still alive, is resolved.
+  #   POST /condition/repeat?type=emitter.overheat&key=left&every=500ms
+  #   POST /condition/stop?type=emitter.overheat&key=left
+  - id: emitter.overheat
+    kind: log
+    source: emitter
+    severity: error
+    match: {attributes: {diag.condition.type: emitter.overheat}}
+    key: [{attribute: diag.condition.key}]
+    activate: {count: 3, within: 2s}
+    resolve_after: 5s
+    on_source_restart: close
+    operator: {ack: none, latch: false}
+
+  # A condition said once, and released by name: silence means nothing here,
+  # so it waits for the release, or is forgotten after forget_after.
+  #   POST /condition/once?type=emitter.disconnected&key=uplink
+  #   POST /condition/release?type=emitter.disconnected&key=uplink
+  # The release has to say false as a bool: `as=string` sends "false", which
+  # does not match, and the Condition stays.
+  - id: emitter.disconnected
+    kind: log
+    source: emitter
+    severity: error
+    match: {attributes: {diag.condition.type: emitter.disconnected}}
+    key: [{attribute: diag.condition.key}]
+    activate: {count: 1}
+    forget_after: 10m
+    release: {attributes: {diag.condition.type: emitter.disconnected, diag.condition.active: false}}
+    on_source_restart: close
+    operator: {ack: required, latch: false}
+
+  # Errors that carry only a standard attribute, per server: three timeouts
+  # within 10 s. The Collector's transform/diag also turns an error whose body
+  # says "timed out" into one of these.
+  #   POST /error/repeat?every=1s&error_type=timeout&server_address=db:5432
+  - id: emitter.timeout
+    kind: log
+    source: emitter
+    severity: warning
+    match: {severity: {gte: error}, attributes: {error.type: timeout}}
+    key: [{attribute: server.address}]
+    activate: {count: 3, within: 10s}
+    resolve_after: 30s
+    on_source_restart: keep
+    operator: {ack: none, latch: false}
+
+  # The process is gone: no data point of its liveness counter for 10 s.
+  #   docker compose stop emitter-1, or docker compose pause emitter-1
+  - id: emitter.down
+    kind: metric
+    source: emitter
+    severity: error
+    metric: {name: emitter.frames}
+    key: []
+    value: {of: points, window: 10s, across: sum}
+    limit: {levels: [{name: down, below: 1, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 10s}
+    startup_grace: 10s
+    operator: {ack: required, latch: false}
+
+  # The process is there and does nothing: its liveness counter stopped
+  # growing, though its data points still arrive.
+  #   POST /hang
+  - id: emitter.stalled
+    kind: metric
+    source: emitter
+    severity: error
+    metric: {name: emitter.frames}
+    key: []
+    value: {of: rate, window: 5s, across: sum}
+    limit: {levels: [{name: stalled, below: 1, severity: error}], deadband: 0}
+    activate: {for: 5s}
+    resolve: {for: 5s}
+    startup_grace: 10s
+    operator: {ack: none, latch: false}
+
+  # Restarting again and again: more than one restart within 5 minutes. Each
+  # restart is a new StartTimeUnixNano and service.instance.id.
+  #   POST /exit?code=1, twice
+  - id: emitter.crash_loop
+    kind: metric
+    source: emitter
+    severity: error
+    metric: {name: emitter.frames}
+    key: []
+    value: {of: resets, window: 5m, across: sum}
+    limit: {levels: [{name: crash_loop, above: 1, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 5m}
+    startup_grace: 0s
+    operator: {ack: required, latch: false}
+
+  # Messages per second, per stream, below 8.
+  #   POST /messages?stream=main&rate=10, then rate=5
+  - id: emitter.messages.slow
+    kind: metric
+    source: emitter
+    severity: warning
+    metric: {name: emitter.messages}
+    key: [{attribute: stream}]
+    value: {of: rate, window: 5s, across: sum}
+    limit: {levels: [{name: slow, below: 8, severity: warning}], deadband: 1}
+    activate: {for: 5s}
+    resolve: {for: 10s}
+    startup_grace: 10s
+    operator: {ack: none, latch: false}
+
+  # A gauge judged by levels, the most severe first.
+  #   POST /gauge?name=battery.charge&value=15&attr.battery.id=main
+  - id: emitter.battery.low
+    kind: metric
+    source: emitter
+    severity: warning
+    metric: {name: battery.charge, match: {battery.id: main}}
+    key: []
+    value: {of: last, window: 10s, across: min}
+    limit:
+      levels:
+        - {name: low_low, below: 10, severity: error}
+        - {name: low, below: 20, severity: warning}
+      deadband: 2
+    activate: {for: 5s}
+    resolve: {for: 10s}
+    startup_grace: 10s
+    operator: {ack: required, latch: true}
+
+  # A discrete state: the hw.state of the series of hw.status that is not 0.
+  #   POST /hw?id=disk0&state=degraded
+  - id: emitter.hardware
+    kind: metric
+    source: emitter
+    severity: warning
+    metric: {name: hw.status}
+    key: [{attribute: hw.id}]
+    value: {of: last, window: 30s, across: max}
+    state: {from: {attribute: hw.state}, normal: [ok], abnormal: {failed: error, degraded: warning}, other: warning}
+    activate: {for: 0s}
+    resolve: {for: 10s}
+    startup_grace: 0s
+    operator: {ack: none, latch: false}

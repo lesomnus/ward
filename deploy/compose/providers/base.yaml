@@ -1,0 +1,28 @@
+# The services of the local environment, and the rule about the nodes
+# themselves. Rules about each service are in a file of their own: a provider
+# whose file breaks keeps its last good rules, and the others are untouched.
+version: 1
+
+sources:
+  # emitter-1 on edge-1 and emitter-2 on edge-2: one source, so every rule
+  # about it makes a Condition per node. The liveness counter is exported every
+  # second; max_gap is three times that.
+  emitter:
+    liveness: {metric: emitter.frames, max_gap: 3s}
+
+  # The reporter sends a liveness counter too (it is the same program), but
+  # this says Ward is not to rely on it: a source whose silence proves nothing.
+  # Its errors are forgotten, never resolved.
+  reporter:
+    liveness: none
+
+rules:
+  # A node whose Collector cannot be shown to deliver: the canary is refused,
+  # slow, or does not come back. Try `docker compose stop edge-1`.
+  - id: node.unobservable
+    kind: node
+    nodes: [edge-1, edge-2]
+    severity: error
+    activate: {unobservable_for: 10s}
+    resolve: {observable_for: 15s}
+    operator: {ack: none, latch: false}

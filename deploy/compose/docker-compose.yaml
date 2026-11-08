@@ -1,0 +1,109 @@
+# Ward's local environment: two nodes, each a Collector with services sending
+# to it, and Ward receiving from both. deploy/README.md says how to use it.
+#
+#   docker compose up -d --build
+#
+# Networks: `lan` joins Ward and the Collectors, as a LAN joins hosts. Each
+# node has a network of its own between its services and its Collector, so
+# that cutting a node off the LAN (docker network disconnect) leaves its
+# services still sending to their Collector, as on a real host.
+name: ward-local
+
+x-collector: &collector
+  image: otel/opentelemetry-collector-contrib:0.163.2
+  command: ["--config=/etc/otelcol-contrib/collector.yaml"]
+  volumes:
+    - ../collector/collector.yaml:/etc/otelcol-contrib/collector.yaml:ro
+  restart: unless-stopped
+
+# gRPC-Go looks up a TXT record for a service config before it connects, and
+# Docker's DNS takes some 5 s to say there is none: a service's first export
+# would arrive that late. Nothing here uses a service config.
+x-grpc: &grpc
+  GRPC_ENABLE_TXT_SERVICE_CONFIG: "false"
+
+x-emitter: &emitter
+  build:
+    context: ../..
+    dockerfile: example/emitter/Dockerfile
+  image: ward-emitter:local
+  # A crash (POST /exit) is restarted, as a supervisor would: a new process,
+  # with a new service.instance.id and a new start time on its counters.
+  restart: unless-stopped
+
+services:
+  ward:
+    build:
+      context: ../..
+    image: ward:local
+    # --config belongs to the root command, so it comes before `serve`.
+    command: ["--config", "/etc/ward/ward.yaml", "serve"]
+    # For the canary's connections to the Collectors.
+    environment:
+      <<: *grpc
+    volumes:
+      - ./ward.yaml:/etc/ward/ward.yaml:ro
+      # The directory and not each file: an editor that saves by renaming
+      # leaves a bind-mounted file pointing at the old one.
+      - ./providers:/etc/ward/providers:ro
+      - ward-state:/var/lib/ward
+    ports:
+      - "14319:14319" # gRPC API
+      - "14317:14317" # OTLP/gRPC
+      - "14318:14318" # OTLP/HTTP
+    networks: [lan]
+    restart: unless-stopped
+
+  edge-1:
+    <<: *collector
+    environment:
+      NODE_HOST_NAME: edge-1
+      WARD_OTLP_HTTP_ENDPOINT: http://ward:14318
+    networks: [lan, edge-1]
+
+  edge-2:
+    <<: *collector
+    environment:
+      NODE_HOST_NAME: edge-2
+      WARD_OTLP_HTTP_ENDPOINT: http://ward:14318
+    networks: [lan, edge-2]
+
+  emitter-1:
+    <<: *emitter
+    environment:
+      <<: *grpc
+      OTEL_SERVICE_NAME: emitter
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://edge-1:4317
+    ports: ["18081:8080"]
+    networks: [edge-1]
+    depends_on: [edge-1]
+
+  emitter-2:
+    <<: *emitter
+    environment:
+      <<: *grpc
+      OTEL_SERVICE_NAME: emitter
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://edge-2:4317
+    ports: ["18082:8080"]
+    networks: [edge-2]
+    depends_on: [edge-2]
+
+  reporter:
+    <<: *emitter
+    environment:
+      <<: *grpc
+      OTEL_SERVICE_NAME: reporter
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://edge-2:4317
+      EMITTER_LIVENESS: reporter.ticks
+    ports: ["18083:8080"]
+    networks: [edge-2]
+    depends_on: [edge-2]
+
+networks:
+  lan:
+  edge-1:
+  edge-2:
+
+volumes:
+  # Ward's SQLite database. `docker compose down -v` removes it.
+  ward-state:
