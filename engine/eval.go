@@ -1261,10 +1261,13 @@ func (e *Evaluator) judge(c *cond, m measurement) judgement {
 		db = *r.Limit.Deadband
 	}
 	v := m.v
+	at := slices.IndexFunc(ls, func(l def.Level) bool { return l.Name == c.cand.level })
 	for idx, l := range ls {
 		holds := (l.Above != nil && v > *l.Above) || (l.Below != nil && v < *l.Below)
-		if !holds && c.cand.level == l.Name {
-			// Leaving a level takes coming back past its bound by the deadband.
+		// Leaving a level takes coming back past its bound by the deadband --
+		// and so does each milder level of the same direction it comes down
+		// through: from low_low, a value just above low's bound is still low.
+		if !holds && at >= 0 && idx >= at && (l.Above != nil) == (ls[at].Above != nil) {
 			holds = (l.Above != nil && v > *l.Above-db) || (l.Below != nil && v < *l.Below+db)
 		}
 		if holds {

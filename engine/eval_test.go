@@ -942,3 +942,40 @@ func TestRateChangeRelative(t *testing.T) {
 		}
 	}
 }
+
+// Coming down from a level, the deadband holds at each milder level of the
+// same direction on the way, and at none of the other direction.
+func TestDeadbandComingDown(t *testing.T) {
+	h := newHarness(t, metricRules)
+	c := h.ev.newCond(condKey{"battery", "n1", ""}, h.rule("battery"))
+	judge := func(cand string, v float64) string {
+		c.cand = h.ev.levelOf(c.r, cand)
+		if cand == "" {
+			c.cand = judgement{}
+		}
+		return h.ev.judge(c, measurement{v: v, known: true}).level
+	}
+	for _, x := range []struct {
+		from string
+		v    float64
+		want string
+	}{
+		{"low_low", 11, "low_low"}, // within low_low's deadband (10 + 2)
+		{"low_low", 21, "low"},     // out of low_low, within low's (20 + 2)
+		{"low_low", 23, ""},        // out of both
+		{"low", 21, "low"},
+		{"", 21, ""}, // never low: no deadband to stay in
+		{"", 19, "low"},
+	} {
+		if got := judge(x.from, x.v); got != x.want {
+			t.Errorf("from %q at %v: %q, want %q", x.from, x.v, got, x.want)
+		}
+	}
+
+	r := newHarness(t, rateRules)
+	d := r.ev.newCond(condKey{"speed.off", "n1", ""}, r.rule("speed.off"))
+	d.cand = r.ev.levelOf(d.r, "fast")
+	if got := r.ev.judge(d, measurement{v: -95, known: true}).level; got != "" {
+		t.Errorf("from fast at -95: %q; slow is the other direction and was never entered", got)
+	}
+}
