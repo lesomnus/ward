@@ -87,6 +87,6 @@ service:
   - `host.name` is set by a processor ahead of the exporter, since the node's
     `match` reads it;
   - `host_metrics` with the `system` scraper gives Ward the boot time (`hostmetrics`,
-    the name before v0.163.0, still loads as a deprecated alias).
+    its older name, still loads as a deprecated alias).
 - **The process.** Ward's API listens on `ward.server.addr`. The database at
   `ward.db.dsn` has to be writable. Ward logs through the Collector's logger.
