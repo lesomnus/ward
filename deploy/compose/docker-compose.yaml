@@ -10,7 +10,7 @@
 name: ward-local
 
 x-collector: &collector
-  image: otel/opentelemetry-collector-contrib:0.163.2
+  image: otel/opentelemetry-collector-contrib:0.165.0
   command: ["--config=/etc/otelcol-contrib/collector.yaml"]
   volumes:
     - ../collector/collector.yaml:/etc/otelcol-contrib/collector.yaml:ro
