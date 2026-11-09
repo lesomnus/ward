@@ -1004,3 +1004,6 @@ curl -X POST 'localhost:18081/exit?code=1&after=100ms'
 ```
 
 자동 시나리오: `go test -tags e2e -count=1 -v ./deploy/compose/` (`deploy/README.md`).
+
+로봇 한 대를 예로 든 샘플은 `example/robot/`에 있다. 역할이 다른 프로그램 넷이 각각 어떤
+신호와 attribute를 내는지와, 그 신호로 Ward가 내리는 결론을 시뮬레이션으로 보인다.

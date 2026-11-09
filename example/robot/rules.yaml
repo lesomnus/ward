@@ -1,0 +1,398 @@
+# A robot's diagnostics, as one provider file: what README.md describes and
+# robot_test.go shows Ward concluding. Thresholds are examples.
+version: 1
+
+# The programs on the robot, by their service.name. Each counts its main loop
+# in robot.loop: a cumulative counter, exported every 2 s.
+sources:
+  robot-controller:
+    liveness: {metric: robot.loop, max_gap: 6s}
+  power-manager:
+    liveness: {metric: robot.loop, max_gap: 6s}
+  sensor-hub:
+    liveness: {metric: robot.loop, max_gap: 6s}
+  fault-reporter:
+    liveness: {metric: robot.loop, max_gap: 6s}
+
+rules:
+  # -- the programs and the robot ---------------------------------------------
+
+  # Nothing from the controller for 6 s: the process, or its export, stopped.
+  - id: controller.down
+    kind: metric
+    source: robot-controller
+    severity: error
+    metric: {name: robot.loop}
+    key: []
+    value: {of: points, window: 6s, across: sum}
+    limit: {levels: [{name: down, below: 1, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 6s}
+    startup_grace: 10s
+    operator: {ack: required, latch: false}
+
+  # Still exported, no longer turning: the controller's loop is stuck.
+  - id: controller.stalled
+    kind: metric
+    source: robot-controller
+    severity: error
+    metric: {name: robot.loop}
+    key: []
+    value: {of: rate, window: 8s, across: sum}
+    limit: {levels: [{name: stalled, below: 1, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 6s}
+    startup_grace: 10s
+    operator: {ack: required, latch: false}
+
+  - id: power-manager.down
+    kind: metric
+    source: power-manager
+    severity: error
+    metric: {name: robot.loop}
+    key: []
+    value: {of: points, window: 6s, across: sum}
+    limit: {levels: [{name: down, below: 1, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 6s}
+    startup_grace: 10s
+    operator: {ack: required, latch: false}
+
+  - id: sensor-hub.down
+    kind: metric
+    source: sensor-hub
+    severity: error
+    metric: {name: robot.loop}
+    key: []
+    value: {of: points, window: 6s, across: sum}
+    limit: {levels: [{name: down, below: 1, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 6s}
+    startup_grace: 10s
+    operator: {ack: required, latch: false}
+
+  # Without it the robot runs; its faults just go unreported.
+  - id: fault-reporter.down
+    kind: metric
+    source: fault-reporter
+    severity: warning
+    metric: {name: robot.loop}
+    key: []
+    value: {of: points, window: 6s, across: sum}
+    limit: {levels: [{name: down, below: 1, severity: warning}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 6s}
+    startup_grace: 10s
+    operator: {ack: none, latch: false}
+
+  # The robot itself cannot be observed: its Collector or its network is gone.
+  # While it is, the rules above hold their verdicts rather than call it down.
+  - id: robot.unobservable
+    kind: node
+    nodes: [robot-1]
+    severity: error
+    activate: {unobservable_for: 10s}
+    resolve: {observable_for: 15s}
+    operator: {ack: required, latch: false}
+
+  # -- robot-controller: safety --------------------------------------------------
+
+  - id: robot.estop
+    kind: metric
+    source: robot-controller
+    severity: error
+    metric: {name: robot.estop.active}
+    key: [{attribute: estop.source}]            # wired, software, wireless
+    value: {of: last, window: 6s, across: max}
+    limit: {levels: [{name: active, above: 0.5, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 0s}
+    startup_grace: 0s
+    operator: {ack: required, latch: false}
+
+  - id: robot.board_fault
+    kind: metric
+    source: robot-controller
+    severity: error
+    metric: {name: robot.board.fault}
+    key: [{attribute: board.id}]
+    value: {of: last, window: 6s, across: max}
+    limit: {levels: [{name: fault, above: 0.5, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 0s}
+    startup_grace: 0s
+    operator: {ack: required, latch: false}
+
+  - id: robot.joint_locked
+    kind: metric
+    source: robot-controller
+    severity: error
+    metric: {name: robot.joint_lock.locked}
+    key: []
+    value: {of: last, window: 6s, across: max}
+    limit: {levels: [{name: locked, above: 0.5, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 0s}
+    startup_grace: 0s
+    operator: {ack: required, latch: false}
+
+  # -- robot-controller: motors and joints -------------------------------------
+
+  # A motor's state: one series per state, 1 on the current one.
+  - id: robot.motor_fault
+    kind: metric
+    source: robot-controller
+    severity: error
+    metric: {name: robot.motor.state}
+    key: [{attribute: motor.id}]
+    value: {of: last, window: 6s, across: max}
+    state:
+      from: {attribute: motor.state}
+      normal: [ok, "off"]
+      abnormal: {disconnected: error, error: error}
+      other: warning
+    activate: {for: 0s}
+    resolve: {for: 0s}
+    startup_grace: 10s
+    operator: {ack: required, latch: false}
+
+  - id: robot.motor_off
+    kind: metric
+    source: robot-controller
+    severity: info
+    metric: {name: robot.motor.state, match: {motor.state: "off"}}
+    key: [{attribute: motor.id}]
+    value: {of: last, window: 6s, across: max}
+    limit: {levels: [{name: "off", above: 0.5, severity: info}], deadband: 0}
+    activate: {for: 10s}                          # off for more than 10 s
+    resolve: {for: 0s}
+    startup_grace: 10s
+    operator: {ack: none, latch: false}
+
+  - id: robot.motor_temperature
+    kind: metric
+    source: robot-controller
+    severity: warning
+    metric: {name: robot.motor.temperature}
+    key: [{attribute: motor.id}]
+    value: {of: last, window: 6s, across: max}
+    limit:
+      levels:
+        - {name: hot, above: 80, severity: error}
+        - {name: warm, above: 65, severity: warning}
+      deadband: 2
+    activate: {for: 10s}
+    resolve: {for: 10s}
+    startup_grace: 0s
+    operator: {ack: required, latch: false}
+
+  - id: robot.joint_stale
+    kind: metric
+    source: robot-controller
+    severity: error
+    metric: {name: robot.joint.stale}
+    key: [{attribute: joint.id}]
+    value: {of: last, window: 6s, across: max}
+    limit: {levels: [{name: stale, above: 0.5, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 0s}
+    startup_grace: 10s
+    operator: {ack: required, latch: false}
+
+  # -- robot-controller: real-time loop and SDK ---------------------------------
+
+  - id: robot.rt_cycle_slow
+    kind: metric
+    source: robot-controller
+    severity: warning
+    metric: {name: robot.rt_cycle.count}
+    key: []
+    value: {of: rate, window: 8s, across: sum}      # cycles per second
+    limit: {levels: [{name: slow, below: 900, severity: warning}], deadband: 10}
+    activate: {for: 10s}
+    resolve: {for: 10s}
+    startup_grace: 10s
+    operator: {ack: none, latch: false}
+
+  - id: robot.rt_cycle_late
+    kind: metric
+    source: robot-controller
+    severity: warning
+    metric: {name: robot.rt_cycle.period_max}
+    key: []
+    value: {of: max, window: 6s, across: max}       # the longest period in each export interval
+    limit: {levels: [{name: late, above: 1500, severity: warning}], deadband: 0}   # us
+    activate: {for: 0s}
+    resolve: {for: 10s}
+    startup_grace: 10s
+    operator: {ack: none, latch: false}
+
+  - id: robot.sdk_drops
+    kind: metric
+    source: robot-controller
+    severity: warning
+    metric: {name: robot.sdk.push_drops}
+    key: [{attribute: queue.name}]
+    value: {of: rate, window: 8s, across: sum}
+    limit: {levels: [{name: dropping, above: 0, severity: warning}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 10s}
+    startup_grace: 10s
+    operator: {ack: none, latch: false}
+
+  # -- power-manager -----------------------------------------------------------
+
+  - id: robot.battery_low
+    kind: metric
+    source: power-manager
+    severity: warning
+    metric: {name: robot.battery.soc}
+    key: []
+    value: {of: last, window: 6s, across: min}
+    limit:
+      levels:
+        - {name: critical, below: 0.1, severity: error}
+        - {name: low, below: 0.2, severity: warning}
+      deadband: 0.02
+    activate: {for: 0s}
+    resolve: {for: 30s}
+    startup_grace: 10s
+    operator: {ack: required, latch: false}
+
+  - id: robot.battery_disconnected
+    kind: metric
+    source: power-manager
+    severity: error
+    metric: {name: robot.battery.connected}
+    key: []
+    value: {of: last, window: 6s, across: min}
+    limit: {levels: [{name: disconnected, below: 0.5, severity: error}], deadband: 0}
+    activate: {for: 0s}
+    resolve: {for: 0s}
+    startup_grace: 10s
+    operator: {ack: required, latch: false}
+
+  - id: robot.battery_power_state
+    kind: metric
+    source: power-manager
+    severity: error
+    metric: {name: robot.battery.power_state}
+    key: []
+    value: {of: last, window: 6s, across: max}
+    state:
+      from: {attribute: battery.power_state}
+      normal: [idle, discharging, charging]
+      abnormal: {shutdown: error}
+      other: warning
+    activate: {for: 0s}
+    resolve: {for: 0s}
+    startup_grace: 10s
+    operator: {ack: required, latch: false}
+
+  # -- sensor-hub --------------------------------------------------------------
+
+  - id: robot.sensor_fault
+    kind: metric
+    source: sensor-hub
+    severity: warning
+    metric: {name: robot.sensor.state}
+    key: [{attribute: sensor.id}]
+    value: {of: last, window: 6s, across: max}
+    state:
+      from: {attribute: sensor.state}
+      normal: [ok]
+      abnormal: {missing: warning, error: warning}
+      other: warning
+    activate: {for: 0s}
+    resolve: {for: 0s}
+    startup_grace: 10s
+    operator: {ack: none, latch: false}
+
+  # -- fault-reporter ----------------------------------------------------------
+
+  # Logged when a fault is raised and again every 5 s while it lasts; the clear
+  # is a record with diag.condition.active=false. The code is the Key.
+  - id: robot.fault_code
+    kind: log
+    source: fault-reporter
+    severity: error
+    match: {severity: {gte: error}, attributes: {diag.condition.type: robot.fault}}
+    release: {attributes: {diag.condition.type: robot.fault, diag.condition.active: false}}
+    key: [{attribute: diag.condition.key}]
+    activate: {count: 1}
+    resolve_after: 15s                              # three repeats missed, the reporter alive
+    on_source_restart: close
+    operator: {ack: required, latch: false}
+
+  - id: robot.warning_code
+    kind: log
+    source: fault-reporter
+    severity: warning
+    match: {severity: warn, attributes: {diag.condition.type: robot.fault}}
+    release: {attributes: {diag.condition.type: robot.fault, diag.condition.active: false}}
+    key: [{attribute: diag.condition.key}]
+    activate: {count: 1}
+    resolve_after: 15s
+    on_source_restart: close
+    operator: {ack: none, latch: false}
+
+# What robot-1 has: Ward keeps these before any signal of them, and shows
+# unobserved what never reports.
+components:
+  robot-1:
+    parent: ""
+    members:
+      - {rule: robot.unobservable, node: robot-1}
+  robot-1-programs:
+    parent: robot-1
+    members:
+      - {rule: controller.down, node: robot-1}
+      - {rule: controller.stalled, node: robot-1}
+      - {rule: power-manager.down, node: robot-1}
+      - {rule: sensor-hub.down, node: robot-1}
+      - {rule: fault-reporter.down, node: robot-1}
+  robot-1-safety:
+    parent: robot-1
+    members:
+      - {rule: robot.estop, node: robot-1, key: wired}
+      - {rule: robot.estop, node: robot-1, key: software}
+      - {rule: robot.estop, node: robot-1, key: wireless}
+      - {rule: robot.board_fault, node: robot-1, key: main}
+      - {rule: robot.board_fault, node: robot-1, key: power}
+      - {rule: robot.joint_locked, node: robot-1}
+  robot-1-motors:
+    parent: robot-1
+    members:
+      - {rule: robot.motor_fault, node: robot-1, key: m1}
+      - {rule: robot.motor_fault, node: robot-1, key: m2}
+      - {rule: robot.motor_fault, node: robot-1, key: m3}
+      - {rule: robot.motor_fault, node: robot-1, key: m4}
+      - {rule: robot.motor_temperature, node: robot-1, key: m1}
+      - {rule: robot.motor_temperature, node: robot-1, key: m2}
+      - {rule: robot.motor_temperature, node: robot-1, key: m3}
+      - {rule: robot.motor_temperature, node: robot-1, key: m4}
+      - {rule: robot.motor_off}
+  robot-1-control:
+    parent: robot-1
+    members:
+      - {rule: robot.rt_cycle_slow, node: robot-1}
+      - {rule: robot.rt_cycle_late, node: robot-1}
+      - {rule: robot.joint_stale}
+      - {rule: robot.sdk_drops}
+  robot-1-power:
+    parent: robot-1
+    members:
+      - {rule: robot.battery_low, node: robot-1}
+      - {rule: robot.battery_disconnected, node: robot-1}
+      - {rule: robot.battery_power_state, node: robot-1}
+  robot-1-sensors:
+    parent: robot-1
+    members:
+      - {rule: robot.sensor_fault, node: robot-1, key: cam_front}
+      - {rule: robot.sensor_fault, node: robot-1, key: cam_rear}
+      - {rule: robot.sensor_fault, node: robot-1, key: imu}
+  robot-1-faults:
+    parent: robot-1
+    members:
+      - {rule: robot.fault_code}
+      - {rule: robot.warning_code}

@@ -69,7 +69,7 @@ gRPC on `:14319`, every service in package `ward`:
 | `layer/` | Ward's layers of the payday stack: `Seal` refuses callers the writes only Ward makes, `Ops` holds Ward's own RPCs |
 | `migrations/` | SQL planned from the schema, reviewed, and embedded in the binary |
 | `cli/`, `cmd/` | the `ward` binary and its wiring |
-| `example/` | the emitter that plays a service, and an example provider file |
+| `example/` | the emitter that plays a service, an example provider file, and `robot/`: a robot's programs, the signals and attributes each sends, the rules, and a simulation of what Ward concludes (in Korean) |
 | `deploy/` | a node's Collector configuration, and the compose environment |
 | `docs/` | `signals.md`, what a service sends; `conditions.md`, the kinds of alarm a rule makes, with the signals, scenarios and configuration of each (in Korean) |
 
