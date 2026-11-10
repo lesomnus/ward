@@ -8,11 +8,11 @@ require (
 	github.com/lesomnus/otx v0.0.0-20261013182912-d2af55df512e
 	github.com/lesomnus/ward v0.0.0-20261109082040-691674a24c34
 	github.com/lesomnus/xli/cfg v0.1.2
-	go.opentelemetry.io/collector/component v1.70.0
-	go.opentelemetry.io/collector/component/componenttest v0.164.0
+	go.opentelemetry.io/collector/component v1.71.0
+	go.opentelemetry.io/collector/component/componenttest v0.165.0
 	go.opentelemetry.io/collector/consumer v1.70.0
 	go.opentelemetry.io/collector/exporter v1.70.0
-	go.opentelemetry.io/collector/pdata v1.70.0
+	go.opentelemetry.io/collector/pdata v1.71.0
 	go.uber.org/zap v1.28.0
 	go.uber.org/zap/exp v0.3.0
 	google.golang.org/grpc v1.85.0
@@ -69,7 +69,7 @@ require (
 	github.com/zclconf/go-cty v1.19.0 // indirect
 	github.com/zclconf/go-cty-yaml v1.2.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/collector/featuregate v1.70.0 // indirect
+	go.opentelemetry.io/collector/featuregate v1.71.0 // indirect
 	go.opentelemetry.io/collector/internal/componentalias v0.164.0 // indirect
 	go.opentelemetry.io/collector/pipeline v1.70.0 // indirect
 	go.opentelemetry.io/contrib/bridges/otelslog v0.21.0 // indirect
