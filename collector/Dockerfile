@@ -2,7 +2,7 @@
 # From the repository's root:
 #
 #   docker build -f collector/Dockerfile -t ward-collector:local .
-FROM golang:1.27.3-bookworm AS build
+FROM golang:1.27.4-bookworm AS build
 ENV CGO_ENABLED=0 GOTOOLCHAIN=local
 WORKDIR /src
 COPY . .

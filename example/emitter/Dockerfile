@@ -5,7 +5,7 @@
 #
 #   docker build -f example/emitter/Dockerfile -t ward-emitter .
 
-FROM golang:1.27.3-bookworm AS build
+FROM golang:1.27.4-bookworm AS build
 
 ENV CGO_ENABLED=0 GOTOOLCHAIN=local
 
